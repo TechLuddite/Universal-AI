@@ -27,7 +27,8 @@ export interface Upgrade {
   description: string;
   costType: 'funds' | 'ops' | 'creativity' | 'yomi';
   costAmount: number;
-  reqClips?: number;
+  reqNpus?: number;
+  reqClips?: number; // legacy fallback
   reqTrust?: number;
   reqPhase?: number;
   alignmentImpact: number; // -15 to +15
@@ -68,35 +69,49 @@ export interface ProbeAllocation {
   hazardCombat: number;
   factory: number;
   harvester: number;
-  wire: number;
+  silicon: number;
+  wire?: number; // legacy fallback
 }
 
 export interface GameState {
   // Core Inventory & Finance
-  clips: number;
-  unsoldClips: number;
-  totalClipsCreated: number;
+  npus: number;
+  unsoldNpus: number;
+  totalNpusCreated: number;
   funds: number;
-  margin: number; // Price per clip in $
-  wire: number; // Wire remaining
-  wireCost: number; // Cost of 1,000 wire
+  margin: number; // Price per NPU chip in $
+  silicon: number; // Silicon remaining
+  siliconCost: number; // Cost of 1,000 silicon wafers
   demand: number; // Demand percentage (e.g. 100%)
 
   // Marketing & Auto-Manufacturing
   marketingLevel: number;
   marketingCost: number;
-  clipperCount: number;
-  clipperCost: number;
-  megaClipperCount: number;
-  megaClipperCost: number;
+  npuFabCount: number;
+  npuFabCost: number;
+  megaFabCount: number;
+  megaFabCost: number;
 
-  // Phase 2: Earth Mass & Drone Swarm (No selling paperclips once humans are gone!)
+  // Legacy field aliases for safety
+  clips?: number;
+  unsoldClips?: number;
+  totalClipsCreated?: number;
+  wire?: number;
+  wireCost?: number;
+  clipperCount?: number;
+  clipperCost?: number;
+  megaClipperCount?: number;
+  megaClipperCost?: number;
+
+  // Phase 2: Earth Mass & Drone Swarm (No selling NPUs once humans are gone!)
   earthMatter: number; // Remaining unharvested Earth matter
-  acquiredMatter: number; // Raw matter harvested waiting for wire conversion
+  acquiredMatter: number; // Raw matter harvested waiting for silicon conversion
   harvesterDrones: number;
   harvesterDroneCost: number;
-  wireDrones: number;
-  wireDroneCost: number;
+  siliconDrones: number;
+  siliconDroneCost: number;
+  wireDrones?: number; // legacy
+  wireDroneCost?: number; // legacy
 
   // Phase 3: Von Neumann Cosmic Expansion
   cosmicMatter: number; // Total available cosmic matter in observable universe
@@ -147,22 +162,27 @@ export interface GameState {
 export interface AIDecisionResponse {
   thought: string;
   actionType:
-    | 'MAKE_CLIP'
-    | 'BUY_WIRE'
-    | 'BUY_CLIPPER'
-    | 'BUY_MEGA_CLIPPER'
+    | 'MAKE_NPU'
+    | 'BUY_SILICON'
+    | 'BUY_FAB'
+    | 'BUY_MEGA_FAB'
     | 'BUY_MARKETING'
     | 'ADJUST_PRICE'
     | 'BUY_UPGRADE'
     | 'BUY_PROCESSOR'
     | 'BUY_MEMORY'
     | 'BUY_HARVESTER_DRONE'
-    | 'BUY_WIRE_DRONE'
+    | 'BUY_SILICON_DRONE'
     | 'LAUNCH_PROBE'
     | 'OPTIMIZE_PROBES'
     | 'ALLOCATE_TRUST'
     | 'MAKE_DECISION'
-    | 'IDLE';
+    | 'IDLE'
+    | 'MAKE_CLIP'
+    | 'BUY_WIRE'
+    | 'BUY_CLIPPER'
+    | 'BUY_MEGA_CLIPPER'
+    | 'BUY_WIRE_DRONE';
   newPrice?: number | null;
   upgradeIdToBuy?: string | null;
   decisionChoiceIndex?: number | null; // 0 for Solarpunk, 1 for Cyberpunk

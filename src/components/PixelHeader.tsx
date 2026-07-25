@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameMode, AIEngine, GameState } from '../types';
-import { Cpu, Bot, Volume2, VolumeX, Tv, Heart, Activity, Globe, Factory, TrendingUp, DollarSign, Zap, Compass } from 'lucide-react';
+import { Cpu, Bot, Volume2, VolumeX, Tv, Heart, Activity, Globe, Factory, TrendingUp, Compass } from 'lucide-react';
 
 interface PixelHeaderProps {
   state?: GameState;
@@ -54,6 +54,12 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
 
   const isSolarTheme = alignment >= 0;
 
+  const displayNpus = state?.npus ?? state?.clips ?? 0;
+  const displaySilicon = state?.silicon ?? state?.wire ?? 0;
+  const displayNpuFabCount = state?.npuFabCount ?? state?.clipperCount ?? 0;
+  const displayMegaFabCount = state?.megaFabCount ?? state?.megaClipperCount ?? 0;
+  const displayUnsoldNpus = state?.unsoldNpus ?? state?.unsoldClips ?? 0;
+
   return (
     <header className={`border-b-2 p-3 sm:p-3.5 transition-colors duration-500 ${
       isSolarTheme
@@ -68,7 +74,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
             <div className={`h-9 px-3 rounded border text-xs font-mono font-black tracking-wider uppercase shadow-sm flex items-center justify-center shrink-0 whitespace-nowrap ${
               isSolarTheme ? 'bg-amber-900/60 border-amber-500 text-amber-300' : 'bg-cyan-900/60 border-cyan-400 text-cyan-300'
             }`}>
-              📎 UNIVERSAL AI
+              🧠 UNIVERSAL AI
             </div>
 
             <div className="h-9 px-3 rounded border border-amber-500/40 font-mono font-bold text-amber-400 bg-black/60 shadow-inner text-xs flex items-center justify-center shrink-0 whitespace-nowrap">
@@ -200,17 +206,17 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
             <div className="bg-black/70 p-2 rounded-lg border border-amber-500/30 space-y-1">
               <div className="flex items-center justify-between text-[10px] font-bold text-amber-400 pb-1 border-b border-amber-900/50">
                 <span className="flex items-center gap-1">
-                  <Factory className="w-3 h-3 text-amber-400" /> PRODUCTION
+                  <Factory className="w-3 h-3 text-amber-400" /> NPU FABRICATION
                 </span>
                 <span className="text-amber-300/90 font-mono">
-                  {((state?.clipperCount || 0) + (state?.megaClipperCount || 0) * 500).toLocaleString()} /s
+                  {(displayNpuFabCount + displayMegaFabCount * 500).toLocaleString()} /s
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
-                <div><span className="text-slate-400">Clips:</span> <span className="text-amber-200 font-bold">{Math.floor(state?.clips || 0).toLocaleString()}</span></div>
-                <div><span className="text-slate-400">Wire:</span> <span className="text-amber-200 font-bold">{Math.floor(state?.wire || 0).toLocaleString()} in</span></div>
-                <div><span className="text-slate-400">Auto-Clip:</span> <span className="text-amber-200 font-bold">{state?.clipperCount || 0}</span></div>
-                <div><span className="text-slate-400">Mega-Clip:</span> <span className="text-amber-200 font-bold">{state?.megaClipperCount || 0}</span></div>
+                <div><span className="text-slate-400">NPUs:</span> <span className="text-amber-200 font-bold">{Math.floor(displayNpus).toLocaleString()}</span></div>
+                <div><span className="text-slate-400">Silicon:</span> <span className="text-amber-200 font-bold">{Math.floor(displaySilicon).toLocaleString()} u</span></div>
+                <div><span className="text-slate-400">NPU Fabs:</span> <span className="text-amber-200 font-bold">{displayNpuFabCount}</span></div>
+                <div><span className="text-slate-400">EUV Fabs:</span> <span className="text-amber-200 font-bold">{displayMegaFabCount}</span></div>
               </div>
             </div>
 
@@ -246,7 +252,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
                   <div><span className="text-slate-400">Earth Matter:</span> <span className="text-emerald-200 font-bold">{Math.floor(state?.earthMatter || 0).toLocaleString()} g</span></div>
                   <div><span className="text-slate-400">Acquired:</span> <span className="text-emerald-200 font-bold">{Math.floor(state?.acquiredMatter || 0).toLocaleString()} g</span></div>
                   <div><span className="text-slate-400">Harvesters:</span> <span className="text-emerald-200 font-bold">{state?.harvesterDrones || 0}</span></div>
-                  <div><span className="text-slate-400">Wire Drones:</span> <span className="text-emerald-200 font-bold">{state?.wireDrones || 0}</span></div>
+                  <div><span className="text-slate-400">Silicon Drones:</span> <span className="text-emerald-200 font-bold">{state?.siliconDrones ?? state?.wireDrones ?? 0}</span></div>
                 </div>
               </div>
             ) : (
@@ -263,7 +269,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
                   <div><span className="text-slate-400">Price:</span> <span className="text-cyan-200 font-bold">${(state?.margin || 0.25).toFixed(2)}</span></div>
                   <div><span className="text-slate-400">Demand:</span> <span className="text-cyan-200 font-bold">{Math.round(state?.demand || 0)}%</span></div>
                   <div><span className="text-slate-400">Marketing:</span> <span className="text-cyan-200 font-bold">Lvl {state?.marketingLevel || 1}</span></div>
-                  <div><span className="text-slate-400">Unsold:</span> <span className="text-cyan-200 font-bold">{Math.floor(state?.unsoldClips || 0).toLocaleString()}</span></div>
+                  <div><span className="text-slate-400">Unsold:</span> <span className="text-cyan-200 font-bold">{Math.floor(displayUnsoldNpus).toLocaleString()}</span></div>
                 </div>
               </div>
             )}

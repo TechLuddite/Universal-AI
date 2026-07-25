@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameState } from '../types';
-import { Activity, Award, Globe, ShieldAlert, Swords, Skull, Crosshair, Zap, ShieldCheck } from 'lucide-react';
+import { Activity, Award, Globe, ShieldAlert, Swords, Skull, Crosshair, Zap } from 'lucide-react';
 
 interface StatsPanelProps {
   state: GameState;
@@ -17,6 +17,10 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ state }) => {
   const wins = state.battlesWon || 0;
   const winRate = battles > 0 ? Math.round((wins / battles) * 100) : 100;
   const killLossRatio = losses > 0 ? (defeated / losses).toFixed(2) : (defeated > 0 ? '∞' : '1.00');
+
+  const totalNpusCreated = state.totalNpusCreated ?? state.totalClipsCreated ?? 0;
+  const npuFabCount = state.npuFabCount ?? state.clipperCount ?? 0;
+  const megaFabCount = state.megaFabCount ?? state.megaClipperCount ?? 0;
 
   let threatLevel = 'SECURED';
   let threatBg = 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20';
@@ -52,16 +56,16 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ state }) => {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
         <div className="p-3 rounded-lg bg-black/60 border border-slate-800">
-          <div className="text-slate-400 text-[10px] uppercase">Lifetime Paperclips</div>
+          <div className="text-slate-400 text-[10px] uppercase">Lifetime NPU Chips</div>
           <div className="text-amber-300 font-black text-sm sm:text-base mt-1">
-            {Math.floor(state.totalClipsCreated).toLocaleString()}
+            {Math.floor(totalNpusCreated).toLocaleString()}
           </div>
         </div>
 
         <div className="p-3 rounded-lg bg-black/60 border border-slate-800">
-          <div className="text-slate-400 text-[10px] uppercase">Auto Output Rate</div>
+          <div className="text-slate-400 text-[10px] uppercase">Fab Lithography Rate</div>
           <div className="text-cyan-300 font-black text-sm sm:text-base mt-1">
-            {(state.clipperCount + state.megaClipperCount * 500).toLocaleString()} /s
+            {(npuFabCount + megaFabCount * 500).toLocaleString()} /s
           </div>
         </div>
 

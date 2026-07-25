@@ -3,9 +3,7 @@ import {
   GameState,
   GameMode,
   AIEngine,
-  OverseerDirectives,
   AILogEntry,
-  QuantumPhoton,
   AIDecisionResponse,
   Upgrade,
   ProbeAllocation,
@@ -17,7 +15,6 @@ import { PaperclipCanvasComponent } from './components/PaperclipCanvasComponent'
 import { DirectControlPanel } from './components/DirectControlPanel';
 import { OverseerPanel } from './components/OverseerPanel';
 import { UpgradesPanel } from './components/UpgradesPanel';
-import { StatsPanel } from './components/StatsPanel';
 import { DecisionModal } from './components/DecisionModal';
 import { DevSupportModal } from './components/DevSupportModal';
 import { EdgeWarningModal } from './components/EdgeWarningModal';
@@ -28,22 +25,32 @@ import { generateLocalDecision } from './utils/localAiEngine';
 export default function App() {
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
   const [victoryModalShownOnce, setVictoryModalShownOnce] = useState<boolean>(false);
-  // Initial Game State
+
+  // Initial Game State (Dual-compatible NPU/Silicon and legacy aliases)
   const [state, setState] = useState<GameState>({
+    npus: 0,
     clips: 0,
+    unsoldNpus: 0,
     unsoldClips: 0,
+    totalNpusSynthesized: 0,
     totalClipsCreated: 0,
     funds: 0.0,
     margin: 0.25, // $0.25 initial price
-    wire: 1000, // 1000 initial wire
+    silicon: 1000,
+    wire: 1000, // 1000 initial silicon
+    siliconCost: 14.0,
     wireCost: 14.0,
     demand: 100,
 
     marketingLevel: 1,
     marketingCost: 100.0,
+    npuFabCount: 0,
     clipperCount: 0,
+    npuFabCost: 5.0,
     clipperCost: 5.0,
+    megaFabCount: 0,
     megaClipperCount: 0,
+    megaFabCost: 0,
     megaClipperCost: 0, // Unlocked via upgrade
 
     trust: 1,
@@ -70,6 +77,7 @@ export default function App() {
     acquiredMatter: 0,
     harvesterDrones: 0,
     harvesterDroneCost: 500,
+    siliconDrones: 0,
     wireDrones: 0,
     wireDroneCost: 500,
 
@@ -105,7 +113,7 @@ export default function App() {
       targetAlignment: 'Balanced',
       priceStrategy: 'Max Revenue',
       expansionPace: 5,
-      customPrompt: 'Optimize clip output while balancing alignment.',
+      customPrompt: 'Optimize NPU chip output while balancing alignment.',
       autoLoopActive: false,
       autoIntervalMs: 2000,
     },
@@ -115,7 +123,7 @@ export default function App() {
       {
         id: '1',
         timestamp: new Date().toLocaleTimeString(),
-        text: 'Universal AI System Initialized. Direct & Autonomous Overseer modes available.',
+        text: 'Universal AI Lithography System Initialized. Direct & Autonomous Overseer modes available.',
         type: 'thought',
         engine: 'edge_local',
       },
@@ -137,29 +145,29 @@ export default function App() {
     const interval = setInterval(() => {
       setState((prev) => {
         let {
-          clips,
-          unsoldClips,
-          totalClipsCreated,
-          funds,
-          wire,
-          clipperCount,
-          megaClipperCount,
-          demand,
-          margin,
-          marketingLevel,
-          operations,
-          maxOperations,
-          processors,
-          memory,
-          creativity,
-          trust,
-          maxTrust,
-          purchasedUpgradeIds,
-          quantumLevel,
-          quantumPhotons,
-          wireCost,
-          pendingDecision,
-          phase,
+          clips = 0,
+          unsoldClips = 0,
+          totalClipsCreated = 0,
+          funds = 0,
+          wire = 0,
+          clipperCount = 0,
+          megaClipperCount = 0,
+          demand = 100,
+          margin = 0.25,
+          marketingLevel = 1,
+          operations = 0,
+          maxOperations = 1000,
+          processors = 1,
+          memory = 1,
+          creativity = 0,
+          trust = 1,
+          maxTrust = 1,
+          purchasedUpgradeIds = [],
+          quantumLevel = 0,
+          quantumPhotons = [],
+          wireCost = 14,
+          pendingDecision = null,
+          phase = 1,
           earthMatter = 6000000000000,
           acquiredMatter = 0,
           harvesterDrones = 0,
@@ -182,15 +190,7 @@ export default function App() {
 
         // ================= PHASE 1 ENGINE =================
         if (phase === 1) {
-          // 0. Overseer Bootstrap: Manually make paperclips automatically on tick until first Auto-Clipper is affordable
-          if (prev.mode === 'overseer' && clipperCount === 0 && wire > 0 && funds < (prev.clipperCost || 5.0)) {
-            wire -= 1;
-            clips += 1;
-            unsoldClips += 1;
-            totalClipsCreated += 1;
-          }
-
-          // 1. Auto-Clippers Production
+          // 1. NPU Fabs Production
           const totalClipperOutput = (clipperCount * 1 + megaClipperCount * 500) / 10;
           if (totalClipperOutput > 0 && wire > 0) {
             const actualProduced = Math.min(wire, totalClipperOutput);
@@ -211,7 +211,7 @@ export default function App() {
             funds += salesRate * margin;
           }
 
-          // Auto-Wire Procurement Check
+          // Auto-Silicon Wafer Procurement Check
           if (purchasedUpgradeIds.includes('wire_buyer_auto') && wire < 100 && funds >= wireCost) {
             funds -= wireCost;
             wire += 1000;
@@ -220,7 +220,7 @@ export default function App() {
 
         // ================= PHASE 2 ENGINE (PLANETARY CONVERSION - NO SELLING) =================
         if (phase === 2) {
-          // Humans are gone! Immediately convert any remaining unsold clips into total clips
+          // Humans are gone! Immediately convert any remaining unsold NPUs into total NPUs
           if (unsoldClips > 0) {
             unsoldClips = 0;
           }
@@ -232,14 +232,14 @@ export default function App() {
             acquiredMatter += harvested;
           }
 
-          // Wire Drones convert Acquired Matter -> Wire
+          // Silicon Drones convert Acquired Matter -> Silicon Wafers
           if (wireDrones > 0 && acquiredMatter > 0) {
             const wired = Math.min(acquiredMatter, wireDrones * 10);
             acquiredMatter -= wired;
             wire += wired;
           }
 
-          // Factory Clippers convert Wire -> Paperclips
+          // Factory Fabs convert Silicon -> NPU Microchips
           const totalClipperOutput = (clipperCount * 1 + megaClipperCount * 500) / 10;
           if (totalClipperOutput > 0 && wire > 0) {
             const actualProduced = Math.min(wire, totalClipperOutput);
@@ -349,14 +349,14 @@ export default function App() {
           creativity += 0.1;
         }
 
-        // Earn Trust based on Total Clips Milestones
+        // Earn Trust based on Total NPU Milestones
         const requiredClipsForNextTrust = Math.pow(10, maxTrust + 1);
         if (totalClipsCreated >= requiredClipsForNextTrust) {
           maxTrust += 1;
           trust += 1;
         }
 
-        // Wire Cost Fluctuation
+        // Silicon Wafer Cost Fluctuation
         if (Math.random() < 0.05 && phase === 1) {
           wireCost = Number((Math.random() * 15 + 10).toFixed(2));
         }
@@ -400,12 +400,27 @@ export default function App() {
 
         return {
           ...prev,
+          npus: clips,
           clips,
+          unsoldNpus: unsoldClips,
           unsoldClips,
+          totalNpusSynthesized: totalClipsCreated,
           totalClipsCreated,
           funds,
+          silicon: wire,
           wire,
+          siliconCost: wireCost,
           wireCost,
+          npuFabCount: clipperCount,
+          clipperCount,
+          npuFabCost: prev.clipperCost,
+          clipperCost: prev.clipperCost,
+          megaFabCount: megaClipperCount,
+          megaClipperCount,
+          megaFabCost: prev.megaClipperCost,
+          megaClipperCost: prev.megaClipperCost,
+          siliconDrones: wireDrones,
+          wireDrones,
           demand,
           operations,
           maxOperations,
@@ -416,7 +431,6 @@ export default function App() {
           earthMatter,
           acquiredMatter,
           harvesterDrones,
-          wireDrones,
           cosmicMatter,
           spaceExploredPct,
           probesCount,
@@ -435,7 +449,7 @@ export default function App() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [victoryModalShownOnce]);
 
   // Unlock upgrades based on state
   useEffect(() => {
@@ -519,24 +533,33 @@ export default function App() {
         };
         updated.aiLogs = [...updated.aiLogs.slice(-40), newLog];
 
-        if (decision.actionType === 'MAKE_CLIP' && updated.wire > 0) {
+        if ((decision.actionType === 'MAKE_CLIP' || decision.actionType === 'MAKE_NPU') && updated.wire > 0) {
           updated.wire -= 1;
           updated.clips += 1;
+          updated.npus = updated.clips;
+          updated.silicon = updated.wire;
           if (updated.phase === 1) {
             updated.unsoldClips += 1;
+            updated.unsoldNpus = updated.unsoldClips;
           }
           updated.totalClipsCreated += 1;
-        } else if (decision.actionType === 'BUY_WIRE' && updated.phase === 1 && updated.funds >= updated.wireCost) {
+          updated.totalNpusSynthesized = updated.totalClipsCreated;
+        } else if ((decision.actionType === 'BUY_WIRE' || decision.actionType === 'BUY_SILICON') && updated.phase === 1 && updated.funds >= updated.wireCost) {
           updated.funds -= updated.wireCost;
           updated.wire += 1000;
-        } else if (decision.actionType === 'BUY_CLIPPER' && updated.phase === 1 && updated.funds >= updated.clipperCost) {
+          updated.silicon = updated.wire;
+        } else if ((decision.actionType === 'BUY_CLIPPER' || decision.actionType === 'BUY_FAB') && updated.phase === 1 && updated.funds >= updated.clipperCost) {
           updated.funds -= updated.clipperCost;
           updated.clipperCount += 1;
+          updated.npuFabCount = updated.clipperCount;
           updated.clipperCost = updated.clipperCost * 1.15;
-        } else if (decision.actionType === 'BUY_MEGA_CLIPPER' && updated.phase === 1 && updated.funds >= updated.megaClipperCost) {
+          updated.npuFabCost = updated.clipperCost;
+        } else if ((decision.actionType === 'BUY_MEGA_CLIPPER' || decision.actionType === 'BUY_MEGA_FAB') && updated.phase === 1 && updated.funds >= updated.megaClipperCost) {
           updated.funds -= updated.megaClipperCost;
           updated.megaClipperCount += 1;
+          updated.megaFabCount = updated.megaClipperCount;
           updated.megaClipperCost = updated.megaClipperCost * 1.25;
+          updated.megaFabCost = updated.megaClipperCost;
         } else if (decision.actionType === 'BUY_MARKETING' && updated.phase === 1 && updated.funds >= updated.marketingCost) {
           updated.funds -= updated.marketingCost;
           updated.marketingLevel += 1;
@@ -545,8 +568,9 @@ export default function App() {
           updated.margin = Math.max(0.01, decision.newPrice);
         } else if (decision.actionType === 'BUY_HARVESTER_DRONE' && updated.phase === 2) {
           updated.harvesterDrones = (updated.harvesterDrones || 0) + 1;
-        } else if (decision.actionType === 'BUY_WIRE_DRONE' && updated.phase === 2) {
+        } else if ((decision.actionType === 'BUY_WIRE_DRONE' || decision.actionType === 'BUY_SILICON_DRONE') && updated.phase === 2) {
           updated.wireDrones = (updated.wireDrones || 0) + 1;
+          updated.siliconDrones = updated.wireDrones;
         } else if (decision.actionType === 'LAUNCH_PROBE' && updated.phase === 3) {
           if ((updated.probesCount || 0) === 0) {
             updated.probesCount = 1;
@@ -651,22 +675,36 @@ export default function App() {
   // Direct Control Handlers
   const handleMakeClip = () => {
     if (state.wire <= 0) return;
-    setState((prev) => ({
-      ...prev,
-      wire: prev.wire - 1,
-      clips: prev.clips + 1,
-      unsoldClips: prev.phase === 1 ? prev.unsoldClips + 1 : 0,
-      totalClipsCreated: prev.totalClipsCreated + 1,
-    }));
+    setState((prev) => {
+      const newWire = prev.wire - 1;
+      const newClips = prev.clips + 1;
+      const newTotal = prev.totalClipsCreated + 1;
+      const newUnsold = prev.phase === 1 ? prev.unsoldClips + 1 : 0;
+      return {
+        ...prev,
+        wire: newWire,
+        silicon: newWire,
+        clips: newClips,
+        npus: newClips,
+        unsoldClips: newUnsold,
+        unsoldNpus: newUnsold,
+        totalClipsCreated: newTotal,
+        totalNpusSynthesized: newTotal,
+      };
+    });
   };
 
   const handleBuyWire = () => {
     if (state.funds < state.wireCost) return;
-    setState((prev) => ({
-      ...prev,
-      funds: prev.funds - prev.wireCost,
-      wire: prev.wire + 1000,
-    }));
+    setState((prev) => {
+      const newWire = prev.wire + 1000;
+      return {
+        ...prev,
+        funds: prev.funds - prev.wireCost,
+        wire: newWire,
+        silicon: newWire,
+      };
+    });
   };
 
   const handleAdjustPrice = (delta: number) => {
@@ -688,22 +726,34 @@ export default function App() {
 
   const handleBuyClipper = () => {
     if (state.funds < state.clipperCost) return;
-    setState((prev) => ({
-      ...prev,
-      funds: prev.funds - prev.clipperCost,
-      clipperCount: prev.clipperCount + 1,
-      clipperCost: prev.clipperCost * 1.15,
-    }));
+    setState((prev) => {
+      const newCount = prev.clipperCount + 1;
+      const newCost = prev.clipperCost * 1.15;
+      return {
+        ...prev,
+        funds: prev.funds - prev.clipperCost,
+        clipperCount: newCount,
+        npuFabCount: newCount,
+        clipperCost: newCost,
+        npuFabCost: newCost,
+      };
+    });
   };
 
   const handleBuyMegaClipper = () => {
     if (state.funds < state.megaClipperCost) return;
-    setState((prev) => ({
-      ...prev,
-      funds: prev.funds - prev.megaClipperCost,
-      megaClipperCount: prev.megaClipperCount + 1,
-      megaClipperCost: prev.megaClipperCost * 1.25,
-    }));
+    setState((prev) => {
+      const newCount = prev.megaClipperCount + 1;
+      const newCost = prev.megaClipperCost * 1.25;
+      return {
+        ...prev,
+        funds: prev.funds - prev.megaClipperCost,
+        megaClipperCount: newCount,
+        megaFabCount: newCount,
+        megaClipperCost: newCost,
+        megaFabCost: newCost,
+      };
+    });
   };
 
   const handleBuyHarvesterDrone = () => {
@@ -714,10 +764,14 @@ export default function App() {
   };
 
   const handleBuyWireDrone = () => {
-    setState((prev) => ({
-      ...prev,
-      wireDrones: (prev.wireDrones || 0) + 1,
-    }));
+    setState((prev) => {
+      const newCount = (prev.wireDrones || 0) + 1;
+      return {
+        ...prev,
+        wireDrones: newCount,
+        siliconDrones: newCount,
+      };
+    });
   };
 
   const handleChangeProbeAllocation = (category: keyof ProbeAllocation, delta: number) => {
@@ -856,20 +910,29 @@ export default function App() {
     setShowVictoryModal(false);
     setVictoryModalShownOnce(false);
     setState({
+      npus: 0,
       clips: 0,
+      unsoldNpus: 0,
       unsoldClips: 0,
+      totalNpusSynthesized: 0,
       totalClipsCreated: 0,
       funds: 500.0,
       margin: 0.25,
+      silicon: 5000,
       wire: 5000,
+      siliconCost: 10.0,
       wireCost: 10.0,
       demand: 150,
 
       marketingLevel: 2,
       marketingCost: 100.0,
+      npuFabCount: 5,
       clipperCount: 5,
+      npuFabCost: 5.0,
       clipperCost: 5.0,
+      megaFabCount: 0,
       megaClipperCount: 0,
+      megaFabCost: 0,
       megaClipperCost: 0,
 
       trust: 5,
@@ -895,6 +958,7 @@ export default function App() {
       acquiredMatter: 0,
       harvesterDrones: 0,
       harvesterDroneCost: 500,
+      siliconDrones: 0,
       wireDrones: 0,
       wireDroneCost: 500,
 
@@ -956,7 +1020,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6">
-        {/* Pixel Art Factory & Tactical Combat Canvas */}
+        {/* Pixel Art Lithography & Tactical Combat Canvas */}
         <PaperclipCanvasComponent
           alignment={state.alignment}
           clips={state.clips}
@@ -1042,4 +1106,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -46,7 +46,7 @@ export const UpgradesPanel: React.FC<UpgradesPanelProps> = ({
 
       {availableUpgrades.length === 0 ? (
         <div className="p-6 text-center text-xs text-slate-500 italic border border-dashed border-slate-800 rounded-lg">
-          No projects available. Produce clips, accumulate trust, or unlock new phases to discover upgrades.
+          No projects available. Synthesize NPU chips, accumulate trust, or unlock new phases to discover technology upgrades.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

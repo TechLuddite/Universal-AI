@@ -7,7 +7,6 @@ import {
   Minus,
   Zap,
   Cpu,
-  HardDrive,
   DollarSign,
   ShoppingCart,
   TrendingUp,
@@ -17,6 +16,7 @@ import {
   Bot,
   Shield,
   Compass,
+  CpuIcon,
 } from 'lucide-react';
 
 interface DirectControlPanelProps {
@@ -52,12 +52,21 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
 }) => {
   const isSolar = state.alignment >= 0;
 
+  const displaySilicon = state.silicon ?? state.wire ?? 0;
+  const displaySiliconCost = state.siliconCost ?? state.wireCost ?? 15;
+  const displayUnsoldNpus = state.unsoldNpus ?? state.unsoldClips ?? 0;
+  const displayNpuFabCount = state.npuFabCount ?? state.clipperCount ?? 0;
+  const displayNpuFabCost = state.npuFabCost ?? state.clipperCost ?? 5;
+  const displayMegaFabCount = state.megaFabCount ?? state.megaClipperCount ?? 0;
+  const displayMegaFabCost = state.megaFabCost ?? state.megaClipperCost ?? 500;
+  const displaySiliconDrones = state.siliconDrones ?? state.wireDrones ?? 0;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
       {/* ================= PHASE 1: COMMERCIAL EARTH ENTERPRISE ================= */}
       {state.phase === 1 && (
         <>
-          {/* 1. Manufacturing Core */}
+          {/* 1. Lithography Etching Engine */}
           <div
             className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
               isSolar
@@ -69,7 +78,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
                   <Zap className="w-4 h-4 text-amber-500" />
-                  1. Bending Engine
+                  1. Lithography Engine
                 </h3>
                 <span className="text-xs text-slate-400">Manual & Auto</span>
               </div>
@@ -79,33 +88,33 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   audio.playClipSound();
                   onMakeClip();
                 }}
-                disabled={state.wire <= 0}
+                disabled={displaySilicon <= 0}
                 className={`w-full py-4 px-3 rounded-lg border-2 font-black text-lg tracking-widest uppercase transition-all transform active:scale-95 shadow-md flex items-center justify-center gap-2 ${
-                  state.wire > 0
+                  displaySilicon > 0
                     ? isSolar
                       ? 'bg-amber-600 hover:bg-amber-500 border-amber-300 text-stone-950'
                       : 'bg-cyan-600 hover:bg-cyan-500 border-cyan-300 text-slate-950'
                     : 'bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed'
                 }`}
               >
-                📎 Make Paperclip
+                <CpuIcon className="w-5 h-5" /> Etch NPU Chip
               </button>
 
-              {/* Wire Reserves */}
+              {/* Silicon Wafer Reserves */}
               <div className="mt-4 p-3 rounded-lg bg-black/60 border border-slate-800 space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Wire Stock:</span>
+                  <span className="text-slate-400">Silicon Wafers:</span>
                   <span
                     className={`font-bold ${
-                      state.wire < 100 ? 'text-rose-400 animate-pulse' : 'text-slate-200'
+                      displaySilicon < 100 ? 'text-rose-400 animate-pulse' : 'text-slate-200'
                     }`}
                   >
-                    {Math.floor(state.wire).toLocaleString()} units
+                    {Math.floor(displaySilicon).toLocaleString()} units
                   </span>
                 </div>
                 <div className="flex justify-between text-xs items-center">
-                  <span className="text-slate-400">Wire Cost:</span>
-                  <span className="text-emerald-400 font-bold">${state.wireCost.toFixed(2)} / 1k</span>
+                  <span className="text-slate-400">Wafer Cost:</span>
+                  <span className="text-emerald-400 font-bold">${displaySiliconCost.toFixed(2)} / 1k</span>
                 </div>
 
                 <button
@@ -113,68 +122,68 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                     audio.playWireSound();
                     onBuyWire();
                   }}
-                  disabled={state.funds < state.wireCost}
+                  disabled={state.funds < displaySiliconCost}
                   className={`w-full py-2 px-3 rounded border font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition-all ${
-                    state.funds >= state.wireCost
+                    state.funds >= displaySiliconCost
                       ? 'bg-emerald-800/80 hover:bg-emerald-700 border-emerald-500 text-emerald-100'
                       : 'bg-slate-800/50 border-slate-800 text-slate-600 cursor-not-allowed'
                   }`}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
-                  Buy Wire (1,000)
+                  Buy Silicon (1,000)
                 </button>
               </div>
             </div>
 
-            {/* Auto-Clippers */}
+            {/* NPU Lithography Fabs */}
             <div className="pt-2 border-t border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300 font-semibold">Auto-Clippers:</span>
-                <span className="text-amber-300 font-bold">{state.clipperCount}</span>
+                <span className="text-slate-300 font-semibold">NPU Fabs:</span>
+                <span className="text-amber-300 font-bold">{displayNpuFabCount}</span>
               </div>
               <button
                 onClick={() => {
                   audio.playBuySound();
                   onBuyClipper();
                 }}
-                disabled={state.funds < state.clipperCost}
+                disabled={state.funds < displayNpuFabCost}
                 className={`w-full py-1.5 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center ${
-                  state.funds >= state.clipperCost
+                  state.funds >= displayNpuFabCost
                     ? 'bg-amber-950/60 hover:bg-amber-900 border-amber-600/80 text-amber-200'
                     : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
                 }`}
               >
-                <span>Auto-Clipper</span>
-                <span>${state.clipperCost.toFixed(2)}</span>
+                <span>NPU Fab</span>
+                <span>${displayNpuFabCost.toFixed(2)}</span>
               </button>
 
-              {state.megaClipperCost > 0 && (
+              {displayMegaFabCost > 0 && (
                 <div className="pt-1">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-semibold">Mega-Clippers:</span>
-                    <span className="text-cyan-300 font-bold">{state.megaClipperCount}</span>
+                    <span className="text-slate-300 font-semibold">EUV Megafabs:</span>
+                    <span className="text-cyan-300 font-bold">{displayMegaFabCount}</span>
                   </div>
                   <button
                     onClick={() => {
                       audio.playBuySound();
                       onBuyMegaClipper();
                     }}
-                    disabled={state.funds < state.megaClipperCost}
+                    disabled={state.funds < displayMegaFabCost}
                     className={`w-full py-1.5 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center mt-1 ${
-                      state.funds >= state.megaClipperCost
+                      state.funds >= displayMegaFabCost
                         ? 'bg-cyan-950/60 hover:bg-cyan-900 border-cyan-500 text-cyan-200'
                         : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
                     }`}
                   >
-                    <span>Mega-Clipper (500 clips/s)</span>
-                    <span>${state.megaClipperCost.toFixed(2)}</span>
+                    <span>EUV Megafab (500 npu/s)</span>
+                    <span>${displayMegaFabCost.toFixed(2)}</span>
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* 2. Commercial Market */}
+          {/* 2. Commercial NPU Market */}
           <div
             className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
               isSolar
@@ -195,16 +204,16 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 </div>
 
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Unsold Inventory:</span>
+                  <span className="text-slate-400">Unsold Chip Inventory:</span>
                   <span className="text-slate-200 font-bold">
-                    {Math.floor(state.unsoldClips).toLocaleString()} clips
+                    {Math.floor(displayUnsoldNpus).toLocaleString()} npus
                   </span>
                 </div>
 
-                {/* Price Per Clip Adjuster */}
+                {/* Price Per NPU Adjuster */}
                 <div className="pt-2 border-t border-slate-800">
                   <div className="flex justify-between items-center text-xs mb-1.5">
-                    <span className="text-slate-300">Margin / Clip:</span>
+                    <span className="text-slate-300">Margin / NPU:</span>
                     <span className="text-amber-300 font-bold">${state.margin.toFixed(2)}</span>
                   </div>
 
@@ -230,7 +239,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 </div>
 
                 <div className="flex justify-between items-center text-xs pt-1">
-                  <span className="text-slate-400">Public Demand:</span>
+                  <span className="text-slate-400">Public NPU Demand:</span>
                   <span className="text-cyan-300 font-bold">{Math.floor(state.demand)}%</span>
                 </div>
               </div>
@@ -239,7 +248,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
             {/* Marketing Campaign */}
             <div className="pt-2 border-t border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300 font-semibold">Marketing Lvl: {state.marketingLevel}</span>
+                <span className="text-slate-300 font-semibold font-mono">Marketing Lvl: {state.marketingLevel}</span>
               </div>
               <button
                 onClick={() => {
@@ -267,7 +276,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
       {/* ================= PHASE 2: PLANETARY MATTER CONVERSION ================= */}
       {state.phase === 2 && (
         <>
-          {/* Phase 2: Manufacturing & Wire Drones */}
+          {/* Phase 2: Manufacturing & Silicon Drones */}
           <div
             className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
               isSolar
@@ -279,7 +288,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-sm font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
                   <Globe className="w-4 h-4 text-amber-500" />
-                  1. Planetary Matter Conversion
+                  1. Planetary Silicon Conversion
                 </h3>
                 <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
                   Humans Assimilated
@@ -300,9 +309,9 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Wire Available:</span>
+                  <span className="text-slate-400">Silicon Available:</span>
                   <span className="text-emerald-300 font-bold">
-                    {Math.floor(state.wire).toLocaleString()} units
+                    {Math.floor(displaySilicon).toLocaleString()} units
                   </span>
                 </div>
               </div>
@@ -313,10 +322,10 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 audio.playClipSound();
                 onMakeClip();
               }}
-              disabled={state.wire <= 0}
+              disabled={displaySilicon <= 0}
               className="w-full py-3 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-sm uppercase transition-all shadow-md flex items-center justify-center gap-2"
             >
-              📎 Manual Clip Bending
+              <CpuIcon className="w-4 h-4" /> Manual Silicon Etching
             </button>
           </div>
 
@@ -354,14 +363,14 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   </div>
                 </div>
 
-                {/* Wire Drones */}
+                {/* Silicon Drones */}
                 <div className="flex justify-between items-center pt-2 border-t border-slate-800">
                   <div>
-                    <div className="font-bold text-slate-200">Wire Drones</div>
-                    <div className="text-[10px] text-slate-400">Converts matter to wire</div>
+                    <div className="font-bold text-slate-200">Silicon Drones</div>
+                    <div className="text-[10px] text-slate-400">Converts matter to silicon</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-cyan-300 font-bold">{state.wireDrones || 0}</span>
+                    <span className="text-cyan-300 font-bold">{displaySiliconDrones}</span>
                     {onBuyWireDrone && (
                       <button
                         onClick={onBuyWireDrone}
@@ -376,7 +385,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
             </div>
 
             <div className="text-[11px] text-slate-400 italic bg-black/40 p-2 rounded border border-slate-800">
-              Note: Humans are no longer around to purchase paperclips. All Earth matter is being converted directly into paperclip wire by your drone swarms.
+              Note: Humans are no longer around to purchase NPU chips. All Earth matter is being converted directly into silicon substrate by your drone swarms.
             </div>
           </div>
         </>
@@ -485,7 +494,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
             </div>
 
             <div className="text-[11px] text-purple-300 bg-purple-950/40 p-2 rounded border border-purple-800/60">
-              Probes are exploring deep space, self-replicating, fighting space drifters, and converting star systems into paperclips.
+              Probes are exploring deep space, self-replicating, fighting space drifters, and converting star systems into NPU microchips.
             </div>
           </div>
 
@@ -662,4 +671,3 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
     </div>
   );
 };
-

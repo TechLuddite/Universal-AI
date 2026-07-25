@@ -6,10 +6,10 @@ export function renderPixelArtCanvas(
   width: number,
   height: number,
   alignment: number, // -100 (Cyberpunk) to +100 (Solarpunk)
-  clips: number,
-  wire: number,
-  clipperCount: number,
-  megaClipperCount: number,
+  npus: number,
+  silicon: number,
+  npuFabCount: number,
+  megaFabCount: number,
   quantumLevel: number,
   quantumPhotons: { id: number; value: number }[],
   phase: number,
@@ -50,10 +50,10 @@ export function renderPixelArtCanvas(
     const floorY = Math.floor(height * 0.72);
     drawIndieFactoryFloor(ctx, width, height, floorY, normAlign, tick);
 
-    // 5. Motorized High-Detail Wire Spool Core
+    // 5. Motorized High-Detail Silicon Wafer Spool Core
     const spoolX = 28;
     const spoolY = floorY - 42;
-    drawModernIndieWireSpool(ctx, spoolX, spoolY, wire, normAlign, tick);
+    drawModernIndieSiliconSpool(ctx, spoolX, spoolY, silicon, normAlign, tick);
 
     // 6. Precision Conveyor Assembly Belt
     const beltX = 72;
@@ -61,25 +61,25 @@ export function renderPixelArtCanvas(
     const beltY = floorY - 18;
     drawIndieConveyorBelt(ctx, beltX, beltY, beltW, tick, normAlign);
 
-    // 7. Glossy Paperclips Riding Conveyor
-    const clipCountToShow = Math.min(16, Math.max(1, Math.floor(clips / 5) + 1));
-    for (let i = 0; i < clipCountToShow; i++) {
+    // 7. Glossy NPU Microchip Dies Riding Conveyor
+    const chipCountToShow = Math.min(16, Math.max(1, Math.floor(npus / 5) + 1));
+    for (let i = 0; i < chipCountToShow; i++) {
       const cx = beltX + ((i * 24 + tick * 1.2) % (beltW - 14));
       const cy = beltY - 9;
-      drawIndiePaperclip(ctx, cx, cy, normAlign);
+      drawIndieNpu(ctx, cx, cy, normAlign);
     }
 
-    // 8. Articulated Robotic Clipper Arm with Hydraulic Pistons
+    // 8. Articulated EUV Lithography Laser Arm with Hydraulic Pistons
     const stampX = Math.floor(width * 0.58);
     const stampY = floorY - 68;
-    drawRoboticClipperArm(ctx, stampX, stampY, clipperCount + megaClipperCount, tick, normAlign);
+    drawRoboticFabArm(ctx, stampX, stampY, npuFabCount + megaFabCount, tick, normAlign);
 
     // 9. Storage Vault & Digital Containment Vessel
     const crateX = width - 62;
     const crateY = floorY - 40;
-    drawStorageVault(ctx, crateX, crateY, clips, normAlign, tick);
+    drawStorageVault(ctx, crateX, crateY, npus, normAlign, tick);
 
-    // 10. Interactive Floating AI Mascot Companion ("CLiP-E / AURA")
+    // 10. Interactive Floating AI Mascot Companion ("NPU-E / AURA")
     const mascotX = Math.floor(width * 0.36);
     const mascotY = Math.floor(height * 0.32);
     drawIndieAIMascot(ctx, mascotX, mascotY, tick, normAlign);
@@ -341,11 +341,11 @@ function drawIndieFactoryFloor(
   ctx.restore();
 }
 
-function drawModernIndieWireSpool(
+function drawModernIndieSiliconSpool(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  wire: number,
+  silicon: number,
   normAlign: number,
   tick: number
 ) {
@@ -356,18 +356,18 @@ function drawModernIndieWireSpool(
   ctx.fillStyle = isSolar ? '#78350f' : '#1e293b';
   ctx.fillRect(x - 12, y + 10, 24, 28);
 
-  // Rotating Wire Drum
-  const spoolRadius = Math.min(18, Math.max(8, Math.floor(wire / 150) + 8));
-  const drumColor = isSolar ? '#d97706' : '#38bdf8';
+  // Silicon Wafer Stack Cylinder
+  const spoolRadius = Math.min(18, Math.max(8, Math.floor(silicon / 150) + 8));
+  const drumColor = isSolar ? '#10b981' : '#38bdf8';
 
-  // Wire Coil Threads
+  // Silicon Ingot Stack
   ctx.fillStyle = drumColor;
   ctx.beginPath();
   ctx.arc(x, y + 16, spoolRadius, 0, Math.PI * 2);
   ctx.fill();
 
-  // Shiny Metallic Rim
-  ctx.strokeStyle = isSolar ? '#fef3c7' : '#e0f2fe';
+  // Shiny Metallic Crystalline Facets
+  ctx.strokeStyle = isSolar ? '#a7f3d0' : '#e0f2fe';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(x, y + 16, spoolRadius, 0, Math.PI * 2);
@@ -378,11 +378,11 @@ function drawModernIndieWireSpool(
   ctx.save();
   ctx.translate(x, y + 16);
   ctx.rotate(angle);
-  ctx.fillStyle = isSolar ? '#f59e0b' : '#0284c7';
+  ctx.fillStyle = isSolar ? '#34d399' : '#0284c7';
   ctx.fillRect(-3, -3, 6, 6);
   ctx.restore();
 
-  // Wire Feeding Strand
+  // Silicon Wafer Track Strand
   ctx.strokeStyle = drumColor;
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -433,7 +433,7 @@ function drawIndieConveyorBelt(
   ctx.restore();
 }
 
-function drawIndiePaperclip(
+function drawIndieNpu(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -442,30 +442,44 @@ function drawIndiePaperclip(
   ctx.save();
   const isSolar = normAlign >= 0.5;
 
-  ctx.strokeStyle = isSolar ? '#fef3c7' : '#00f0ff';
-  ctx.shadowColor = isSolar ? '#fbbf24' : '#00f0ff';
-  ctx.shadowBlur = 4;
-  ctx.lineWidth = 2;
+  // High-Detail NPU Microchip Die
+  const chipSize = 14;
+  const chipX = x;
+  const chipY = y - 4;
 
-  // High-Detail Curved Paperclip Path
-  ctx.beginPath();
-  ctx.moveTo(x, y + 6);
-  ctx.lineTo(x, y - 6);
-  ctx.arcTo(x + 6, y - 10, x + 12, y - 6, 5);
-  ctx.lineTo(x + 12, y + 8);
-  ctx.arcTo(x + 6, y + 12, x, y + 8, 5);
-  ctx.lineTo(x + 4, y);
-  ctx.stroke();
+  // Outer Substrate
+  ctx.fillStyle = isSolar ? '#064e3b' : '#0f172a';
+  ctx.strokeStyle = isSolar ? '#34d399' : '#00f0ff';
+  ctx.shadowColor = isSolar ? '#10b981' : '#00f0ff';
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 1.5;
+
+  ctx.fillRect(chipX, chipY, chipSize, chipSize);
+  ctx.strokeRect(chipX, chipY, chipSize, chipSize);
+
+  // Golden Pin Contacts on edges
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(chipX + 2, chipY - 2, 2, 2);
+  ctx.fillRect(chipX + 6, chipY - 2, 2, 2);
+  ctx.fillRect(chipX + 10, chipY - 2, 2, 2);
+
+  ctx.fillRect(chipX + 2, chipY + chipSize, 2, 2);
+  ctx.fillRect(chipX + 6, chipY + chipSize, 2, 2);
+  ctx.fillRect(chipX + 10, chipY + chipSize, 2, 2);
+
+  // Glowing Neural Core Center
+  ctx.fillStyle = isSolar ? '#fef08a' : '#c084fc';
+  ctx.fillRect(chipX + 4, chipY + 4, 6, 6);
 
   ctx.shadowBlur = 0;
   ctx.restore();
 }
 
-function drawRoboticClipperArm(
+function drawRoboticFabArm(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  clipperCount: number,
+  fabCount: number,
   tick: number,
   normAlign: number
 ) {
@@ -473,7 +487,7 @@ function drawRoboticClipperArm(
   const isSolar = normAlign >= 0.5;
 
   // Hydraulic Vertical Motion
-  const strokeY = Math.sin(tick * (clipperCount > 0 ? 0.15 : 0.02)) * 6;
+  const strokeY = Math.sin(tick * (fabCount > 0 ? 0.15 : 0.02)) * 6;
 
   // Overhead Base Mount
   ctx.fillStyle = isSolar ? '#451a03' : '#1e1b4b';
@@ -484,15 +498,15 @@ function drawRoboticClipperArm(
   ctx.fillRect(x - 10, y - 6, 4, 24 + strokeY);
   ctx.fillRect(x + 6, y - 6, 4, 24 + strokeY);
 
-  // Stamper Laser Head
+  // EUV Lithography Laser Stamper Head
   const headY = y + 18 + strokeY;
   ctx.fillStyle = isSolar ? '#b45309' : '#0369a1';
   ctx.fillRect(x - 18, headY, 36, 12);
 
-  // Laser Cutter Beam Flare (when extending down)
+  // Laser Cutter EUV Beam Flare (when extending down)
   if (strokeY > 2) {
-    ctx.fillStyle = isSolar ? 'rgba(239, 68, 68, 0.8)' : 'rgba(236, 72, 153, 0.8)';
-    ctx.shadowColor = isSolar ? '#ef4444' : '#ec4899';
+    ctx.fillStyle = isSolar ? 'rgba(52, 211, 153, 0.9)' : 'rgba(168, 85, 247, 0.9)';
+    ctx.shadowColor = isSolar ? '#34d399' : '#c084fc';
     ctx.shadowBlur = 12;
     ctx.fillRect(x - 2, headY + 12, 4, 18);
 
@@ -512,7 +526,7 @@ function drawStorageVault(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  clips: number,
+  npus: number,
   normAlign: number,
   tick: number
 ) {
@@ -527,18 +541,18 @@ function drawStorageVault(
   ctx.strokeRect(x, y, 36, 38);
 
   // Stored Content Fill Level
-  const fillPct = Math.min(1, clips / 1000);
+  const fillPct = Math.min(1, npus / 1000);
   const fillHeight = Math.floor(34 * fillPct);
 
   if (fillHeight > 0) {
-    ctx.fillStyle = isSolar ? 'rgba(251, 191, 36, 0.65)' : 'rgba(0, 240, 255, 0.65)';
+    ctx.fillStyle = isSolar ? 'rgba(52, 211, 153, 0.65)' : 'rgba(0, 240, 255, 0.65)';
     ctx.fillRect(x + 2, y + 36 - fillHeight, 32, fillHeight);
   }
 
   // Holographic Level Gauge Marker
   ctx.fillStyle = isSolar ? '#fef3c7' : '#e0f2fe';
   ctx.font = 'bold 9px monospace';
-  ctx.fillText(`${Math.floor(clips)}`, x + 2, y - 4);
+  ctx.fillText(`${Math.floor(npus)}`, x + 2, y - 4);
 
   ctx.restore();
 }
@@ -900,7 +914,7 @@ function drawIndieCosmicCombatVisualizer(
   ctx.font = '9px monospace';
   ctx.fillStyle = '#38bdf8';
   ctx.fillText(
-    `SWARM FLEET: ${probesCount.toLocaleString()} PROBES [COMBAT POWER: ${hazardCombat}]`,
+    `NPU SWARM FLEET: ${probesCount.toLocaleString()} PROBES [COMBAT POWER: ${hazardCombat}]`,
     10,
     stripY + 14
   );

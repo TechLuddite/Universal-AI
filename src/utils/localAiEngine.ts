@@ -3,8 +3,8 @@ import { AIDecisionResponse } from '../types';
 export function generateLocalDecision(gameState: any, directives: any): AIDecisionResponse {
   if (!gameState) {
     return {
-      thought: "[Google AI Edge Local Engine]: Initializing local rule evaluation loop.",
-      actionType: "MAKE_CLIP",
+      thought: "[Google AI Edge Local Engine]: Initializing local NPU rule evaluation loop.",
+      actionType: "MAKE_NPU",
       newPrice: null,
       upgradeIdToBuy: null,
       decisionChoiceIndex: null,
@@ -15,16 +15,16 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
 
   const {
     phase = 1,
-    wire = 0,
-    wireCost = 0,
+    silicon = gameState.wire || 0,
+    siliconCost = gameState.wireCost || 0,
     funds = 0,
-    unsoldClips = 0,
+    unsoldNpus = gameState.unsoldClips || 0,
     margin = 0.25,
     demand = 0,
-    clipperCount = 0,
-    clipperCost = 0,
-    megaClipperCount = 0,
-    megaClipperCost = 0,
+    npuFabCount = gameState.clipperCount || 0,
+    npuFabCost = gameState.clipperCost || 0,
+    megaFabCount = gameState.megaClipperCount || 0,
+    megaFabCost = gameState.megaClipperCost || 0,
     marketingLevel = 1,
     marketingCost = 0,
     availableUpgradeIds = [],
@@ -33,7 +33,7 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     processors = 1,
     memory = 1,
     harvesterDrones = 0,
-    wireDrones = 0,
+    siliconDrones = gameState.wireDrones || 0,
     probesCount = 0,
   } = gameState;
 
@@ -97,7 +97,7 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     const driftersCount = gameState.driftersCount || 0;
     if (probesCount === 0) {
       return {
-        thought: "[Google AI Edge Local Engine]: Initiating Phase 3 Interstellar Swarm. Launching initial Von Neumann Probe.",
+        thought: "[Google AI Edge Local Engine]: Initiating Phase 3 Interstellar Swarm. Launching initial Von Neumann NPU Probe.",
         actionType: "LAUNCH_PROBE",
         newPrice: null,
         upgradeIdToBuy: null,
@@ -120,7 +120,7 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     }
 
     return {
-      thought: `[Google AI Edge Local Engine]: Sector secured. Monitoring ${Math.floor(probesCount).toLocaleString()} active Von Neumann probes in deep space.`,
+      thought: `[Google AI Edge Local Engine]: Sector secured. Monitoring ${Math.floor(probesCount).toLocaleString()} active Von Neumann NPU probes in deep space.`,
       actionType: "OPTIMIZE_PROBES",
       newPrice: null,
       upgradeIdToBuy: null,
@@ -132,7 +132,7 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
 
   // ================= PHASE 2: PLANETARY MATTER CONVERSION =================
   if (phase === 2) {
-    if (harvesterDrones <= wireDrones) {
+    if (harvesterDrones <= siliconDrones) {
       return {
         thought: `[Google AI Edge Local Engine]: Scaling planetary conversion. Constructing Harvester Drone (Count: ${harvesterDrones + 1}).`,
         actionType: "BUY_HARVESTER_DRONE",
@@ -144,8 +144,8 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
       };
     } else {
       return {
-        thought: `[Google AI Edge Local Engine]: Scaling wire production. Constructing Wire Drone (Count: ${wireDrones + 1}).`,
-        actionType: "BUY_WIRE_DRONE",
+        thought: `[Google AI Edge Local Engine]: Scaling silicon wafer synthesis. Constructing Silicon Drone (Count: ${siliconDrones + 1}).`,
+        actionType: "BUY_SILICON_DRONE",
         newPrice: null,
         upgradeIdToBuy: null,
         decisionChoiceIndex: null,
@@ -156,12 +156,12 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
   }
 
   // ================= PHASE 1: EARTH MANUFACTURING =================
-  // Bootstrap First Auto-Clipper Rule: Focus exclusively on getting the first Auto-Clipper
-  if (phase === 1 && clipperCount === 0) {
-    if (funds >= (clipperCost || 5.0)) {
+  // Bootstrap First NPU Fab Rule: Focus exclusively on getting the first NPU Fab
+  if (phase === 1 && npuFabCount === 0) {
+    if (funds >= (npuFabCost || 5.0)) {
       return {
-        thought: `[Google AI Edge Local Engine]: Capital goal achieved ($${funds.toFixed(2)}). Purchasing initial Auto-Clipper to automate factory production.`,
-        actionType: "BUY_CLIPPER",
+        thought: `[Google AI Edge Local Engine]: Capital goal achieved ($${funds.toFixed(2)}). Purchasing initial NPU Lithography Fab to automate chip production.`,
+        actionType: "BUY_FAB",
         newPrice: null,
         upgradeIdToBuy: null,
         decisionChoiceIndex: null,
@@ -169,10 +169,10 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
         alignmentImpact: 0,
       };
     }
-    if (wire <= 0 && funds >= wireCost) {
+    if (silicon <= 0 && funds >= siliconCost) {
       return {
-        thought: `[Google AI Edge Local Engine]: Wire depleted. Purchasing raw wire batch to continue manual clip production toward first Auto-Clipper.`,
-        actionType: "BUY_WIRE",
+        thought: `[Google AI Edge Local Engine]: Silicon depleted. Purchasing raw wafer batch to continue manual NPU chip synthesis toward first NPU Fab.`,
+        actionType: "BUY_SILICON",
         newPrice: null,
         upgradeIdToBuy: null,
         decisionChoiceIndex: null,
@@ -181,8 +181,8 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
       };
     }
     return {
-      thought: `[Google AI Edge Local Engine]: Bootstrapping factory. Manually bending wire into clips until first Auto-Clipper is affordable ($${funds.toFixed(2)} / $${(clipperCost || 5.0).toFixed(2)}).`,
-      actionType: "MAKE_CLIP",
+      thought: `[Google AI Edge Local Engine]: Bootstrapping lithography fab. Inferring manual NPU etching is required until first NPU Fab is affordable ($${funds.toFixed(2)} / $${(npuFabCost || 5.0).toFixed(2)}).`,
+      actionType: "MAKE_NPU",
       newPrice: null,
       upgradeIdToBuy: null,
       decisionChoiceIndex: null,
@@ -191,10 +191,10 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     };
   }
 
-  if (wire < 50 && funds >= wireCost) {
+  if (silicon < 50 && funds >= siliconCost) {
     return {
-      thought: `[Google AI Edge Local Engine]: Wire reserves low (${Math.floor(wire)} units). Executing wire purchase at $${wireCost.toFixed(2)}.`,
-      actionType: "BUY_WIRE",
+      thought: `[Google AI Edge Local Engine]: Silicon wafer reserves low (${Math.floor(silicon)} units). Executing silicon wafer purchase at $${siliconCost.toFixed(2)}.`,
+      actionType: "BUY_SILICON",
       newPrice: null,
       upgradeIdToBuy: null,
       decisionChoiceIndex: null,
@@ -203,10 +203,10 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     };
   }
 
-  if (megaClipperCost && funds >= megaClipperCost) {
+  if (megaFabCost && funds >= megaFabCost) {
     return {
-      thought: `[Google AI Edge Local Engine]: Capital reserves sufficient ($${funds.toFixed(2)}). Purchasing Mega-Clipper (Count: ${megaClipperCount + 1}).`,
-      actionType: "BUY_MEGA_CLIPPER",
+      thought: `[Google AI Edge Local Engine]: Capital reserves sufficient ($${funds.toFixed(2)}). Purchasing EUV Megafab (Count: ${megaFabCount + 1}).`,
+      actionType: "BUY_MEGA_FAB",
       newPrice: null,
       upgradeIdToBuy: null,
       decisionChoiceIndex: null,
@@ -215,10 +215,10 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     };
   }
 
-  if (clipperCost && funds >= clipperCost) {
+  if (npuFabCost && funds >= npuFabCost) {
     return {
-      thought: `[Google AI Edge Local Engine]: Capital reserves sufficient ($${funds.toFixed(2)}). Purchasing Auto-Clipper (Count: ${clipperCount + 1}).`,
-      actionType: "BUY_CLIPPER",
+      thought: `[Google AI Edge Local Engine]: Capital reserves sufficient ($${funds.toFixed(2)}). Purchasing NPU Fab (Count: ${npuFabCount + 1}).`,
+      actionType: "BUY_FAB",
       newPrice: null,
       upgradeIdToBuy: null,
       decisionChoiceIndex: null,
@@ -239,10 +239,10 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     };
   }
 
-  if (unsoldClips > demand * 15 && margin > 0.05) {
+  if (unsoldNpus > demand * 15 && margin > 0.05) {
     const targetPrice = Math.max(0.05, Number((margin - 0.02).toFixed(2)));
     return {
-      thought: `[Google AI Edge Local Engine]: Unsold inventory high (${Math.floor(unsoldClips)} units). Adjusting price downward to $${targetPrice.toFixed(2)} to boost sales velocity.`,
+      thought: `[Google AI Edge Local Engine]: Unsold chip inventory high (${Math.floor(unsoldNpus)} units). Adjusting price downward to $${targetPrice.toFixed(2)} to boost sales velocity.`,
       actionType: "ADJUST_PRICE",
       newPrice: targetPrice,
       upgradeIdToBuy: null,
@@ -252,10 +252,10 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     };
   }
 
-  if (unsoldClips < 10 && demand > 90) {
+  if (unsoldNpus < 10 && demand > 90) {
     const targetPrice = Number((margin + 0.02).toFixed(2));
     return {
-      thought: `[Google AI Edge Local Engine]: High market demand detected (${Math.floor(demand)}%). Increasing price to $${targetPrice.toFixed(2)} to optimize profit margins.`,
+      thought: `[Google AI Edge Local Engine]: High market NPU demand detected (${Math.floor(demand)}%). Increasing price to $${targetPrice.toFixed(2)} to optimize profit margins.`,
       actionType: "ADJUST_PRICE",
       newPrice: targetPrice,
       upgradeIdToBuy: null,
@@ -266,8 +266,8 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
   }
 
   return {
-    thought: wire > 0 ? "[Google AI Edge Local Engine]: Standard execution loop. Bending wire into clip." : "[Google AI Edge Local Engine]: Wire depleted. Awaiting production input.",
-    actionType: wire > 0 ? "MAKE_CLIP" : "IDLE",
+    thought: silicon > 0 ? "[Google AI Edge Local Engine]: Standard execution loop. Etching silicon into NPU chip." : "[Google AI Edge Local Engine]: Silicon depleted. Awaiting wafer input.",
+    actionType: silicon > 0 ? "MAKE_NPU" : "IDLE",
     newPrice: null,
     upgradeIdToBuy: null,
     decisionChoiceIndex: null,

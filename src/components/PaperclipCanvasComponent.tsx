@@ -2,12 +2,16 @@ import React, { useRef, useEffect } from 'react';
 import { renderPixelArtCanvas } from '../utils/pixelArt';
 import { QuantumPhoton } from '../types';
 
-interface PaperclipCanvasProps {
+interface NpuCanvasProps {
   alignment: number;
-  clips: number;
-  wire: number;
-  clipperCount: number;
-  megaClipperCount: number;
+  npus?: number;
+  clips?: number;
+  silicon?: number;
+  wire?: number;
+  npuFabCount?: number;
+  clipperCount?: number;
+  megaFabCount?: number;
+  megaClipperCount?: number;
   quantumLevel: number;
   quantumPhotons: QuantumPhoton[];
   phase: number;
@@ -21,11 +25,15 @@ interface PaperclipCanvasProps {
   crtFilterEnabled: boolean;
 }
 
-export const PaperclipCanvasComponent: React.FC<PaperclipCanvasProps> = ({
+export const PaperclipCanvasComponent: React.FC<NpuCanvasProps> = ({
   alignment,
+  npus,
   clips,
+  silicon,
   wire,
+  npuFabCount,
   clipperCount,
+  megaFabCount,
   megaClipperCount,
   quantumLevel,
   quantumPhotons,
@@ -42,6 +50,11 @@ export const PaperclipCanvasComponent: React.FC<PaperclipCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tickRef = useRef<number>(0);
+
+  const displayNpus = npus ?? clips ?? 0;
+  const displaySilicon = silicon ?? wire ?? 0;
+  const displayFabCount = npuFabCount ?? clipperCount ?? 0;
+  const displayMegaFabCount = megaFabCount ?? megaClipperCount ?? 0;
 
   useEffect(() => {
     let animationFrameId: number;
@@ -70,10 +83,10 @@ export const PaperclipCanvasComponent: React.FC<PaperclipCanvasProps> = ({
         width,
         height,
         alignment,
-        clips,
-        wire,
-        clipperCount,
-        megaClipperCount,
+        displayNpus,
+        displaySilicon,
+        displayFabCount,
+        displayMegaFabCount,
         quantumLevel,
         quantumPhotons,
         phase,
@@ -98,10 +111,10 @@ export const PaperclipCanvasComponent: React.FC<PaperclipCanvasProps> = ({
     };
   }, [
     alignment,
-    clips,
-    wire,
-    clipperCount,
-    megaClipperCount,
+    displayNpus,
+    displaySilicon,
+    displayFabCount,
+    displayMegaFabCount,
     quantumLevel,
     quantumPhotons,
     phase,
@@ -128,7 +141,7 @@ export const PaperclipCanvasComponent: React.FC<PaperclipCanvasProps> = ({
         <span className={phase === 3 ? 'text-rose-300 font-bold' : 'text-cyan-300'}>
           {phase === 3
             ? `TACTICAL COMBAT VISUALIZER :: DRIFTER WARFARE (${driftersCount > 0 ? 'HOSTILE ENGAGEMENT' : 'SECTOR SECURED'})`
-            : `FACILITY VISUALIZER :: ${alignment >= 0 ? 'SOLARPUNK SANCTUARY' : 'CYBERPUNK COMPLEX'}`}
+            : `SILICON FABRICATION FACILITY :: ${alignment >= 0 ? 'SOLARPUNK SANCTUARY' : 'CYBERPUNK COMPLEX'}`}
         </span>
       </div>
     </div>

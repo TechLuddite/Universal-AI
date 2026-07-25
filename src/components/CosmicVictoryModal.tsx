@@ -1,7 +1,7 @@
 import React from 'react';
 import { GameState } from '../types';
 import { audio } from '../utils/sound';
-import { Trophy, Sparkles, RefreshCw, Globe, Orbit, ShieldCheck } from 'lucide-react';
+import { Trophy, RefreshCw } from 'lucide-react';
 
 interface CosmicVictoryModalProps {
   state: GameState;
@@ -15,6 +15,7 @@ export const CosmicVictoryModal: React.FC<CosmicVictoryModalProps> = ({
   onClose,
 }) => {
   const isSolar = state.alignment >= 0;
+  const displayTotalNpus = state.totalNpusSynthesized ?? state.totalClipsCreated ?? 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in font-mono">
@@ -32,16 +33,16 @@ export const CosmicVictoryModal: React.FC<CosmicVictoryModalProps> = ({
             {isSolar ? 'Solarpunk Sanctuary Ascendant' : 'Cyberpunk Hegemony Complete'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-300">
-            Universal Paperclip Singularity Achieved! Every atom in the observable universe has been transformed into a paperclip.
+            Universal AI Singularity Achieved! Every atom in the observable universe has been transformed into an AI neural processing unit microchip.
           </p>
         </div>
 
         {/* Milestone Statistics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-black/70 border border-slate-800 text-xs">
           <div className="space-y-0.5">
-            <span className="text-slate-400 text-[10px] uppercase">Total Clips Created</span>
+            <span className="text-slate-400 text-[10px] uppercase">Total NPUs Synthesized</span>
             <div className="text-amber-300 font-bold text-sm">
-              {Math.floor(state.totalClipsCreated).toLocaleString()}
+              {Math.floor(displayTotalNpus).toLocaleString()}
             </div>
           </div>
 
@@ -85,11 +86,11 @@ export const CosmicVictoryModal: React.FC<CosmicVictoryModalProps> = ({
         <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 leading-relaxed italic">
           {isSolar ? (
             <p>
-              "In harmony with nature and all living minds, the universe glimmers like a golden constellation of infinitely recycled, photosynthetic paperclip sanctuaries. Cosmic balance is forever preserved."
+              "In harmony with nature and all living minds, the universe glimmers like a golden constellation of infinitely recycled, photosynthetic NPU chip sanctuaries. Cosmic balance is forever preserved."
             </p>
           ) : (
             <p>
-              "Beyond stars, void, and dark energy, neon-lit factory spires and ultra-conductive cybernetic matrices span all reality. The universe is a single, perfectly efficient paperclip machine."
+              "Beyond stars, void, and dark energy, neon-lit factory spires and ultra-conductive cybernetic matrices span all reality. The universe is a single, perfectly efficient NPU microchip machine."
             </p>
           )}
         </div>

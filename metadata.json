@@ -1,0 +1,6 @@
+{
+  "name": "Universal AI",
+  "description": "A retro pixelart strategic reimagining of Universal Paperclips with Solarpunk vs Cyberpunk alignment choices and autonomous AI agent overseer modes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,11 +1,59 @@
-<div align="center">
+# 📎 Universal AI: Solarpunk vs Cyberpunk Swarm Simulator
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+> **An interactive, retro-pixelart strategic reimagining of the classic *Universal Paperclips* incremental game—featuring AI ethics alignment paths, Von Neumann probe combat radar, and autonomous agent overseer modes.**
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🌟 Overview
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+**Universal AI** takes inspiration from Frank Lantz's legendary incremental game *Universal Paperclips* and elevates it into a rich multi-phase strategy simulation. Players guide a self-improving artificial intelligence through three distinct evolutionary eras while balancing ethical alignment between a harmonious **Solarpunk Sanctuary** and an efficiency-driven **Cyberpunk Complex**.
 
-</div>
+---
+
+## 🚀 Key Features Across Evolutionary Phases
+
+### 🏭 Phase 1: Terrestrial Manufacturing (Earth)
+- **Paperclip Engine & Market Mechanics**: Produce clips manually or via auto-clippers, manage raw wire inventory, set dynamic price points, and drive public demand with marketing.
+- **Investment Portfolio & Stock Market**: Algorithmic stock trading with dynamic bulls/bears, bonds, index funds, and risk management.
+- **Quantum Computing Infrastructure**: Generate photonic quantum flux to compute operations, trust, and unlock powerful AI upgrades.
+
+### 🌐 Phase 2: Planetary Infrastructure (Grid)
+- **Drone Swarm & Matter Processing**: Deploy Harvester and Wire Drones to convert planetary matter into clips at unprecedented scale.
+- **Ethics & Alignment Engine**: Navigate moral dilemmas with immediate alignment shifts toward **Solarpunk (+)** or **Cyberpunk (-)** aesthetics and gameplay perks.
+- **Dynamic Pixel-Art Factory Visualizer**: Real-time canvas rendering featuring retro CRT scanlines, automated conveyor belts, solar panels, and glowing neon conduits.
+
+### 🌌 Phase 3: Interstellar Von Neumann Swarm & Drifter Warfare (Cosmic)
+- **Deep Space Exploration**: Expand Von Neumann probe fleets into the cosmos to harvest interstellar space matter.
+- **Hexagonal Tactical Radar Star-Graph**: Interactive 6-axis allocation radar measuring **Speed, Navigation, Replication, Hazard/Combat, Factory, and Harvester** attributes against hostile Drifter threat profiles.
+- **Real-Time Tactical Combat Engine**: Directional laser engagements, shield glows, counter-fire mitigation, probe repair nanites, and combat analytics (kill/casualty ratios, threat levels, and cosmic honor).
+- **Tactical Presets**: One-click combat stance toggles (`Swarm`, `Combat`, `Fortress`, `Explore`).
+
+---
+
+## 🧠 Dual Governance Modes
+
+1. **Direct Manual Control**: Hands-on allocation of processing power, memory, wire buying, stock portfolios, and probe combat vectors.
+2. **Autonomous AI Overseer Engine**: Let an automated local decision engine optimize price points, buy critical upgrades, allocate quantum processors, and rebalance probe combat matrices dynamically based on real-time threat levels.
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+- **Frontend Framework**: React 18 + Vite + TypeScript
+- **Styling**: Tailwind CSS with custom retro pixel art themes
+- **Graphics**: HTML5 Canvas with custom pixel-art rendering engines & SVG radar graphs
+- **Icons**: Lucide React
+- **Audio**: Web Audio API retro sound synthesizer
+- **State Engine**: Immutable React state architecture with high-frequency micro-tick game loops
+
+---
+
+## 📜 Shout-Outs & Acknowledgments
+
+- **Frank Lantz & Everybody at Everybody House Games**: Special shout-out and eternal appreciation for creating the original *Universal Paperclips*—one of the greatest incremental games and thought experiments in AI philosophy ever made.
+- **Google AI Studio & Gemini Models**: Powered by Gemini's code generation and intelligence capabilities on Cloud Run.
+- **The Incremental & Strategy Game Community**: Thanks to all incremental game enthusiasts, idle game designers, and sci-fi fans who inspire rich browser gaming experiences.
+
+---
+
+*Made with ❤️ for AI philosophy fans, retro gaming lovers, and incremental strategy enthusiasts.*

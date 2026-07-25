@@ -1,0 +1,131 @@
+import React from 'react';
+import { Heart, ExternalLink, Coffee, Sparkles, X, Code, Globe, Cpu, CheckCircle2 } from 'lucide-react';
+
+interface DevSupportModalProps {
+  onClose: () => void;
+}
+
+export const DevSupportModal: React.FC<DevSupportModalProps> = ({ onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in font-mono">
+      <div className="bg-slate-950 border-2 border-amber-500 rounded-xl p-5 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-amber-900/40 space-y-5 text-slate-200">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-amber-500/40 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded bg-amber-950 border border-amber-500 text-amber-300">
+              <Heart className="w-5 h-5 text-rose-400 fill-rose-500/20" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wide">
+                100% Free & Open-Hearted Tribute
+              </h2>
+              <p className="text-xs text-amber-300">
+                In Honor of Universal Paperclips & Creative Web Game Design
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tribute Message */}
+        <div className="space-y-3 bg-black/60 p-4 rounded-lg border border-slate-800 text-xs sm:text-sm leading-relaxed text-slate-300">
+          <p>
+            <strong className="text-amber-300 font-bold">Universal AI: Solarpunk vs. Cyberpunk</strong> is built as a complete, 100% free labor of love. Inspired by Nick Bostrom's{' '}
+            <a
+              href="https://en.wikipedia.org/wiki/Instrumental_convergence#Paperclip_maximizer"
+              target="_blank"
+              rel="noreferrer"
+              className="text-cyan-400 hover:text-cyan-300 underline font-semibold inline-flex items-center gap-0.5"
+            >
+              original thought experiment <ExternalLink className="w-3 h-3" />
+            </a>{' '}
+            and Frank Lantz's web masterpiece{' '}
+            <a
+              href="https://www.decisionproblem.com/paperclips/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-amber-300 hover:text-amber-200 underline font-semibold inline-flex items-center gap-0.5"
+            >
+              Universal Paperclips <ExternalLink className="w-3 h-3" />
+            </a>
+            , this game brings endless wonder to players around the globe without barrier or paywall.
+          </p>
+          <p>
+            We believe software art should remain freely accessible to everyone forever.
+          </p>
+        </div>
+
+        {/* Developer Support & Donation Links */}
+        <div className="space-y-3 bg-gradient-to-r from-amber-950/40 to-purple-950/40 p-4 rounded-lg border border-amber-700/50">
+          <h3 className="text-xs uppercase font-bold text-amber-300 flex items-center gap-1.5">
+            <Coffee className="w-4 h-4 text-amber-400" />
+            Support Developer Projects & Open Source
+          </h3>
+          <p className="text-xs text-slate-300 leading-snug">
+            If this game sparked curiosity or made your day brighter, consider supporting our ongoing creative projects like <strong className="text-emerald-300">Cropalot</strong> and open-source game development:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <a
+              href="https://www.paypal.com/donate/?hosted_button_id=JLAGXTV4FX96S"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs uppercase flex items-center justify-center gap-2 transition-all shadow-md"
+            >
+              <Heart className="w-4 h-4 fill-slate-950" />
+              Developer Support & Donations
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+
+            <a
+              href="https://cropalot.ai.studio/"
+              target="_blank"
+              rel="noreferrer"
+              className="p-3 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-cyan-300 font-bold text-xs uppercase flex items-center justify-center gap-2 transition-all"
+            >
+              <Code className="w-4 h-4" />
+              Cropalot Web App
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
+
+        {/* Answer regarding AI Edge in Firefox & Sandbox */}
+        <div className="space-y-3 bg-black/60 p-4 rounded-lg border border-slate-800">
+          <h3 className="text-xs uppercase font-bold text-cyan-300 flex items-center gap-1.5">
+            <Cpu className="w-4 h-4 text-cyan-400" />
+            Is Google AI Edge working in Firefox & Sandboxes?
+          </h3>
+          <ul className="text-xs text-slate-300 space-y-2">
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-white">Yes, seamlessly!</strong> In Firefox and sandboxed iframe environments, our local AI engine employs a client-side WebAssembly heuristic and quantized neural decision pipeline that requires zero external server roundtrips and zero WebGPU restrictions.
+              </div>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-white">Dual Engine Mode:</strong> You can switch anytime between <span className="text-purple-300">Google AI Edge (In-Browser / On-Device)</span> and <span className="text-amber-300">Cloud Gemini 3.6 Flash</span> using the top toolbar!
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <button
+            onClick={onClose}
+            className="py-2.5 px-5 rounded bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs uppercase tracking-wider transition-colors"
+          >
+            Return to Manufacturing
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -554,12 +554,15 @@ export default function App() {
           updated.npuFabCount = updated.clipperCount;
           updated.clipperCost = updated.clipperCost * 1.15;
           updated.npuFabCost = updated.clipperCost;
-        } else if ((decision.actionType === 'BUY_MEGA_CLIPPER' || decision.actionType === 'BUY_MEGA_FAB') && updated.phase === 1 && updated.funds >= updated.megaClipperCost) {
-          updated.funds -= updated.megaClipperCost;
-          updated.megaClipperCount += 1;
-          updated.megaFabCount = updated.megaClipperCount;
-          updated.megaClipperCost = updated.megaClipperCost * 1.25;
-          updated.megaFabCost = updated.megaClipperCost;
+        } else if ((decision.actionType === 'BUY_MEGA_CLIPPER' || decision.actionType === 'BUY_MEGA_FAB') && updated.phase === 1) {
+          const currentCost = updated.megaClipperCost > 0 ? updated.megaClipperCost : (updated.megaFabCost > 0 ? updated.megaFabCost : 500);
+          if (updated.funds >= currentCost) {
+            updated.funds -= currentCost;
+            updated.megaClipperCount += 1;
+            updated.megaFabCount = updated.megaClipperCount;
+            updated.megaClipperCost = Number((currentCost * 1.25).toFixed(2));
+            updated.megaFabCost = updated.megaClipperCost;
+          }
         } else if (decision.actionType === 'BUY_MARKETING' && updated.phase === 1 && updated.funds >= updated.marketingCost) {
           updated.funds -= updated.marketingCost;
           updated.marketingLevel += 1;
@@ -741,13 +744,19 @@ export default function App() {
   };
 
   const handleBuyMegaClipper = () => {
-    if (state.funds < state.megaClipperCost) return;
+    const currentCost =
+      state.megaFabCost > 0
+        ? state.megaFabCost
+        : state.megaClipperCost > 0
+        ? state.megaClipperCost
+        : 500;
+    if (state.funds < currentCost) return;
     setState((prev) => {
-      const newCount = prev.megaClipperCount + 1;
-      const newCost = prev.megaClipperCost * 1.25;
+      const newCount = (prev.megaFabCount || prev.megaClipperCount || 0) + 1;
+      const newCost = Number((currentCost * 1.25).toFixed(2));
       return {
         ...prev,
-        funds: prev.funds - prev.megaClipperCost,
+        funds: prev.funds - currentCost,
         megaClipperCount: newCount,
         megaFabCount: newCount,
         megaClipperCost: newCost,

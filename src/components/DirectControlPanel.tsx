@@ -58,8 +58,15 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
   const displayNpuFabCount = state.npuFabCount ?? state.clipperCount ?? 0;
   const displayNpuFabCost = state.npuFabCost ?? state.clipperCost ?? 5;
   const displayMegaFabCount = state.megaFabCount ?? state.megaClipperCount ?? 0;
-  const displayMegaFabCost = state.megaFabCost ?? state.megaClipperCost ?? 500;
+  const rawMegaFabCost = state.megaFabCost > 0 ? state.megaFabCost : (state.megaClipperCost > 0 ? state.megaClipperCost : 0);
+  const displayMegaFabCost = rawMegaFabCost > 0 ? rawMegaFabCost : 500;
   const displaySiliconDrones = state.siliconDrones ?? state.wireDrones ?? 0;
+
+  const isMegaFabUnlocked =
+    rawMegaFabCost > 0 ||
+    displayMegaFabCount > 0 ||
+    displayNpuFabCount >= 5 ||
+    (state.purchasedUpgradeIds && state.purchasedUpgradeIds.includes('hyperscale_mega_clippers'));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
@@ -157,29 +164,40 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 <span>${displayNpuFabCost.toFixed(2)}</span>
               </button>
 
-              {displayMegaFabCost > 0 && (
-                <div className="pt-1">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-300 font-semibold">EUV Megafabs:</span>
-                    <span className="text-cyan-300 font-bold">{displayMegaFabCount}</span>
-                  </div>
+              {/* EUV Megafabs (Hyperscale Industrial Lithography) */}
+              <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-300 font-semibold flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> EUV Megafabs:
+                  </span>
+                  <span className="text-cyan-300 font-bold">{displayMegaFabCount}</span>
+                </div>
+
+                {isMegaFabUnlocked ? (
                   <button
                     onClick={() => {
                       audio.playBuySound();
                       onBuyMegaClipper();
                     }}
                     disabled={state.funds < displayMegaFabCost}
-                    className={`w-full py-1.5 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center mt-1 ${
+                    className={`w-full py-1.5 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center ${
                       state.funds >= displayMegaFabCost
-                        ? 'bg-cyan-950/60 hover:bg-cyan-900 border-cyan-500 text-cyan-200'
+                        ? 'bg-cyan-950/60 hover:bg-cyan-900 border-cyan-500 text-cyan-200 shadow-sm'
                         : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
                     }`}
                   >
-                    <span>EUV Megafab (500 npu/s)</span>
+                    <span>EUV Megafab (+500 npu/s)</span>
                     <span>${displayMegaFabCost.toFixed(2)}</span>
                   </button>
-                </div>
-              )}
+                ) : (
+                  <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-400 flex justify-between items-center">
+                    <span className="flex items-center gap-1 font-semibold text-slate-400">
+                      🔒 EUV Megafab
+                    </span>
+                    <span className="text-[10px] text-cyan-400 font-mono">Unlock at 5 NPU Fabs or Upgrade</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

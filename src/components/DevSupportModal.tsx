@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ExternalLink, Coffee, Sparkles, X, Code, Globe, Cpu, CheckCircle2 } from 'lucide-react';
+import { Heart, ExternalLink, Coffee, Sparkles, X, Code, Globe, Cpu, CheckCircle2, ShieldCheck, Building2 } from 'lucide-react';
 
 interface DevSupportModalProps {
   onClose: () => void;
@@ -17,7 +17,7 @@ export const DevSupportModal: React.FC<DevSupportModalProps> = ({ onClose }) => 
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-wide">
-                100% Free & Open-Hearted Tribute
+                Developer Support & Tribute
               </h2>
               <p className="text-xs text-amber-300">
                 In Honor of Universal Paperclips & Creative Web Game Design
@@ -35,7 +35,7 @@ export const DevSupportModal: React.FC<DevSupportModalProps> = ({ onClose }) => 
         {/* Tribute Message */}
         <div className="space-y-3 bg-black/60 p-4 rounded-lg border border-slate-800 text-xs sm:text-sm leading-relaxed text-slate-300">
           <p>
-            <strong className="text-amber-300 font-bold">Universal AI: Solarpunk vs. Cyberpunk</strong> is built as a complete, 100% free labor of love. Inspired by Nick Bostrom's{' '}
+            <strong className="text-amber-300 font-bold">Universal AI: Solarpunk vs. Cyberpunk</strong> is built as a complete labor of love. Inspired by Nick Bostrom's{' '}
             <a
               href="https://en.wikipedia.org/wiki/Instrumental_convergence#Paperclip_maximizer"
               target="_blank"
@@ -53,10 +53,42 @@ export const DevSupportModal: React.FC<DevSupportModalProps> = ({ onClose }) => 
             >
               Universal Paperclips <ExternalLink className="w-3 h-3" />
             </a>
-            , this game brings endless wonder to players around the globe without barrier or paywall.
+            , a game that has brought endless wonder to players around the globe without barrier or paywall.
           </p>
           <p>
             We believe software art should remain freely accessible to everyone forever.
+          </p>
+        </div>
+
+        {/* Special Shout-Out: Halo MSP & Tech 2U */}
+        <div className="space-y-3 bg-gradient-to-r from-cyan-950/60 via-blue-950/40 to-slate-950 p-4 rounded-lg border border-cyan-500/50 shadow-md">
+          <h3 className="text-xs uppercase font-bold text-cyan-300 flex items-center gap-1.5">
+            <Building2 className="w-4 h-4 text-cyan-400" />
+            Special Shout-Out: Halo MSP & Tech 2U
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+            Huge shout-out to <strong className="text-cyan-300 font-bold">Halo MSP</strong> (
+            <a
+              href="https://halomsp.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-cyan-400 hover:text-cyan-200 underline font-semibold inline-flex items-center gap-0.5"
+            >
+              halomsp.com <ExternalLink className="w-3 h-3" />
+            </a>
+            )—helping businesses navigate safe and sensible AI and software implementations!
+          </p>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            And to their parent company, <strong className="text-amber-300 font-bold">Tech 2U</strong> (
+            <a
+              href="https://tech2u.com"
+              target="_blank"
+              rel="noreferrer"
+              className="text-amber-300 hover:text-amber-200 underline font-semibold inline-flex items-center gap-0.5"
+            >
+              tech2u.com <ExternalLink className="w-3 h-3" />
+            </a>
+            ), ready to assist with any business or personal IT need with expert, reliable support.
           </p>
         </div>
 

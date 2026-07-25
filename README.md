@@ -51,6 +51,7 @@
 ## 📜 Shout-Outs & Acknowledgments
 
 - **Frank Lantz & Everybody at Everybody House Games**: Special shout-out and eternal appreciation for creating the original *Universal Paperclips*—one of the greatest incremental games and thought experiments in AI philosophy ever made.
+- **Halo MSP ([halomsp.com](https://halomsp.com)) & Tech 2U ([tech2u.com](https://tech2u.com))**: Special shout-out to Halo MSP for helping businesses with safe and sensible AI and software implementation, and parent company Tech 2U for expert IT support and services.
 - **Google AI Studio & Gemini Models**: Powered by Gemini's code generation and intelligence capabilities on Cloud Run.
 - **The Incremental & Strategy Game Community**: Thanks to all incremental game enthusiasts, idle game designers, and sci-fi fans who inspire rich browser gaming experiences.
 

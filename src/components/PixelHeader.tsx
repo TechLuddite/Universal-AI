@@ -78,10 +78,10 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
             <button
               onClick={onOpenAndroidGuide}
               className="h-9 px-3 rounded border border-rose-500/60 bg-rose-950/60 hover:bg-rose-900/80 text-rose-200 transition-all font-mono font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap shadow-sm"
-              title="100% Free Forever - Support Developer Projects & View AI Engine Info"
+              title="Support Developer Projects & View AI Engine Info"
             >
               <Heart className="w-3.5 h-3.5 text-rose-400 fill-rose-400/30 animate-pulse" />
-              <span>100% Free & Dev Support</span>
+              <span>Dev Support</span>
             </button>
           </div>
 

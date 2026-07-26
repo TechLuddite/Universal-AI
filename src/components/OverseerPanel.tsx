@@ -62,7 +62,7 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
           </div>
         </div>
 
-        {/* Pricing Strategy */}
+        {/* Pricing Strategy Policy */}
         <div className="space-y-1.5 text-xs">
           <label className="text-slate-300 font-semibold block">Pricing Strategy Policy:</label>
           <select
@@ -74,6 +74,41 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             <option value="Market Penetration">Market Penetration (Low Margin / High Speed)</option>
             <option value="Premium Margin">Premium Margin (High Price / High Profit)</option>
           </select>
+        </div>
+
+        {/* Auto-Silicon Procurement Policy */}
+        <div className="space-y-1.5 text-xs">
+          <label className="text-slate-300 font-semibold block">Auto-Silicon Wafer Procurement Policy:</label>
+          <div className="grid grid-cols-3 gap-1">
+            {(['Off', 'Conservative', 'Aggressive'] as const).map((pol) => (
+              <button
+                key={pol}
+                onClick={() => onUpdateDirectives({ autoSiliconProcurement: pol })}
+                className={`py-1.5 px-1.5 rounded border text-[10px] font-bold transition-all ${
+                  (directives.autoSiliconProcurement || 'Aggressive') === pol
+                    ? 'bg-cyan-900 border-cyan-400 text-cyan-200'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                {pol === 'Aggressive' ? 'Aggressive (5s)' : pol === 'Conservative' ? 'Conservative' : 'Manual'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Auto-Upgrade Purchasing Policy Toggle */}
+        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800">
+          <span className="text-slate-300 font-semibold">Auto-Purchase Unlocked Upgrades:</span>
+          <button
+            onClick={() => onUpdateDirectives({ autoUpgradePurchasing: !directives.autoUpgradePurchasing })}
+            className={`px-2 py-1 rounded text-[10px] font-bold border ${
+              directives.autoUpgradePurchasing !== false
+                ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                : 'bg-slate-900 border-slate-800 text-slate-500'
+            }`}
+          >
+            {directives.autoUpgradePurchasing !== false ? 'ENABLED' : 'DISABLED'}
+          </button>
         </div>
 
         {/* Expansion Aggression Pace */}
@@ -131,6 +166,46 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
                 </span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Phase 1 Silicon Supply & Lithography Telemetry Box */}
+        {state.phase === 1 && (
+          <div className="p-2.5 rounded-lg bg-black/80 border border-amber-500/40 space-y-1.5 text-xs font-mono">
+            <div className="flex items-center justify-between text-amber-300 font-bold border-b border-amber-900/60 pb-1 text-[11px]">
+              <span className="flex items-center gap-1">
+                <Zap className="w-3.5 h-3.5 text-amber-400" /> Silicon Supply & Lithography
+              </span>
+              <span className="text-[10px] text-slate-400">
+                {(state.siliconPerNpu || 1.0) < 1.0 ? `${((state.siliconPerNpu || 1.0) * 100).toFixed(0)}% Wafer Ratio` : 'Standard 1:1 Node'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="bg-amber-950/40 p-1.5 rounded border border-amber-800/40 flex justify-between">
+                <span className="text-slate-400">Stock:</span>
+                <span className={`font-bold ${Math.floor(state.silicon || state.wire || 0) < 100 ? 'text-rose-400 font-black' : 'text-amber-200'}`}>
+                  {Math.floor(state.silicon || state.wire || 0).toLocaleString()}
+                </span>
+              </div>
+              <div className="bg-amber-950/40 p-1.5 rounded border border-amber-800/40 flex justify-between">
+                <span className="text-slate-400">Burn Rate:</span>
+                <span className="text-cyan-300 font-bold">
+                  {Math.floor(((state.npuFabCount || 0) + (state.megaFabCount || 0) * 500) * 10 * (state.siliconPerNpu || 1.0)).toLocaleString()} /s
+                </span>
+              </div>
+            </div>
+
+            {Math.floor(state.silicon || state.wire || 0) < 50 && ((state.npuFabCount || 0) + (state.megaFabCount || 0)) > 0 && (
+              <div className="p-1.5 rounded bg-rose-950/80 border border-rose-500 text-rose-200 text-[10px] font-bold flex items-center justify-between gap-1 animate-pulse">
+                <span className="flex items-center gap-1">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  Wafer Bottleneck Detected
+                </span>
+                <span className="text-[9px] underline text-amber-300">
+                  {directives.autoSiliconProcurement === 'Off' ? 'Enable Auto-Silicon Policy' : 'Funds needed for silicon'}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

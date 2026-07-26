@@ -290,6 +290,10 @@ function generateLocalDecision(gameState: any, directives: any) {
   }
 
   // ================= PHASE 1: EARTH MANUFACTURING =================
+  // Calculate total fab throughput demand
+  const fabThroughputPerSec = (npuFabCount * 1 + megaFabCount * 500);
+  const targetSiliconBuffer = Math.max(2000, fabThroughputPerSec * 20); // Maintain at least 2-5 seconds of wafer buffer
+
   // Bootstrap First NPU Fab Rule: Focus exclusively on getting the first NPU Fab
   if (phase === 1 && npuFabCount === 0) {
     if (funds >= (npuFabCost || 5.0)) {
@@ -325,9 +329,10 @@ function generateLocalDecision(gameState: any, directives: any) {
     };
   }
 
-  if (silicon < 50 && funds >= siliconCost) {
+  // Predictive Silicon Buffer Rule: Maintain buffer proportional to Fab output capacity
+  if (silicon < targetSiliconBuffer && funds >= siliconCost) {
     return {
-      thought: `[Google AI Edge Local Engine]: Silicon wafer reserves low (${Math.floor(silicon)} units). Executing silicon purchase at $${siliconCost.toFixed(2)}.`,
+      thought: `[Google AI Edge Local Engine]: Silicon wafer buffer low (${Math.floor(silicon)} units vs target ${Math.floor(targetSiliconBuffer)} for ${fabThroughputPerSec} chips/s output). Executing silicon wafer bulk purchase at $${siliconCost.toFixed(2)}.`,
       actionType: "BUY_SILICON",
       newPrice: null,
       upgradeIdToBuy: null,

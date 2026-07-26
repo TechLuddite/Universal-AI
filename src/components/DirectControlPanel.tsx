@@ -107,38 +107,65 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 <CpuIcon className="w-5 h-5" /> Etch NPU Chip
               </button>
 
-              {/* Silicon Wafer Reserves */}
+              {/* Silicon Wafer Reserves & Lithography Metrics */}
               <div className="mt-4 p-3 rounded-lg bg-black/60 border border-slate-800 space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-slate-400">Silicon Wafers:</span>
+                  <span className="text-slate-400">Silicon Stock:</span>
                   <span
                     className={`font-bold ${
-                      displaySilicon < 100 ? 'text-rose-400 animate-pulse' : 'text-slate-200'
+                      displaySilicon < 100 ? 'text-rose-400 font-black animate-pulse' : 'text-slate-200'
                     }`}
                   >
-                    {Math.floor(displaySilicon).toLocaleString()} units
+                    {Math.floor(displaySilicon).toLocaleString()} wafers
                   </span>
                 </div>
                 <div className="flex justify-between text-xs items-center">
                   <span className="text-slate-400">Wafer Cost:</span>
                   <span className="text-emerald-400 font-bold">${displaySiliconCost.toFixed(2)} / 1k</span>
                 </div>
+                <div className="flex justify-between text-[11px] text-slate-400 items-center pt-0.5 border-t border-slate-800/80">
+                  <span>Wafer / NPU Ratio:</span>
+                  <span className="text-cyan-300 font-bold font-mono">
+                    {(state.siliconPerNpu || 1.0).toFixed(2)} Wafers
+                  </span>
+                </div>
 
-                <button
-                  onClick={() => {
-                    audio.playWireSound();
-                    onBuyWire();
-                  }}
-                  disabled={state.funds < displaySiliconCost}
-                  className={`w-full py-2 px-3 rounded border font-bold text-xs uppercase flex items-center justify-center gap-1.5 transition-all ${
-                    state.funds >= displaySiliconCost
-                      ? 'bg-emerald-800/80 hover:bg-emerald-700 border-emerald-500 text-emerald-100'
-                      : 'bg-slate-800/50 border-slate-800 text-slate-600 cursor-not-allowed'
-                  }`}
-                >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  Buy Silicon (1,000)
-                </button>
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  <button
+                    onClick={() => {
+                      audio.playWireSound();
+                      onBuyWire();
+                    }}
+                    disabled={state.funds < displaySiliconCost}
+                    className={`py-2 px-2 rounded border font-bold text-[11px] uppercase flex items-center justify-center gap-1 transition-all ${
+                      state.funds >= displaySiliconCost
+                        ? 'bg-emerald-800/80 hover:bg-emerald-700 border-emerald-500 text-emerald-100'
+                        : 'bg-slate-800/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                    }`}
+                  >
+                    <ShoppingCart className="w-3 h-3" />
+                    +1,000
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      audio.playWireSound();
+                      // Buy 10 batches if affordable
+                      for (let i = 0; i < 10; i++) {
+                        onBuyWire();
+                      }
+                    }}
+                    disabled={state.funds < displaySiliconCost * 10}
+                    className={`py-2 px-2 rounded border font-bold text-[11px] uppercase flex items-center justify-center gap-1 transition-all ${
+                      state.funds >= displaySiliconCost * 10
+                        ? 'bg-cyan-800/80 hover:bg-cyan-700 border-cyan-400 text-cyan-100 shadow'
+                        : 'bg-slate-800/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                    }`}
+                  >
+                    <Zap className="w-3 h-3" />
+                    +10,000
+                  </button>
+                </div>
               </div>
             </div>
 

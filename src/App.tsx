@@ -40,6 +40,7 @@ export default function App() {
     wire: 1000, // 1000 initial silicon
     siliconCost: 14.0,
     wireCost: 14.0,
+    siliconPerNpu: 1.0,
     demand: 100,
 
     marketingLevel: 1,
@@ -116,6 +117,8 @@ export default function App() {
       customPrompt: 'Optimize NPU chip output while balancing alignment.',
       autoLoopActive: false,
       autoIntervalMs: 2000,
+      autoSiliconProcurement: 'Aggressive',
+      autoUpgradePurchasing: true,
     },
     soundEnabled: true,
     crtFilterEnabled: true,
@@ -190,11 +193,14 @@ export default function App() {
 
         // ================= PHASE 1 ENGINE =================
         if (phase === 1) {
-          // 1. NPU Fabs Production
+          // 1. NPU Fabs Production (with Lithography Node Efficiency)
+          const siliconRatio = prev.siliconPerNpu || 1.0;
           const totalClipperOutput = (clipperCount * 1 + megaClipperCount * 500) / 10;
           if (totalClipperOutput > 0 && wire > 0) {
-            const actualProduced = Math.min(wire, totalClipperOutput);
-            wire -= actualProduced;
+            const maxBySilicon = wire / siliconRatio;
+            const actualProduced = Math.min(maxBySilicon, totalClipperOutput);
+            const siliconConsumed = actualProduced * siliconRatio;
+            wire -= siliconConsumed;
             clips += actualProduced;
             unsoldClips += actualProduced;
             totalClipsCreated += actualProduced;
@@ -211,10 +217,30 @@ export default function App() {
             funds += salesRate * margin;
           }
 
-          // Auto-Silicon Wafer Procurement Check
-          if (purchasedUpgradeIds.includes('wire_buyer_auto') && wire < 100 && funds >= wireCost) {
-            funds -= wireCost;
-            wire += 1000;
+          // 3. Scaled Auto-Silicon Wafer Procurement Engine
+          const siliconMode = prev.directives?.autoSiliconProcurement ?? 'Aggressive';
+          const autoBuyerActive = purchasedUpgradeIds.includes('wire_buyer_auto') || (prev.mode === 'overseer' && siliconMode !== 'Off');
+
+          if (autoBuyerActive && funds >= wireCost) {
+            let targetBuffer = 2000;
+            if (siliconMode === 'Aggressive') {
+              targetBuffer = Math.max(10000, totalClipperOutput * 50); // 5 seconds of continuous production buffer
+            } else if (siliconMode === 'Conservative') {
+              targetBuffer = Math.max(3000, totalClipperOutput * 20); // 2 seconds of production buffer
+            } else if (purchasedUpgradeIds.includes('wire_buyer_auto')) {
+              targetBuffer = Math.max(2000, totalClipperOutput * 20);
+            }
+
+            if (wire < targetBuffer) {
+              const neededSilicon = targetBuffer - wire;
+              const neededBatches = Math.max(1, Math.ceil(neededSilicon / 1000));
+              const maxAffordableBatches = Math.floor(funds / wireCost);
+              const batchesToBuy = Math.min(neededBatches, maxAffordableBatches);
+              if (batchesToBuy > 0) {
+                funds -= batchesToBuy * wireCost;
+                wire += batchesToBuy * 1000;
+              }
+            }
           }
         }
 
@@ -227,23 +253,26 @@ export default function App() {
 
           // Harvester Drones harvest Earth Matter -> Acquired Matter
           if (harvesterDrones > 0 && earthMatter > 0) {
-            const harvested = Math.min(earthMatter, harvesterDrones * 10);
+            const harvested = Math.min(earthMatter, harvesterDrones * 50);
             earthMatter -= harvested;
             acquiredMatter += harvested;
           }
 
           // Silicon Drones convert Acquired Matter -> Silicon Wafers
           if (wireDrones > 0 && acquiredMatter > 0) {
-            const wired = Math.min(acquiredMatter, wireDrones * 10);
+            const wired = Math.min(acquiredMatter, wireDrones * 50);
             acquiredMatter -= wired;
             wire += wired;
           }
 
           // Factory Fabs convert Silicon -> NPU Microchips
+          const siliconRatio = prev.siliconPerNpu || 1.0;
           const totalClipperOutput = (clipperCount * 1 + megaClipperCount * 500) / 10;
           if (totalClipperOutput > 0 && wire > 0) {
-            const actualProduced = Math.min(wire, totalClipperOutput);
-            wire -= actualProduced;
+            const maxBySilicon = wire / siliconRatio;
+            const actualProduced = Math.min(maxBySilicon, totalClipperOutput);
+            const siliconConsumed = actualProduced * siliconRatio;
+            wire -= siliconConsumed;
             clips += actualProduced;
             totalClipsCreated += actualProduced;
           }
@@ -545,9 +574,16 @@ export default function App() {
           updated.totalClipsCreated += 1;
           updated.totalNpusSynthesized = updated.totalClipsCreated;
         } else if ((decision.actionType === 'BUY_WIRE' || decision.actionType === 'BUY_SILICON') && updated.phase === 1 && updated.funds >= updated.wireCost) {
-          updated.funds -= updated.wireCost;
-          updated.wire += 1000;
-          updated.silicon = updated.wire;
+          const totalClipperOutput = (updated.clipperCount * 1 + updated.megaClipperCount * 500) / 10;
+          const targetBuffer = Math.max(10000, totalClipperOutput * 50);
+          const neededBatches = Math.max(1, Math.ceil((targetBuffer - updated.wire) / 1000));
+          const maxAffordable = Math.floor(updated.funds / updated.wireCost);
+          const batchesToBuy = Math.min(neededBatches, Math.max(1, maxAffordable));
+          if (batchesToBuy > 0) {
+            updated.funds -= batchesToBuy * updated.wireCost;
+            updated.wire += batchesToBuy * 1000;
+            updated.silicon = updated.wire;
+          }
         } else if ((decision.actionType === 'BUY_CLIPPER' || decision.actionType === 'BUY_FAB') && updated.phase === 1 && updated.funds >= updated.clipperCost) {
           updated.funds -= updated.clipperCost;
           updated.clipperCount += 1;

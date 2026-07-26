@@ -46,6 +46,8 @@ export interface OverseerDirectives {
   customPrompt: string;
   autoLoopActive: boolean;
   autoIntervalMs: number;
+  autoSiliconProcurement: 'Off' | 'Conservative' | 'Aggressive';
+  autoUpgradePurchasing: boolean;
 }
 
 export interface AILogEntry {
@@ -82,6 +84,7 @@ export interface GameState {
   margin: number; // Price per NPU chip in $
   silicon: number; // Silicon remaining
   siliconCost: number; // Cost of 1,000 silicon wafers
+  siliconPerNpu?: number; // Wafers required per NPU chip (default 1.0)
   demand: number; // Demand percentage (e.g. 100%)
 
   // Marketing & Auto-Manufacturing

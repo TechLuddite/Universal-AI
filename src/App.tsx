@@ -1029,7 +1029,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6">
-        {/* Pixel Art Lithography & Tactical Combat Canvas */}
+        {/* 2D Vector Lithography & Tactical Combat Canvas */}
         <PaperclipCanvasComponent
           alignment={state.alignment}
           clips={state.clips}

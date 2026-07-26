@@ -1,6 +1,6 @@
 {
   "name": "Universal AI",
-  "description": "A retro pixelart strategic reimagining of Universal Paperclips focused on autonomous NPU AI silicon synthesis with Solarpunk vs Cyberpunk alignment choices.",
+  "description": "A vector visual strategic reimagining of Universal Paperclips focused on autonomous NPU AI silicon synthesis with Solarpunk vs Cyberpunk alignment choices.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

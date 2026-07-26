@@ -1,6 +1,6 @@
 # 🧠 Universal AI: Solarpunk vs Cyberpunk NPU Swarm Simulator
 
-> **An interactive, retro-pixelart strategic reimagining of the classic *Universal Paperclips* incremental game—featuring AI ethics alignment paths, NPU microchip lithography, Von Neumann probe combat radar, and autonomous agent overseer modes powered by Google AI Edge and Gemini 3.6 Flash.**
+> **An interactive, 2D vector visual strategic reimagining of the classic *Universal Paperclips* incremental game—featuring AI ethics alignment paths, NPU microchip lithography, Von Neumann probe combat radar, and autonomous agent overseer modes powered by Google AI Edge and Gemini 3.6 Flash.**
 
 ---
 
@@ -20,7 +20,7 @@
 ### 🌐 Phase 2: Planetary Infrastructure (Grid)
 - **Drone Swarm & Matter Processing**: Deploy Harvester and Silicon Drones to convert planetary matter into silicon wafers and microchips at an unprecedented planetary scale.
 - **Ethics & Alignment Engine**: Navigate moral dilemmas with immediate alignment shifts toward **Solarpunk (+)** or **Cyberpunk (-)** aesthetics and gameplay perks.
-- **Dynamic Pixel-Art Factory Visualizer**: Real-time canvas rendering featuring retro CRT scanlines, automated conveyor belts, solar panels, and glowing neon conduits.
+- **Dynamic 2D Vector Factory Visualizer**: Real-time canvas rendering featuring procedural vector graphics, retro CRT scanlines, automated conveyor belts, solar panels, and glowing neon conduits.
 
 ### 🌌 Phase 3: Interstellar Von Neumann Swarm & Drifter Warfare (Cosmic)
 - **Deep Space Exploration**: Expand Von Neumann probe fleets into the cosmos to harvest interstellar space matter.
@@ -49,8 +49,8 @@
 ## 🛠️ Tech Stack & Architecture
 
 - **Frontend Framework**: React 18 + Vite + TypeScript
-- **Styling**: Tailwind CSS with custom retro pixel art themes & CRT scanline filters
-- **Graphics**: HTML5 Canvas with custom pixel-art rendering engines & SVG radar graphs
+- **Styling**: Tailwind CSS with custom dark/light theme styling & CRT scanline visual filters
+- **Graphics**: HTML5 Canvas with custom 2D vector rendering engines & SVG radar graphs
 - **Icons**: Lucide React
 - **Audio**: Web Audio API retro sound synthesizer
 - **State Engine**: Immutable React state architecture with high-frequency micro-tick game loops

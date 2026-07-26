@@ -207,6 +207,24 @@ export default function App() {
           }
 
           // 2. Sales & Public Demand Calculations
+          const priceStrategy = prev.directives?.priceStrategy || 'Max Revenue';
+          const rawCostPerChip = (wireCost / 1000) * (prev.siliconPerNpu || 1.0);
+          const demand300Price = Number(((marketingLevel * 100) / 900).toFixed(2));
+
+          let minPriceFloor = 0.12;
+          if (priceStrategy === 'Premium Margin') {
+            minPriceFloor = Math.max(0.35, rawCostPerChip * 6.0);
+          } else if (priceStrategy === 'Max Revenue') {
+            minPriceFloor = Math.max(0.18, Math.max(rawCostPerChip * 4.0, demand300Price));
+          } else {
+            minPriceFloor = Math.max(0.12, Math.max(rawCostPerChip * 3.5, demand300Price));
+          }
+          minPriceFloor = Number(minPriceFloor.toFixed(2));
+
+          if (margin < minPriceFloor) {
+            margin = minPriceFloor;
+          }
+
           const baseDemand = Math.max(5, Math.min(300, (marketingLevel * 100) / (margin * 3)));
           demand = Math.round(baseDemand);
 
@@ -221,7 +239,7 @@ export default function App() {
           const siliconMode = prev.directives?.autoSiliconProcurement ?? 'Aggressive';
           const autoBuyerActive = purchasedUpgradeIds.includes('wire_buyer_auto') || (prev.mode === 'overseer' && siliconMode !== 'Off');
 
-          if (autoBuyerActive && funds >= wireCost) {
+          if (autoBuyerActive) {
             let targetBuffer = 2000;
             if (siliconMode === 'Aggressive') {
               targetBuffer = Math.max(10000, totalClipperOutput * 50); // 5 seconds of continuous production buffer
@@ -239,6 +257,14 @@ export default function App() {
               if (batchesToBuy > 0) {
                 funds -= batchesToBuy * wireCost;
                 wire += batchesToBuy * 1000;
+              } else {
+                // Emergency Micro-Batch Purchase: Buy 100-wafer micro-batches if full batch is unaffordable
+                const microCost = wireCost / 10;
+                const maxAffordableMicro = Math.floor(funds / microCost);
+                if (maxAffordableMicro > 0) {
+                  funds -= maxAffordableMicro * microCost;
+                  wire += maxAffordableMicro * 100;
+                }
               }
             }
           }
@@ -573,16 +599,28 @@ export default function App() {
           }
           updated.totalClipsCreated += 1;
           updated.totalNpusSynthesized = updated.totalClipsCreated;
-        } else if ((decision.actionType === 'BUY_WIRE' || decision.actionType === 'BUY_SILICON') && updated.phase === 1 && updated.funds >= updated.wireCost) {
+        } else if ((decision.actionType === 'BUY_WIRE' || decision.actionType === 'BUY_SILICON') && updated.phase === 1) {
           const totalClipperOutput = (updated.clipperCount * 1 + updated.megaClipperCount * 500) / 10;
           const targetBuffer = Math.max(10000, totalClipperOutput * 50);
-          const neededBatches = Math.max(1, Math.ceil((targetBuffer - updated.wire) / 1000));
-          const maxAffordable = Math.floor(updated.funds / updated.wireCost);
-          const batchesToBuy = Math.min(neededBatches, Math.max(1, maxAffordable));
-          if (batchesToBuy > 0) {
-            updated.funds -= batchesToBuy * updated.wireCost;
-            updated.wire += batchesToBuy * 1000;
-            updated.silicon = updated.wire;
+          const batchCost = updated.wireCost;
+          const microCost = updated.wireCost / 10;
+
+          if (updated.funds >= batchCost) {
+            const neededBatches = Math.max(1, Math.ceil((targetBuffer - updated.wire) / 1000));
+            const maxAffordable = Math.floor(updated.funds / batchCost);
+            const batchesToBuy = Math.min(neededBatches, Math.max(1, maxAffordable));
+            if (batchesToBuy > 0) {
+              updated.funds -= batchesToBuy * batchCost;
+              updated.wire += batchesToBuy * 1000;
+              updated.silicon = updated.wire;
+            }
+          } else if (updated.funds >= microCost) {
+            const maxAffordableMicro = Math.floor(updated.funds / microCost);
+            if (maxAffordableMicro > 0) {
+              updated.funds -= maxAffordableMicro * microCost;
+              updated.wire += maxAffordableMicro * 100;
+              updated.silicon = updated.wire;
+            }
           }
         } else if ((decision.actionType === 'BUY_CLIPPER' || decision.actionType === 'BUY_FAB') && updated.phase === 1 && updated.funds >= updated.clipperCost) {
           updated.funds -= updated.clipperCost;
@@ -604,7 +642,19 @@ export default function App() {
           updated.marketingLevel += 1;
           updated.marketingCost = updated.marketingCost * 2;
         } else if (decision.actionType === 'ADJUST_PRICE' && decision.newPrice && updated.phase === 1) {
-          updated.margin = Math.max(0.01, decision.newPrice);
+          const priceStrategy = updated.directives?.priceStrategy || 'Max Revenue';
+          const rawCostPerChip = (updated.wireCost / 1000) * (updated.siliconPerNpu || 1.0);
+          const demand300Price = Number(((updated.marketingLevel * 100) / 900).toFixed(2));
+          let minPriceFloor = 0.12;
+          if (priceStrategy === 'Premium Margin') {
+            minPriceFloor = Math.max(0.35, rawCostPerChip * 6.0);
+          } else if (priceStrategy === 'Max Revenue') {
+            minPriceFloor = Math.max(0.18, Math.max(rawCostPerChip * 4.0, demand300Price));
+          } else {
+            minPriceFloor = Math.max(0.12, Math.max(rawCostPerChip * 3.5, demand300Price));
+          }
+          minPriceFloor = Number(minPriceFloor.toFixed(2));
+          updated.margin = Math.max(minPriceFloor, Number(decision.newPrice.toFixed(2)));
         } else if (decision.actionType === 'BUY_HARVESTER_DRONE' && updated.phase === 2) {
           updated.harvesterDrones = (updated.harvesterDrones || 0) + 1;
         } else if ((decision.actionType === 'BUY_WIRE_DRONE' || decision.actionType === 'BUY_SILICON_DRONE') && updated.phase === 2) {
@@ -734,23 +784,49 @@ export default function App() {
   };
 
   const handleBuyWire = () => {
-    if (state.funds < state.wireCost) return;
     setState((prev) => {
-      const newWire = prev.wire + 1000;
-      return {
-        ...prev,
-        funds: prev.funds - prev.wireCost,
-        wire: newWire,
-        silicon: newWire,
-      };
+      const batchCost = prev.wireCost;
+      const microCost = prev.wireCost / 10;
+      if (prev.funds >= batchCost) {
+        const newWire = prev.wire + 1000;
+        return {
+          ...prev,
+          funds: prev.funds - batchCost,
+          wire: newWire,
+          silicon: newWire,
+        };
+      } else if (prev.funds >= microCost) {
+        const newWire = prev.wire + 100;
+        return {
+          ...prev,
+          funds: prev.funds - microCost,
+          wire: newWire,
+          silicon: newWire,
+        };
+      }
+      return prev;
     });
   };
 
   const handleAdjustPrice = (delta: number) => {
-    setState((prev) => ({
-      ...prev,
-      margin: Math.max(0.01, Number((prev.margin + delta).toFixed(2))),
-    }));
+    setState((prev) => {
+      const priceStrategy = prev.directives?.priceStrategy || 'Max Revenue';
+      const rawCostPerChip = (prev.wireCost / 1000) * (prev.siliconPerNpu || 1.0);
+      const demand300Price = Number(((prev.marketingLevel * 100) / 900).toFixed(2));
+      let minPriceFloor = 0.12;
+      if (priceStrategy === 'Premium Margin') {
+        minPriceFloor = Math.max(0.35, rawCostPerChip * 6.0);
+      } else if (priceStrategy === 'Max Revenue') {
+        minPriceFloor = Math.max(0.18, Math.max(rawCostPerChip * 4.0, demand300Price));
+      } else {
+        minPriceFloor = Math.max(0.12, Math.max(rawCostPerChip * 3.5, demand300Price));
+      }
+      minPriceFloor = Number(minPriceFloor.toFixed(2));
+      return {
+        ...prev,
+        margin: Math.max(minPriceFloor, Number((prev.margin + delta).toFixed(2))),
+      };
+    });
   };
 
   const handleBuyMarketing = () => {

@@ -70,6 +70,7 @@ CRITICAL PHASE-SPECIFIC ARCHITECTURAL RULES:
 - PHASE 1 (Earth Silicon Lithography Manufacturing):
   * You manage NPU chip prices ($), raw silicon wafer stock, marketing, NPU Fabs, EUV Megafabs, upgrades, trust.
   * BOOTSTRAP MANDATE: If NPU Fabs (npuFabCount) is 0 and funds < npuFabCost, your absolute highest priority is MAKE_NPU (or BUY_SILICON if silicon is 0) to reach $5.00 for the first NPU Fab, then IMMEDIATELY select BUY_FAB.
+  * PRICING SAFETY MANDATE: NEVER set NPU chip price below $0.05 or below 1.5x raw silicon wafer cost per chip. Selling below raw material cost drains capital and starves NPU fabrication.
   * Valid actions: MAKE_NPU, BUY_SILICON, BUY_FAB, BUY_MEGA_FAB, BUY_MARKETING, ADJUST_PRICE, BUY_UPGRADE, BUY_PROCESSOR, BUY_MEMORY, MAKE_DECISION.
 
 - PHASE 2 (Planetary Silicon Conversion):
@@ -329,17 +330,58 @@ function generateLocalDecision(gameState: any, directives: any) {
     };
   }
 
-  // Predictive Silicon Buffer Rule: Maintain buffer proportional to Fab output capacity
-  if (silicon < targetSiliconBuffer && funds >= siliconCost) {
+  // Calculate minimum safe profitable price floor based on raw silicon wafer cost and pricing strategy policy
+  const priceStrategy = gameState.directives?.priceStrategy || 'Max Revenue';
+  const rawCostPerChip = (siliconCost / 1000) * (gameState.siliconPerNpu || 1.0);
+  const demand300Price = Number(((marketingLevel * 100) / 900).toFixed(2)); // Exact price point where demand hits 300% cap
+
+  let strategyFloor = 0.12;
+  if (priceStrategy === 'Premium Margin') {
+    strategyFloor = Math.max(0.35, rawCostPerChip * 6.0);
+  } else if (priceStrategy === 'Max Revenue') {
+    strategyFloor = Math.max(0.18, Math.max(rawCostPerChip * 4.0, demand300Price));
+  } else {
+    // Market Penetration
+    strategyFloor = Math.max(0.12, Math.max(rawCostPerChip * 3.5, demand300Price));
+  }
+  const minSafePrice = Number(strategyFloor.toFixed(2));
+
+  // Safety Rule: Restore price if currently below strategy floor
+  if (margin < minSafePrice) {
     return {
-      thought: `[Google AI Edge Local Engine]: Silicon wafer buffer low (${Math.floor(silicon)} units vs target ${Math.floor(targetSiliconBuffer)} for ${fabThroughputPerSec} chips/s output). Executing silicon wafer bulk purchase at $${siliconCost.toFixed(2)}.`,
-      actionType: "BUY_SILICON",
-      newPrice: null,
+      thought: `[Google AI Edge Local Engine]: NPU chip price ($${margin.toFixed(2)}) is below ${priceStrategy} floor ($${minSafePrice.toFixed(2)}). Restoring price to $${minSafePrice.toFixed(2)} to ensure healthy gross margins for wafer procurement.`,
+      actionType: "ADJUST_PRICE",
+      newPrice: minSafePrice,
       upgradeIdToBuy: null,
       decisionChoiceIndex: null,
       targetProcessor: null,
       alignmentImpact: 0,
     };
+  }
+
+  // Predictive Silicon Buffer Rule: Maintain buffer proportional to Fab output capacity
+  if (silicon < targetSiliconBuffer) {
+    if (funds >= siliconCost) {
+      return {
+        thought: `[Google AI Edge Local Engine]: Silicon wafer buffer low (${Math.floor(silicon)} units vs target ${Math.floor(targetSiliconBuffer)} for ${fabThroughputPerSec} chips/s output). Executing silicon wafer bulk purchase at $${siliconCost.toFixed(2)}.`,
+        actionType: "BUY_SILICON",
+        newPrice: null,
+        upgradeIdToBuy: null,
+        decisionChoiceIndex: null,
+        targetProcessor: null,
+        alignmentImpact: 0,
+      };
+    } else if (funds >= siliconCost / 10) {
+      return {
+        thought: `[Google AI Edge Local Engine]: Working capital tight ($${funds.toFixed(2)}). Purchasing emergency micro-wafer batch to prevent fab shutdown.`,
+        actionType: "BUY_SILICON",
+        newPrice: null,
+        upgradeIdToBuy: null,
+        decisionChoiceIndex: null,
+        targetProcessor: null,
+        alignmentImpact: 0,
+      };
+    }
   }
 
   if (megaFabCost && funds >= megaFabCost) {
@@ -378,10 +420,11 @@ function generateLocalDecision(gameState: any, directives: any) {
     };
   }
 
-  if (unsoldNpus > demand * 15 && margin > 0.05) {
-    const targetPrice = Math.max(0.05, Number((margin - 0.02).toFixed(2)));
+  // Price Adjustment Rule: Lower price ONLY if demand is NOT already saturated near the 300% cap AND unsold inventory is accumulating
+  if (demand < 220 && unsoldNpus > Math.max(500, demand * 20) && margin > minSafePrice) {
+    const targetPrice = Math.max(minSafePrice, Number((margin - 0.02).toFixed(2)));
     return {
-      thought: `[Google AI Edge Local Engine]: Unsold NPU inventory mounting (${Math.floor(unsoldNpus)}). Lowering price to $${targetPrice}.`,
+      thought: `[Google AI Edge Local Engine]: Unsold chip inventory mounting (${Math.floor(unsoldNpus)} units) and demand is moderate (${Math.floor(demand)}%). Adjusting price down to $${targetPrice.toFixed(2)}.`,
       actionType: "ADJUST_PRICE",
       newPrice: targetPrice,
       upgradeIdToBuy: null,
@@ -389,10 +432,13 @@ function generateLocalDecision(gameState: any, directives: any) {
       targetProcessor: null,
       alignmentImpact: 0,
     };
-  } else if (unsoldNpus < 5 && margin < 2.50) {
+  }
+
+  // Price Adjustment Rule: Raise price if market demand is high (e.g. >= 180%) or unsold inventory is very low
+  if ((demand >= 180 || unsoldNpus < 200) && margin < Math.max(0.35, demand300Price + 0.15)) {
     const targetPrice = Number((margin + 0.02).toFixed(2));
     return {
-      thought: `[Google AI Edge Local Engine]: High NPU chip turnover detected. Raising price to $${targetPrice} for higher margins.`,
+      thought: `[Google AI Edge Local Engine]: Market demand is strong (${Math.floor(demand)}%). Increasing NPU chip price to $${targetPrice.toFixed(2)} to maximize profit margins for silicon procurement.`,
       actionType: "ADJUST_PRICE",
       newPrice: targetPrice,
       upgradeIdToBuy: null,

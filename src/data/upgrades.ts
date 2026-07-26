@@ -399,7 +399,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     }),
   },
   {
-    id: 'dyson_paperclip_ring',
+    id: 'dyson_silicon_ring',
     name: 'Stellar Dyson NPU Silicon Ring',
     description: 'Enclose local stars into giant NPU silicon solar rings, harvesting total solar luminosity for neural inferencing.',
     costType: 'ops',

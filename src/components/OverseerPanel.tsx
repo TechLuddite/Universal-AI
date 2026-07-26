@@ -264,7 +264,7 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
               </div>
               <p className="text-[11px] text-slate-300 italic">
                 {isThinking
-                  ? 'Analyzing paperclip yields & market signals...'
+                  ? 'Analyzing NPU yields & market signals...'
                   : directives.autoLoopActive
                   ? 'Watching conveyor belts & executing architect directives smoothly!'
                   : 'Awaiting your signal to start the autonomous loop.'}
@@ -306,7 +306,7 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
         <div className="mt-3 p-2 rounded bg-black/60 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
           <Bot className="w-4 h-4 text-cyan-400 shrink-0" />
           <span>
-            This mode implements your agentic concept: the AI runs continuous inferencing loops to optimize paperclip growth while you tune macro parameters and directives.
+            This mode implements your agentic concept: the AI runs continuous inferencing loops to optimize NPU microchip growth while you tune macro parameters and directives.
           </span>
         </div>
       </div>

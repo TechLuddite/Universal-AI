@@ -25,7 +25,7 @@ interface NpuCanvasProps {
   crtFilterEnabled: boolean;
 }
 
-export const PaperclipCanvasComponent: React.FC<NpuCanvasProps> = ({
+export const NpuCanvasComponent: React.FC<NpuCanvasProps> = ({
   alignment,
   npus,
   clips,

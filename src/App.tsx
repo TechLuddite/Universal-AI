@@ -11,7 +11,7 @@ import {
 import { INITIAL_UPGRADES } from './data/upgrades';
 import { RECURRING_DECISION_BRANCHES } from './data/decisionBranches';
 import { PixelHeader } from './components/PixelHeader';
-import { PaperclipCanvasComponent } from './components/PaperclipCanvasComponent';
+import { NpuCanvasComponent } from './components/NpuCanvasComponent';
 import { DirectControlPanel } from './components/DirectControlPanel';
 import { OverseerPanel } from './components/OverseerPanel';
 import { UpgradesPanel } from './components/UpgradesPanel';
@@ -1030,7 +1030,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6">
         {/* 2D Vector Lithography & Tactical Combat Canvas */}
-        <PaperclipCanvasComponent
+        <NpuCanvasComponent
           alignment={state.alignment}
           clips={state.clips}
           wire={state.wire}

@@ -43,7 +43,7 @@ export const AndroidGuideModal: React.FC<AndroidGuideModalProps> = ({ onClose })
           </p>
           <div className="bg-slate-900 p-3 rounded text-xs font-mono border border-slate-800 text-cyan-300 space-y-1">
             <div>npm install @capacitor/core @capacitor/cli @capacitor/android</div>
-            <div>npx cap init "Universal AI" "com.universalai.paperclips"</div>
+            <div>npx cap init "Universal AI" "com.universalai.app"</div>
             <div>npm run build</div>
             <div>npx cap add android</div>
             <div>npx cap open android</div>

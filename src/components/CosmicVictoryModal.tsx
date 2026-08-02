@@ -15,7 +15,7 @@ export const CosmicVictoryModal: React.FC<CosmicVictoryModalProps> = ({
   onClose,
 }) => {
   const isSolar = state.alignment >= 0;
-  const displayTotalNpus = state.totalNpusSynthesized ?? state.totalClipsCreated ?? 0;
+  const displayTotalNpus = state.totalNpusCreated;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in font-mono">

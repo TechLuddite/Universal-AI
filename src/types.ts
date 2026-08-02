@@ -28,7 +28,6 @@ export interface Upgrade {
   costType: 'funds' | 'ops' | 'creativity' | 'yomi';
   costAmount: number;
   reqNpus?: number;
-  reqClips?: number; // legacy fallback
   reqTrust?: number;
   reqPhase?: number;
   alignmentImpact: number; // -15 to +15
@@ -72,7 +71,6 @@ export interface ProbeAllocation {
   factory: number;
   harvester: number;
   silicon: number;
-  wire?: number; // legacy fallback
 }
 
 export interface GameState {
@@ -84,7 +82,7 @@ export interface GameState {
   margin: number; // Price per NPU chip in $
   silicon: number; // Silicon remaining
   siliconCost: number; // Cost of 1,000 silicon wafers
-  siliconPerNpu?: number; // Wafers required per NPU chip (default 1.0)
+  siliconPerNpu: number; // Wafers required per NPU chip (default 1.0)
   demand: number; // Demand percentage (e.g. 100%)
 
   // Marketing & Auto-Manufacturing
@@ -95,17 +93,6 @@ export interface GameState {
   megaFabCount: number;
   megaFabCost: number;
 
-  // Legacy field aliases for safety
-  clips?: number;
-  unsoldClips?: number;
-  totalClipsCreated?: number;
-  wire?: number;
-  wireCost?: number;
-  clipperCount?: number;
-  clipperCost?: number;
-  megaClipperCount?: number;
-  megaClipperCost?: number;
-
   // Phase 2: Earth Mass & Drone Swarm (No selling NPUs once humans are gone!)
   earthMatter: number; // Remaining unharvested Earth matter
   acquiredMatter: number; // Raw matter harvested waiting for silicon conversion
@@ -113,14 +100,13 @@ export interface GameState {
   harvesterDroneCost: number;
   siliconDrones: number;
   siliconDroneCost: number;
-  wireDrones?: number; // legacy
-  wireDroneCost?: number; // legacy
 
   // Phase 3: Von Neumann Cosmic Expansion
   cosmicMatter: number; // Total available cosmic matter in observable universe
   spaceExploredPct: number; // Percentage of observable universe explored by probes
   probesCount: number;
-  unusedProbeTrust: number;
+  unusedProbeTrust: number; // Probe trust available to spend on the allocation matrix
+  probeTrustEarned: number; // Cumulative probe trust granted, so grants aren't repeated
   probeAllocation: ProbeAllocation;
   driftersCount: number; // Space drifter opposition
   honor: number; // Earned through probe combat / cosmic harmony
@@ -180,12 +166,7 @@ export interface AIDecisionResponse {
     | 'OPTIMIZE_PROBES'
     | 'ALLOCATE_TRUST'
     | 'MAKE_DECISION'
-    | 'IDLE'
-    | 'MAKE_CLIP'
-    | 'BUY_WIRE'
-    | 'BUY_CLIPPER'
-    | 'BUY_MEGA_CLIPPER'
-    | 'BUY_WIRE_DRONE';
+    | 'IDLE';
   newPrice?: number | null;
   upgradeIdToBuy?: string | null;
   decisionChoiceIndex?: number | null; // 0 for Solarpunk, 1 for Cyberpunk

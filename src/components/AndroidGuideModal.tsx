@@ -1,5 +1,5 @@
 import React from 'react';
-import { Smartphone, Download, Cpu, X, Check, Code, ShieldCheck } from 'lucide-react';
+import { Smartphone, Cpu, X, Code, ShieldCheck } from 'lucide-react';
 
 interface AndroidGuideModalProps {
   onClose: () => void;

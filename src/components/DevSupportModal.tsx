@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ExternalLink, Coffee, Sparkles, X, Code, Globe, Cpu, CheckCircle2, ShieldCheck, Building2 } from 'lucide-react';
+import { Heart, ExternalLink, Coffee, X, Code, Cpu, CheckCircle2, Building2 } from 'lucide-react';
 
 interface DevSupportModalProps {
   onClose: () => void;

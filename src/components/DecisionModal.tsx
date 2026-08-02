@@ -1,7 +1,7 @@
 import React from 'react';
 import { DecisionBranch, GameState } from '../types';
 import { audio } from '../utils/sound';
-import { Sparkles, Compass, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Sparkles, Compass, CheckCircle2 } from 'lucide-react';
 
 interface DecisionModalProps {
   decision: DecisionBranch;

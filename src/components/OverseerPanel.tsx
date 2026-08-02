@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, OverseerDirectives, AIEngine, AILogEntry } from '../types';
+import { GameState, OverseerDirectives } from '../types';
 import { Bot, Play, Pause, FastForward, Cpu, Terminal, Compass, Zap, ShieldAlert } from 'lucide-react';
 
 interface OverseerPanelProps {
@@ -183,8 +183,8 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             <div className="grid grid-cols-2 gap-2 text-[10px]">
               <div className="bg-amber-950/40 p-1.5 rounded border border-amber-800/40 flex justify-between">
                 <span className="text-slate-400">Stock:</span>
-                <span className={`font-bold ${Math.floor(state.silicon || state.wire || 0) < 100 ? 'text-rose-400 font-black' : 'text-amber-200'}`}>
-                  {Math.floor(state.silicon || state.wire || 0).toLocaleString()}
+                <span className={`font-bold ${Math.floor(state.silicon || state.silicon || 0) < 100 ? 'text-rose-400 font-black' : 'text-amber-200'}`}>
+                  {Math.floor(state.silicon || state.silicon || 0).toLocaleString()}
                 </span>
               </div>
               <div className="bg-amber-950/40 p-1.5 rounded border border-amber-800/40 flex justify-between">
@@ -195,7 +195,7 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
               </div>
             </div>
 
-            {Math.floor(state.silicon || state.wire || 0) < 50 && ((state.npuFabCount || 0) + (state.megaFabCount || 0)) > 0 && (
+            {Math.floor(state.silicon || state.silicon || 0) < 50 && ((state.npuFabCount || 0) + (state.megaFabCount || 0)) > 0 && (
               <div className="p-1.5 rounded bg-rose-950/80 border border-rose-500 text-rose-200 text-[10px] font-bold flex items-center justify-between gap-1 animate-pulse">
                 <span className="flex items-center gap-1">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />

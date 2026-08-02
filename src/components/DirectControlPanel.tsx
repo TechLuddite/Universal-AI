@@ -1,6 +1,7 @@
 import React from 'react';
 import { GameState, ProbeAllocation } from '../types';
 import { audio } from '../utils/sound';
+import { PROBE_SILICON_COST } from '../game/actions';
 import { ProbeRadarChart } from './ProbeRadarChart';
 import {
   Plus,
@@ -21,15 +22,19 @@ import {
 
 interface DirectControlPanelProps {
   state: GameState;
-  onMakeClip: () => void;
-  onBuyWire: () => void;
+  /** Price below which the current strategy stops making sense. Advice, not a clamp. */
+  advisoryFloor: number;
+  megaFabUnlocked: boolean;
+  onMakeNpu: () => void;
+  onBuySilicon: () => void;
   onAdjustPrice: (delta: number) => void;
   onBuyMarketing: () => void;
-  onBuyClipper: () => void;
-  onBuyMegaClipper: () => void;
-  onBuyHarvesterDrone?: () => void;
-  onBuyWireDrone?: () => void;
-  onChangeProbeAllocation?: (category: keyof ProbeAllocation, delta: number) => void;
+  onBuyFab: () => void;
+  onBuyMegaFab: () => void;
+  onBuyHarvesterDrone: () => void;
+  onBuySiliconDrone: () => void;
+  onLaunchProbe: () => void;
+  onChangeProbeAllocation: (category: keyof ProbeAllocation, delta: number) => void;
   onChangeProcessor: (delta: number) => void;
   onChangeMemory: (delta: number) => void;
   onQuantumPulse: () => void;
@@ -37,36 +42,23 @@ interface DirectControlPanelProps {
 
 export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
   state,
-  onMakeClip,
-  onBuyWire,
+  advisoryFloor,
+  megaFabUnlocked,
+  onMakeNpu,
+  onBuySilicon,
   onAdjustPrice,
   onBuyMarketing,
-  onBuyClipper,
-  onBuyMegaClipper,
+  onBuyFab,
+  onBuyMegaFab,
   onBuyHarvesterDrone,
-  onBuyWireDrone,
+  onBuySiliconDrone,
+  onLaunchProbe,
   onChangeProbeAllocation,
   onChangeProcessor,
   onChangeMemory,
   onQuantumPulse,
 }) => {
   const isSolar = state.alignment >= 0;
-
-  const displaySilicon = state.silicon ?? state.wire ?? 0;
-  const displaySiliconCost = state.siliconCost ?? state.wireCost ?? 15;
-  const displayUnsoldNpus = state.unsoldNpus ?? state.unsoldClips ?? 0;
-  const displayNpuFabCount = state.npuFabCount ?? state.clipperCount ?? 0;
-  const displayNpuFabCost = state.npuFabCost ?? state.clipperCost ?? 5;
-  const displayMegaFabCount = state.megaFabCount ?? state.megaClipperCount ?? 0;
-  const rawMegaFabCost = state.megaFabCost > 0 ? state.megaFabCost : (state.megaClipperCost > 0 ? state.megaClipperCost : 0);
-  const displayMegaFabCost = rawMegaFabCost > 0 ? rawMegaFabCost : 500;
-  const displaySiliconDrones = state.siliconDrones ?? state.wireDrones ?? 0;
-
-  const isMegaFabUnlocked =
-    rawMegaFabCost > 0 ||
-    displayMegaFabCount > 0 ||
-    displayNpuFabCount >= 5 ||
-    (state.purchasedUpgradeIds && state.purchasedUpgradeIds.includes('hyperscale_mega_clippers'));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
@@ -93,11 +85,11 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
               <button
                 onClick={() => {
                   audio.playClipSound();
-                  onMakeClip();
+                  onMakeNpu();
                 }}
-                disabled={displaySilicon <= 0}
+                disabled={state.silicon <= 0}
                 className={`w-full py-4 px-3 rounded-lg border-2 font-black text-lg tracking-widest uppercase transition-all transform active:scale-95 shadow-md flex items-center justify-center gap-2 ${
-                  displaySilicon > 0
+                  state.silicon > 0
                     ? isSolar
                       ? 'bg-amber-600 hover:bg-amber-500 border-amber-300 text-stone-950'
                       : 'bg-cyan-600 hover:bg-cyan-500 border-cyan-300 text-slate-950'
@@ -113,15 +105,15 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   <span className="text-slate-400">Silicon Stock:</span>
                   <span
                     className={`font-bold ${
-                      displaySilicon < 100 ? 'text-rose-400 font-black animate-pulse' : 'text-slate-200'
+                      state.silicon < 100 ? 'text-rose-400 font-black animate-pulse' : 'text-slate-200'
                     }`}
                   >
-                    {Math.floor(displaySilicon).toLocaleString()} wafers
+                    {Math.floor(state.silicon).toLocaleString()} wafers
                   </span>
                 </div>
                 <div className="flex justify-between text-xs items-center">
                   <span className="text-slate-400">Wafer Cost:</span>
-                  <span className="text-emerald-400 font-bold">${displaySiliconCost.toFixed(2)} / 1k</span>
+                  <span className="text-emerald-400 font-bold">${state.siliconCost.toFixed(2)} / 1k</span>
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-400 items-center pt-0.5 border-t border-slate-800/80">
                   <span>Wafer / NPU Ratio:</span>
@@ -134,11 +126,11 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   <button
                     onClick={() => {
                       audio.playWireSound();
-                      onBuyWire();
+                      onBuySilicon();
                     }}
-                    disabled={state.funds < displaySiliconCost}
+                    disabled={state.funds < state.siliconCost}
                     className={`py-2 px-2 rounded border font-bold text-[11px] uppercase flex items-center justify-center gap-1 transition-all ${
-                      state.funds >= displaySiliconCost
+                      state.funds >= state.siliconCost
                         ? 'bg-emerald-800/80 hover:bg-emerald-700 border-emerald-500 text-emerald-100'
                         : 'bg-slate-800/50 border-slate-800 text-slate-600 cursor-not-allowed'
                     }`}
@@ -152,12 +144,12 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                       audio.playWireSound();
                       // Buy 10 batches if affordable
                       for (let i = 0; i < 10; i++) {
-                        onBuyWire();
+                        onBuySilicon();
                       }
                     }}
-                    disabled={state.funds < displaySiliconCost * 10}
+                    disabled={state.funds < state.siliconCost * 10}
                     className={`py-2 px-2 rounded border font-bold text-[11px] uppercase flex items-center justify-center gap-1 transition-all ${
-                      state.funds >= displaySiliconCost * 10
+                      state.funds >= state.siliconCost * 10
                         ? 'bg-cyan-800/80 hover:bg-cyan-700 border-cyan-400 text-cyan-100 shadow'
                         : 'bg-slate-800/50 border-slate-800 text-slate-600 cursor-not-allowed'
                     }`}
@@ -173,22 +165,22 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
             <div className="pt-2 border-t border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-300 font-semibold">NPU Fabs:</span>
-                <span className="text-amber-300 font-bold">{displayNpuFabCount}</span>
+                <span className="text-amber-300 font-bold">{state.npuFabCount}</span>
               </div>
               <button
                 onClick={() => {
                   audio.playBuySound();
-                  onBuyClipper();
+                  onBuyFab();
                 }}
-                disabled={state.funds < displayNpuFabCost}
+                disabled={state.funds < state.npuFabCost}
                 className={`w-full py-1.5 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center ${
-                  state.funds >= displayNpuFabCost
+                  state.funds >= state.npuFabCost
                     ? 'bg-amber-950/60 hover:bg-amber-900 border-amber-600/80 text-amber-200'
                     : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
                 }`}
               >
                 <span>NPU Fab</span>
-                <span>${displayNpuFabCost.toFixed(2)}</span>
+                <span>${state.npuFabCost.toFixed(2)}</span>
               </button>
 
               {/* EUV Megafabs (Hyperscale Industrial Lithography) */}
@@ -197,24 +189,24 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   <span className="text-slate-300 font-semibold flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> EUV Megafabs:
                   </span>
-                  <span className="text-cyan-300 font-bold">{displayMegaFabCount}</span>
+                  <span className="text-cyan-300 font-bold">{state.megaFabCount}</span>
                 </div>
 
-                {isMegaFabUnlocked ? (
+                {megaFabUnlocked ? (
                   <button
                     onClick={() => {
                       audio.playBuySound();
-                      onBuyMegaClipper();
+                      onBuyMegaFab();
                     }}
-                    disabled={state.funds < displayMegaFabCost}
+                    disabled={state.funds < state.megaFabCost}
                     className={`w-full py-1.5 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center ${
-                      state.funds >= displayMegaFabCost
+                      state.funds >= state.megaFabCost
                         ? 'bg-cyan-950/60 hover:bg-cyan-900 border-cyan-500 text-cyan-200 shadow-sm'
                         : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
                     }`}
                   >
                     <span>EUV Megafab (+500 npu/s)</span>
-                    <span>${displayMegaFabCost.toFixed(2)}</span>
+                    <span>${state.megaFabCost.toFixed(2)}</span>
                   </button>
                 ) : (
                   <div className="p-2 rounded bg-slate-900/60 border border-slate-800/80 text-[11px] text-slate-400 flex justify-between items-center">
@@ -251,7 +243,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-400">Unsold Chip Inventory:</span>
                   <span className="text-slate-200 font-bold">
-                    {Math.floor(displayUnsoldNpus).toLocaleString()} npus
+                    {Math.floor(state.unsoldNpus).toLocaleString()} npus
                   </span>
                 </div>
 
@@ -280,6 +272,15 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
+                  </div>
+
+                  {/* Guidance, not a limit — you can price below this on purpose. */}
+                  <div className="flex justify-between items-center text-[11px] pt-1.5 text-slate-500">
+                    <span>{state.directives.priceStrategy} floor:</span>
+                    <span className={state.margin < advisoryFloor ? 'text-amber-400 font-bold' : 'text-slate-500'}>
+                      ${advisoryFloor.toFixed(2)}
+                      {state.margin < advisoryFloor && ' · undercutting'}
+                    </span>
                   </div>
                 </div>
 
@@ -356,7 +357,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                 <div className="flex justify-between">
                   <span className="text-slate-400">Silicon Available:</span>
                   <span className="text-emerald-300 font-bold">
-                    {Math.floor(displaySilicon).toLocaleString()} units
+                    {Math.floor(state.silicon).toLocaleString()} units
                   </span>
                 </div>
               </div>
@@ -365,9 +366,9 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
             <button
               onClick={() => {
                 audio.playClipSound();
-                onMakeClip();
+                onMakeNpu();
               }}
-              disabled={displaySilicon <= 0}
+              disabled={state.silicon <= 0}
               className="w-full py-3 px-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-sm uppercase transition-all shadow-md flex items-center justify-center gap-2"
             >
               <CpuIcon className="w-4 h-4" /> Manual Silicon Etching
@@ -415,10 +416,10 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                     <div className="text-[10px] text-slate-400">Converts matter to silicon</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-cyan-300 font-bold">{displaySiliconDrones}</span>
-                    {onBuyWireDrone && (
+                    <span className="text-cyan-300 font-bold">{state.siliconDrones}</span>
+                    {onBuySiliconDrone && (
                       <button
-                        onClick={onBuyWireDrone}
+                        onClick={onBuySiliconDrone}
                         className="py-1 px-2.5 bg-cyan-600 hover:bg-cyan-500 text-slate-950 text-[10px] font-bold uppercase rounded"
                       >
                         +1 Drone
@@ -536,6 +537,23 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   </span>
                 </div>
               </div>
+
+              {/* Probes are built from harvested silicon, not conjured free. */}
+              <button
+                onClick={() => {
+                  audio.playBuySound();
+                  onLaunchProbe();
+                }}
+                disabled={state.silicon < PROBE_SILICON_COST}
+                className={`w-full mt-2 py-2 px-3 rounded border text-xs font-bold transition-all flex justify-between items-center ${
+                  state.silicon >= PROBE_SILICON_COST
+                    ? 'bg-purple-950/60 hover:bg-purple-900 border-purple-500/80 text-purple-200'
+                    : 'bg-slate-900 border-slate-800 text-slate-600 cursor-not-allowed'
+                }`}
+              >
+                <span>Launch Probes</span>
+                <span>{PROBE_SILICON_COST.toLocaleString()} wafers</span>
+              </button>
             </div>
 
             <div className="text-[11px] text-purple-300 bg-purple-950/40 p-2 rounded border border-purple-800/60">

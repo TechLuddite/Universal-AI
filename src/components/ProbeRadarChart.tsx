@@ -119,7 +119,7 @@ export const ProbeRadarChart: React.FC<ProbeRadarChartProps> = ({
           })}
 
           {/* Radial Axes */}
-          {axes.map((axis, i) => {
+          {axes.map((_axis, i) => {
             const angle = (Math.PI * 2 * i) / totalAxes - Math.PI / 2;
             const x2 = center + radius * Math.cos(angle);
             const y2 = center + radius * Math.sin(angle);

@@ -128,7 +128,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => ({
+    effect: (_state) => ({
       siliconCost: 8,
     }),
   },
@@ -160,7 +160,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => ({
+    effect: (_state) => ({
       siliconPerNpu: 0.75,
     }),
   },
@@ -174,7 +174,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => ({
+    effect: (_state) => ({
       siliconPerNpu: 0.50,
     }),
   },
@@ -207,7 +207,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => ({
+    effect: (_state) => ({
       quantumLevel: 1,
     }),
   },
@@ -255,7 +255,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => ({
+    effect: (_state) => ({
       megaFabCost: 500,
     }),
   },
@@ -365,7 +365,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => ({
+    effect: (_state) => ({
       phase: 3,
       cosmicMatter: 6000000000000000000, // 6 Quintillion units
       probesCount: 100,

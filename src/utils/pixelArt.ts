@@ -148,7 +148,7 @@ function drawAtmosphereAndSky(
   w: number,
   h: number,
   normAlign: number,
-  tick: number
+  _tick: number
 ) {
   const grad = ctx.createLinearGradient(0, 0, 0, h * 0.72);
   if (normAlign >= 0.5) {
@@ -528,7 +528,7 @@ function drawStorageVault(
   y: number,
   npus: number,
   normAlign: number,
-  tick: number
+  _tick: number
 ) {
   ctx.save();
   const isSolar = normAlign >= 0.5;
@@ -668,11 +668,11 @@ function drawIndieCosmicCombatVisualizer(
   tick: number,
   normAlign: number,
   driftersCount: number,
-  honor: number,
+  _honor: number,
   hazardCombat: number,
   probesLostInCombat: number,
   driftersDefeated: number,
-  lastBattleOutcome: string
+  _lastBattleOutcome: string
 ) {
   ctx.save();
 

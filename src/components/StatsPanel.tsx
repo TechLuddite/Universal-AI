@@ -13,14 +13,11 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ state }) => {
   const drifters = state.driftersCount || 0;
   const defeated = state.driftersDefeated || 0;
   const losses = state.probesLostInCombat || 0;
-  const battles = state.battlesFought || 0;
-  const wins = state.battlesWon || 0;
-  const winRate = battles > 0 ? Math.round((wins / battles) * 100) : 100;
   const killLossRatio = losses > 0 ? (defeated / losses).toFixed(2) : (defeated > 0 ? '∞' : '1.00');
 
-  const totalNpusCreated = state.totalNpusCreated ?? state.totalClipsCreated ?? 0;
-  const npuFabCount = state.npuFabCount ?? state.clipperCount ?? 0;
-  const megaFabCount = state.megaFabCount ?? state.megaClipperCount ?? 0;
+  const totalNpusCreated = state.totalNpusCreated ?? state.totalNpusCreated ?? 0;
+  const npuFabCount = state.npuFabCount ?? state.npuFabCount ?? 0;
+  const megaFabCount = state.megaFabCount ?? state.megaFabCount ?? 0;
 
   let threatLevel = 'SECURED';
   let threatBg = 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20';

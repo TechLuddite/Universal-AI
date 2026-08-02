@@ -15,16 +15,16 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
 
   const {
     phase = 1,
-    silicon = gameState.wire || 0,
-    siliconCost = gameState.wireCost || 0,
+    silicon = gameState.silicon || 0,
+    siliconCost = gameState.siliconCost || 0,
     funds = 0,
-    unsoldNpus = gameState.unsoldClips || 0,
+    unsoldNpus = gameState.unsoldNpus || 0,
     margin = 0.25,
     demand = 0,
-    npuFabCount = gameState.clipperCount || 0,
-    npuFabCost = gameState.clipperCost || 0,
-    megaFabCount = gameState.megaClipperCount || 0,
-    megaFabCost = gameState.megaClipperCost || 0,
+    npuFabCount = gameState.npuFabCount || 0,
+    npuFabCost = gameState.npuFabCost || 0,
+    megaFabCount = gameState.megaFabCount || 0,
+    megaFabCost = gameState.megaFabCost || 0,
     marketingLevel = 1,
     marketingCost = 0,
     availableUpgradeIds = [],
@@ -33,7 +33,7 @@ export function generateLocalDecision(gameState: any, directives: any): AIDecisi
     processors = 1,
     memory = 1,
     harvesterDrones = 0,
-    siliconDrones = gameState.wireDrones || 0,
+    siliconDrones = gameState.siliconDrones || 0,
     probesCount = 0,
   } = gameState;
 

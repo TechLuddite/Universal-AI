@@ -1,7 +1,7 @@
 import React from 'react';
 import { Upgrade, GameState } from '../types';
 import { audio } from '../utils/sound';
-import { Sparkles, Check, Lock, Zap, Award } from 'lucide-react';
+import { Sparkles, Lock, Zap } from 'lucide-react';
 
 interface UpgradesPanelProps {
   upgrades: Upgrade[];

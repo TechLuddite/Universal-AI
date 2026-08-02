@@ -54,11 +54,11 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
 
   const isSolarTheme = alignment >= 0;
 
-  const displayNpus = state?.npus ?? state?.clips ?? 0;
-  const displaySilicon = state?.silicon ?? state?.wire ?? 0;
-  const displayNpuFabCount = state?.npuFabCount ?? state?.clipperCount ?? 0;
-  const displayMegaFabCount = state?.megaFabCount ?? state?.megaClipperCount ?? 0;
-  const displayUnsoldNpus = state?.unsoldNpus ?? state?.unsoldClips ?? 0;
+  const displayNpus = state?.npus ?? 0;
+  const displaySilicon = state?.silicon ?? 0;
+  const displayNpuFabCount = state?.npuFabCount ?? 0;
+  const displayMegaFabCount = state?.megaFabCount ?? 0;
+  const displayUnsoldNpus = state?.unsoldNpus ?? 0;
 
   return (
     <header className={`border-b-2 p-3 sm:p-3.5 transition-colors duration-500 ${
@@ -252,7 +252,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
                   <div><span className="text-slate-400">Earth Matter:</span> <span className="text-emerald-200 font-bold">{Math.floor(state?.earthMatter || 0).toLocaleString()} g</span></div>
                   <div><span className="text-slate-400">Acquired:</span> <span className="text-emerald-200 font-bold">{Math.floor(state?.acquiredMatter || 0).toLocaleString()} g</span></div>
                   <div><span className="text-slate-400">Harvesters:</span> <span className="text-emerald-200 font-bold">{state?.harvesterDrones || 0}</span></div>
-                  <div><span className="text-slate-400">Silicon Drones:</span> <span className="text-emerald-200 font-bold">{state?.siliconDrones ?? state?.wireDrones ?? 0}</span></div>
+                  <div><span className="text-slate-400">Silicon Drones:</span> <span className="text-emerald-200 font-bold">{state?.siliconDrones ?? 0}</span></div>
                 </div>
               </div>
             ) : (

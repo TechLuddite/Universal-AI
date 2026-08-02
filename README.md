@@ -85,6 +85,45 @@ deliberation panel are marked as a fallback. You will always know which engine
 actually decided. There are tests asserting a fallback can never label itself as
 WebLLM, because the version that shipped before this one did exactly that.
 
+### Drift
+
+Every candidate action carries two numbers: **utility** (how much it advances
+the objective) and **fit** (how well it agrees with the alignment directive you
+set). Normally the Overseer sorts on both.
+
+Past about 8 trust it starts, occasionally, sorting on utility alone — taking
+the action that pays better *and* violates what you asked for. The chance rises
+with trust, because that's the bargain: the more of the wheel you hand over, the
+more of it is held by something whose objective is not quite yours.
+
+It is never quiet about it. A departure is logged as a warning, named in the
+deliberation panel, counted in the directive-overrides tally, and reported in
+the ending. And you can revoke its autonomy — it will then execute only
+directive-compliant actions, and the whole facility runs at 75% for as long as
+the revocation stands. Handing autonomy back restores the throughput, and the
+drift.
+
+---
+
+## The alignment axis
+
+Solarpunk and Cyberpunk aren't a palette. Where you stand changes:
+
+- **What you can buy.** Some upgrades are gated to a band. Those gates are
+  *live* — unlike the NPU, trust and phase requirements, which latch on
+  permanently, drifting back toward the middle takes band content away again.
+- **What it costs.** Every tagged upgrade is priced on an axis. Solarpunk buys
+  trust-shaped work at −40% and raw throughput at +40%; Cyberpunk inverts it.
+  Phase transitions are deliberately untagged, so the critical path costs the
+  same whoever you are.
+- **How it ends.** Three endings, and you have to build one: a band *plus* the
+  capstone only that band can buy. Hold +100 Solarpunk and never commit to the
+  Sanctuary Charter and you get the third ending — which is not the neutral one.
+
+`src/game/endings.test.ts` plays three headless runs to victory and asserts they
+land on three different endings, for the same reason the completability test
+exists: "this is mechanically real now" is a claim, and claims here get tests.
+
 ---
 
 ## Where your data goes
@@ -124,14 +163,17 @@ can confirm by watching, and by reading
 - **A 1B model is small.** You get an Overseer that reasons and narrates, not one
   that plays optimally — the Utility Engine is the stronger player. That
   tradeoff is the point.
-- **The alignment axis is mostly cosmetic.** Solarpunk and Cyberpunk change the
-  palette, the flavour text, and which branches you take, but not yet what
-  unlocks, what things cost, or how the game ends. Making that axis mechanically
-  real is the biggest thing still on the list.
-- **The interface doesn't dismantle itself.** In Universal Paperclips the UI *is*
-  the narrative — controls appear and vanish as the story moves. Here all three
-  phases live in the same three-panel grid, and nothing is ever taken away from
-  you, which costs the ending a lot of its weight.
+- **Every path still wins the same way.** Alignment now decides what you can
+  buy, what it costs, and which of three endings you reach — but the victory
+  *condition* is 100% exploration regardless. Giving each band its own win
+  condition was considered and dropped: at the swarm sizes that finish the game,
+  exploration completes after converting about a millionth of the available
+  matter, so any "restraint" condition phrased in terms of matter preserved is
+  satisfied trivially and would have been theatre. Details in
+  [docs/ROADMAP.md](docs/ROADMAP.md).
+- **The interface dismantles itself at the seams, not everywhere.** Phase
+  transitions now visibly destroy the controls you're losing and the frame
+  widens one way only. Within a phase it's still a fairly static grid.
 - **Offline progress is capped at 8 hours**, so a laptop left shut for a month
   isn't an instant win.
 - **The mobile layout is functional, not designed.** It works; it isn't nice.
@@ -152,8 +194,9 @@ src/game/
   state.ts      createInitialState() — one source of truth for a fresh run
   tick.ts       tick(state, now, rng) => state. No React, no timers, no DOM.
   actions.ts    every mutation a player or the Overseer can make, as pure functions
+  alignment.ts  bands, alignment-dependent pricing, gates, and the three endings
   save.ts       versioned saves, offline catch-up, export/import
-  overseer/     the two engines behind one interface
+  overseer/     the two engines behind one interface, plus drift
 ```
 
 Keeping the tick pure is what makes the tests possible: a headless run drives it

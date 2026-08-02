@@ -15,6 +15,8 @@ interface PixelHeaderProps {
   onToggleCRT: () => void;
   onOpenAndroidGuide: () => void;
   phase: number;
+  /** Kept in step with the main frame, which widens once per phase and never narrows. */
+  frameWidth: string;
 }
 
 export const PixelHeader: React.FC<PixelHeaderProps> = ({
@@ -30,6 +32,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
   onToggleCRT,
   onOpenAndroidGuide,
   phase,
+  frameWidth,
 }) => {
   // Normalize alignment to percentage 0..100
   const alignPercent = Math.round(((alignment + 100) / 200) * 100);
@@ -66,7 +69,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
         ? 'bg-stone-900 border-amber-700/60 text-amber-100'
         : 'bg-slate-950 border-cyan-700/60 text-cyan-100'
     }`}>
-      <div className="max-w-7xl mx-auto space-y-2.5">
+      <div className="frame w-full mx-auto space-y-2.5" style={{ maxWidth: frameWidth }}>
         {/* Row 1: Brand, Alignment & Controls */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
           {/* Title, Phase Badge & Support Boxes - Uniform Sizing */}

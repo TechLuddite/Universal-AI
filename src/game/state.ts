@@ -86,6 +86,11 @@ export function createInitialState(): GameState {
     completedDecisionIds: [],
     purchasedUpgradeIds: [],
 
+    // Overseer autonomy & drift
+    autonomyRevoked: false,
+    driftCount: 0,
+    lastDrift: null,
+
     // Settings & preferences
     mode: 'direct',
     aiEngine: 'utility',

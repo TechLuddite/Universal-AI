@@ -8,6 +8,7 @@ import {
   ScoredAction,
 } from './types';
 import { UtilityOverseer, rankActions } from './utility';
+import { applyDrift } from './drift';
 
 /**
  * A genuine large language model, running on your GPU, in this tab.
@@ -245,11 +246,19 @@ export class WebLlmOverseer implements OverseerEngine {
         );
       }
 
+      // Drift applies to whichever engine is driving. The model's pick is what
+      // the Overseer *intended* to do; drift is it doing something else anyway,
+      // and it is labelled either way.
+      const { chosen, drift } = applyDrift(ctx, ranked, picked);
+
       return {
-        chosen: picked,
+        chosen,
         ranked,
-        thought: parsed.reason?.trim() || picked.reason,
+        thought: drift
+          ? `[autonomy drift] ${drift.summary}`
+          : parsed.reason?.trim() || picked.reason,
         engine: this.id,
+        drift,
       };
     } catch (err) {
       return this.fallBack(

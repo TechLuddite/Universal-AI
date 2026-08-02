@@ -12,7 +12,9 @@ function ctx(overrides: Partial<GameState> = {}, directives: Partial<OverseerDir
     ...overrides,
     directives: { ...base.directives, ...directives },
   };
-  return { state, directives: state.directives, availableUpgrades: [] };
+  // 0.99 never clears the drift roll, so these tests see the compliant choice.
+  // Drift has its own suite in drift.test.ts.
+  return { state, directives: state.directives, availableUpgrades: [], rng: () => 0.99 };
 }
 
 describe('the utility engine ranks rather than picks the first match', () => {

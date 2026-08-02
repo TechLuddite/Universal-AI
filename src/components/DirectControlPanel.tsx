@@ -2,6 +2,7 @@ import React from 'react';
 import { GameState, ProbeAllocation } from '../types';
 import { audio } from '../utils/sound';
 import { PROBE_SILICON_COST } from '../game/actions';
+import { endingTrajectory } from '../game/alignment';
 import { ProbeRadarChart } from './ProbeRadarChart';
 import {
   Plus,
@@ -22,6 +23,14 @@ import {
 
 interface DirectControlPanelProps {
   state: GameState;
+  /**
+   * The phase whose panels are currently being destroyed on screen, or null.
+   *
+   * While this is set the panel renders the *outgoing* phase, wearing
+   * `panel-demolish`. The controls you're losing are taken apart in front of
+   * you rather than quietly ceasing to be rendered — see index.css.
+   */
+  demolishing: 1 | 2 | null;
   /** Price below which the current strategy stops making sense. Advice, not a clamp. */
   advisoryFloor: number;
   megaFabUnlocked: boolean;
@@ -42,6 +51,7 @@ interface DirectControlPanelProps {
 
 export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
   state,
+  demolishing,
   advisoryFloor,
   megaFabUnlocked,
   onMakeNpu,
@@ -60,14 +70,27 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
 }) => {
   const isSolar = state.alignment >= 0;
 
+  // While a demolition is running we keep rendering the phase being left behind.
+  const visiblePhase = demolishing ?? state.phase;
+  const phaseClass = demolishing ? 'panel-demolish' : 'panel-arrive';
+  const trajectory = endingTrajectory(state);
+
+  // Phase 3 collapses to the swarm: two panels, one of them dominant, and the
+  // compute block demoted to a strip along the bottom.
+  const swarmView = visiblePhase === 3;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
+    <div
+      className={`grid grid-cols-1 gap-4 font-mono ${
+        swarmView ? 'lg:grid-cols-3' : 'md:grid-cols-2 lg:grid-cols-3'
+      }`}
+    >
       {/* ================= PHASE 1: COMMERCIAL EARTH ENTERPRISE ================= */}
-      {state.phase === 1 && (
+      {visiblePhase === 1 && (
         <>
           {/* 1. Lithography Etching Engine */}
           <div
-            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${phaseClass} ${
               isSolar
                 ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
                 : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -222,7 +245,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
 
           {/* 2. Commercial NPU Market */}
           <div
-            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${phaseClass} ${
               isSolar
                 ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
                 : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -320,11 +343,11 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
       )}
 
       {/* ================= PHASE 2: PLANETARY MATTER CONVERSION ================= */}
-      {state.phase === 2 && (
+      {visiblePhase === 2 && (
         <>
           {/* Phase 2: Manufacturing & Silicon Drones */}
           <div
-            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${phaseClass} ${
               isSolar
                 ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
                 : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -377,7 +400,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
 
           {/* Phase 2: Drone Swarm Assembly */}
           <div
-            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${phaseClass} ${
               isSolar
                 ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
                 : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -438,11 +461,11 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
       )}
 
       {/* ================= PHASE 3: INTERSTELLAR VON NEUMANN SWARM ================= */}
-      {state.phase === 3 && (
+      {visiblePhase === 3 && (
         <>
           {/* Phase 3: Cosmic Status */}
           <div
-            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all lg:col-span-2 ${phaseClass} ${
               isSolar
                 ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
                 : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -556,6 +579,31 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
               </button>
             </div>
 
+            {/*
+              What this run is currently on course to end as, and what's still
+              missing. Stated here rather than sprung on you at the victory
+              screen — an ending you can't steer toward isn't a choice.
+            */}
+            <div
+              className={`p-2.5 rounded border text-[11px] space-y-1 ${
+                trajectory.ending.id === 'solarpunk'
+                  ? 'bg-emerald-950/50 border-emerald-600/60 text-emerald-200'
+                  : trajectory.ending.id === 'cyberpunk'
+                  ? 'bg-rose-950/50 border-rose-600/60 text-rose-200'
+                  : 'bg-slate-900/70 border-slate-700 text-slate-300'
+              }`}
+            >
+              <div className="flex justify-between items-center gap-2">
+                <span className="uppercase tracking-wider text-[10px] opacity-70">
+                  Ending trajectory
+                </span>
+                <span className="font-bold">{trajectory.ending.title}</span>
+              </div>
+              {trajectory.missing && (
+                <p className="text-[10px] leading-snug opacity-90">{trajectory.missing}</p>
+              )}
+            </div>
+
             <div className="text-[11px] text-purple-300 bg-purple-950/40 p-2 rounded border border-purple-800/60">
               Probes are exploring deep space, self-replicating, fighting space drifters, and converting star systems into NPU microchips.
             </div>
@@ -563,7 +611,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
 
           {/* Phase 3: Probe Allocation Matrix */}
           <div
-            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+            className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${phaseClass} ${
               isSolar
                 ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
                 : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -607,9 +655,15 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
         </>
       )}
 
-      {/* ================= COMPUTE ARCHITECTURE & TRUST (ALL PHASES) ================= */}
+      {/*
+        ================= COMPUTE ARCHITECTURE & TRUST (ALL PHASES) =================
+        The one panel that survives every transition. In the swarm view it is
+        demoted to a strip along the bottom: still yours, no longer the point.
+      */}
       <div
-        className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all md:col-span-2 lg:col-span-1 ${
+        className={`p-4 rounded-xl border-2 flex flex-col justify-between gap-4 transition-all ${
+          swarmView ? 'lg:col-span-3' : 'md:col-span-2 lg:col-span-1'
+        } ${
           isSolar
             ? 'bg-stone-900/90 border-amber-600/50 shadow-lg shadow-amber-950/20'
             : 'bg-slate-950/90 border-cyan-600/50 shadow-lg shadow-cyan-950/20'
@@ -618,10 +672,16 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
         <div>
           <h3 className="text-sm font-bold text-cyan-400 flex items-center gap-1.5 uppercase tracking-wider mb-3">
             <Cpu className="w-4 h-4 text-cyan-500" />
-            3. Compute Architecture
+            {swarmView ? 'Compute Architecture' : '3. Compute Architecture'}
           </h3>
 
-          <div className="p-3 rounded-lg bg-black/60 border border-slate-800 space-y-2 text-xs">
+          <div
+            className={`p-3 rounded-lg bg-black/60 border border-slate-800 text-xs ${
+              swarmView
+                ? 'grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 items-center'
+                : 'space-y-2'
+            }`}
+          >
             <div className="flex justify-between items-center">
               <span className="text-slate-400">Earned Trust:</span>
               <span className="text-amber-400 font-bold">
@@ -630,7 +690,11 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
             </div>
 
             {/* Processors & Memory Distribution */}
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+            <div
+              className={`grid grid-cols-2 gap-2 ${
+                swarmView ? 'col-span-2' : 'pt-2 border-t border-slate-800'
+              }`}
+            >
               {/* Processors */}
               <div className="p-2 rounded bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
                 <span className="text-slate-400 text-[10px]">Processors</span>

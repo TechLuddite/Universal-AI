@@ -17,10 +17,13 @@ src/
     state.ts         createInitialState() / createNewGamePlusState()
     tick.ts          tick(state, now, rng) => state   ← the whole simulation
     actions.ts       every mutation, as pure (state, args) => state
+    alignment.ts     bands, alignment-dependent pricing, gates, the three endings
     save.ts          versioned localStorage, offline catch-up, export/import
+    headless.ts      test-only driver: strategies + a loop to the win condition
     overseer/
-      types.ts       OverseerEngine interface, OverseerDecision
+      types.ts       OverseerEngine interface, OverseerDecision, DriftRecord
       utility.ts     deterministic scorer (default engine)
+      drift.ts       when the Overseer stops obeying, and how loudly it says so
       webllm.ts      Llama 3.2 1B on WebGPU (opt-in)
       worker.ts      WebLLM inference worker
 
@@ -92,6 +95,52 @@ asserts this directly.
 - **`webllm.ts`** — opt-in, lazily imported so its ~6MB runtime stays out of the
   initial bundle. Feature-detects `navigator.gpu`, reports `unsupported` rather
   than offering a broken button.
+- **`drift.ts`** — the Overseer's latitude to disobey. Both engines route their
+  chosen action through `applyDrift` before returning.
+
+`OverseerContext` carries an `rng`. It is supplied by the caller (App passes
+`Math.random`) rather than reached for, for the same reason `tick` takes one.
+
+### Drift
+
+`ScoredAction` carries `utility` (advances the objective) and `fit` (agrees with
+the alignment directive) as separate numbers; `score` is the first discounted by
+the second. Drift is deciding to sort on `utility` alone.
+
+The chance is zero below `DRIFT_TRUST_THRESHOLD`, rises with trust, caps at
+`DRIFT_MAX_CHANCE`, and is exactly zero when `autonomyRevoked` — which costs
+`AUTONOMY_REVOKED_THROUGHPUT` of all production, applied in `tick`.
+
+**Same non-negotiable as the fallback:** a departure sets `OverseerDecision.drift`,
+prefixes the thought text, logs at warning level, increments `driftCount`, and
+shows in the panel and the ending. `game/overseer/drift.test.ts` asserts it.
+
+## Alignment
+
+`game/alignment.ts` is where the Solarpunk/Cyberpunk axis stops being paint.
+
+- `alignmentBand()` — ±40. Deliberately past the largest single decision shift
+  (±35), so a band is a policy, not an accident.
+- `upgradeCost(state, upgrade)` — the **only** price. Scales the sticker price by
+  up to ±40% along `costAxis`. Anything that displays or spends a cost goes
+  through it; a panel quoting one number while `buyUpgrade` charges another is
+  exactly the class of quiet disagreement this codebase has been burned by.
+- `meetsAlignmentRequirement()` — the band gate. **Live**, unlike `reqNpus` /
+  `reqTrust` / `reqPhase`, which latch on once. Enforced inside `buyUpgrade`, not
+  in the UI, because the player and the Overseer both come through there.
+- `endingFor()` — band **plus** the band-exclusive capstone. Holding +100 without
+  ever committing to the Sanctuary Charter gets you the third ending.
+
+## Phase transitions
+
+Phase changes are events, not a render branch. App holds `demolishing`, keeps the
+outgoing phase's panels mounted for `PHASE_DEMOLITION_MS`, and gives them
+`panel-demolish`; `PhaseTransition` names what was lost over the top.
+
+**Keep `PHASE_DEMOLITION_MS` in App.tsx in step with the keyframe durations in
+`index.css`,** or panels unmount mid-animation. A restored save sets
+`renderedPhase` directly so loading into Phase 3 doesn't demolish panels the
+player never had open.
 
 ## Saves
 
@@ -137,11 +186,19 @@ service worker competing with it would be a disaster.
 
 ```
 game/completability.test.ts   drives tick through phase 1 → 2 → 3 → victory
+game/endings.test.ts          three committed runs reach three different endings
+game/alignment.test.ts        bands gate content and move prices, both ways
 game/rewards.test.ts          every upgrade/decision reward survives the next tick
 game/save.test.ts             round-trip, migration, corruption, offline caps
 game/overseer/utility.test.ts directives measurably reorder the ranking
+game/overseer/drift.test.ts   a departure is never silent; revoking stops it
 game/overseer/webllm.test.ts  fallback is always visible and never mislabelled
 ```
+
+`game/headless.ts` is the shared driver for the first two. It's test-only and
+imported by nothing in the app — but it is deliberately not inside a `.test.ts`,
+because two suites drive it and a second copy of the game loop would have
+drifted from the first.
 
 These are written against **claims**, not implementation. "Can this game be
 finished" is a test. So is "does a reward still exist 100ms after it's granted."
@@ -162,9 +219,12 @@ say `paperclips.opsvibe.systems`. Keep them in sync or drop the root one.
 
 - `base: './'` in Vite — relative paths, so the build works from a custom domain
   root or a project subpath.
-- Alignment (`-100`..`+100`) currently drives colour and flavour text only. It
-  does **not** gate content or change the ending. See
-  [ROADMAP.md](ROADMAP.md).
+- Alignment gates are re-checked continuously; every other requirement latches.
+  If you add a gate, add it to `meetsAlignmentRequirement`, not to App's unlock
+  effect.
+- The victory *condition* is the same on every path — only the ending differs.
+  [ROADMAP.md](ROADMAP.md) has the arithmetic for why band-specific win
+  conditions were dropped rather than faked.
 - `probesCount` is deliberately fractional. Flooring it each tick meant a
   100-probe swarm growing at 0.1%/tick rounded back to 100 forever. Display
   floors it; the state does not.

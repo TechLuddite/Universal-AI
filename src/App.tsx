@@ -10,6 +10,7 @@ import { DecisionModal } from './components/DecisionModal';
 import { DevSupportModal } from './components/DevSupportModal';
 import { EdgeWarningModal } from './components/EdgeWarningModal';
 import { CosmicVictoryModal } from './components/CosmicVictoryModal';
+import { PhaseTransition } from './components/PhaseTransition';
 import { audio } from './utils/sound';
 import { createInitialState, createNewGamePlusState } from './game/state';
 import { UtilityOverseer } from './game/overseer/utility';
@@ -35,10 +36,27 @@ import {
   changeProcessor,
   changeMemory,
   quantumPulse,
-  canAffordUpgrade,
+  canBuyUpgrade,
   buyUpgrade,
   resolveDecision,
+  revokeAutonomy,
+  grantAutonomy,
+  recordDrift,
 } from './game/actions';
+
+/**
+ * How long the outgoing phase's panels stay on screen being destroyed before
+ * they're unmounted. Must match the `panel-demolish` / `phase-banner` keyframes
+ * in index.css.
+ */
+const PHASE_DEMOLITION_MS = 2200;
+
+/** The frame only ever widens. Scope is one-way, and the layout should say so. */
+const FRAME_WIDTH: Record<1 | 2 | 3, string> = {
+  1: '64rem',
+  2: '80rem',
+  3: '110rem',
+};
 
 export default function App() {
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
@@ -48,6 +66,8 @@ export default function App() {
 
   const [upgrades, setUpgrades] = useState<Upgrade[]>(INITIAL_UPGRADES);
   const [showDevSupport, setShowDevSupport] = useState<boolean>(false);
+  const [demolishing, setDemolishing] = useState<1 | 2 | null>(null);
+  const renderedPhase = useRef<1 | 2 | 3>(1);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
   const [offlineReport, setOfflineReport] = useState<string | null>(null);
 
@@ -76,6 +96,9 @@ export default function App() {
 
     setState(restored.state);
     setUpgrades(restored.upgrades);
+    // Loading into Phase 3 is not the same event as arriving there. Don't
+    // demolish panels the player never had open.
+    renderedPhase.current = restored.state.phase;
 
     if (restored.offlineNpus > 1) {
       const minutes = Math.round(restored.offlineMs / 60000);
@@ -102,6 +125,30 @@ export default function App() {
       setVictoryModalShownOnce(true);
     }
   }, [state, victoryModalShownOnce]);
+
+  // Phase transitions are *events*, not just a different branch of the render.
+  //
+  // When the phase changes, the panels belonging to the phase you're leaving
+  // stay mounted for `PHASE_DEMOLITION_MS` and are visibly destroyed first.
+  // Nothing used to be taken away from you here; that was the single biggest
+  // gap between this and the game it's a tribute to.
+  useEffect(() => {
+    if (state.phase === renderedPhase.current) return;
+    const leaving = renderedPhase.current;
+    renderedPhase.current = state.phase;
+
+    // Only a phase you actually played through gets demolished. A restored save
+    // sets `renderedPhase` directly, and a New Game+ reset walks backwards.
+    if (leaving === 3 || state.phase !== leaving + 1) return;
+
+    setDemolishing(leaving);
+    audio.playQuantumSound();
+    // The panels being taken apart are at the top of the page. A player who was
+    // scrolled down in the upgrade list would otherwise miss the whole event.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const timer = setTimeout(() => setDemolishing(null), PHASE_DEMOLITION_MS);
+    return () => clearTimeout(timer);
+  }, [state.phase]);
 
   // Unlock upgrades based on state
   useEffect(() => {
@@ -152,6 +199,8 @@ export default function App() {
         state: current,
         directives: current.directives,
         availableUpgrades: upgradesRef.current.filter((u) => u.unlocked && !u.purchased),
+        // Randomness is passed in, not reached for, so `game/` stays pure.
+        rng: Math.random,
       });
 
       setLastDecision(decision);
@@ -164,7 +213,13 @@ export default function App() {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           timestamp: new Date().toLocaleTimeString(),
           text: decision.thought,
-          type: chosen.action === 'MAKE_DECISION' ? 'decision' : 'thought',
+          // A departure from the alignment directive is logged as a warning, not
+          // as another thought. It has to be findable in the scrollback.
+          type: decision.drift
+            ? 'warning'
+            : chosen.action === 'MAKE_DECISION'
+            ? 'decision'
+            : 'thought',
           // The engine that actually decided, which is not necessarily the one
           // selected — a fallback must never be labelled as the engine it replaced.
           engine: decision.engine,
@@ -257,6 +312,8 @@ export default function App() {
             break;
         }
 
+        if (decision.drift) next = recordDrift(next, decision.drift.summary);
+
         return { ...next, aiLogs: [...next.aiLogs.slice(-40), newLog] };
       });
     } catch {
@@ -307,7 +364,7 @@ export default function App() {
 
   const handleBuyUpgrade = (upgradeId: string) => {
     const up = upgrades.find((u) => u.id === upgradeId);
-    if (!up || !canAffordUpgrade(state, up)) return;
+    if (!up || !canBuyUpgrade(state, up)) return;
 
     setState((prev) => buyUpgrade(prev, up));
     setUpgrades((list) =>
@@ -317,6 +374,9 @@ export default function App() {
 
   const handleSelectDecisionOption = (choiceIndex: number) =>
     setState((prev) => resolveDecision(prev, choiceIndex === 1 ? 1 : 0));
+
+  const handleToggleAutonomy = () =>
+    setState((prev) => (prev.autonomyRevoked ? grantAutonomy(prev) : revokeAutonomy(prev)));
 
   const handleToggleAutoLoop = () => {
     setState((prev) => ({
@@ -353,10 +413,14 @@ export default function App() {
         onToggleCRT={() => setState((prev) => ({ ...prev, crtFilterEnabled: !prev.crtFilterEnabled }))}
         onOpenAndroidGuide={() => setShowDevSupport(true)}
         phase={state.phase}
+        frameWidth={FRAME_WIDTH[state.phase]}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6">
+      {/* Main Content Area. The frame widens as scope does, and never narrows. */}
+      <main
+        className="frame flex-1 w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6"
+        style={{ maxWidth: FRAME_WIDTH[state.phase] }}
+      >
         {offlineReport && (
           <div className="flex items-center justify-between gap-3 p-3 rounded-lg border-2 border-emerald-600/60 bg-emerald-950/40 font-mono text-xs text-emerald-200">
             <span>{offlineReport}</span>
@@ -393,6 +457,7 @@ export default function App() {
         {state.mode === 'direct' ? (
           <DirectControlPanel
             state={state}
+            demolishing={demolishing}
             advisoryFloor={advisoryPriceFloor(state)}
             megaFabUnlocked={megaFabUnlocked(state)}
             onMakeNpu={handleMakeNpu}
@@ -415,6 +480,7 @@ export default function App() {
             onUpdateDirectives={(updated) =>
               setState((prev) => ({ ...prev, directives: { ...prev.directives, ...updated } }))
             }
+            onToggleAutonomy={handleToggleAutonomy}
             onToggleAutoLoop={handleToggleAutoLoop}
             onTriggerSingleStep={executeAiStep}
             isThinking={isAiThinking}
@@ -429,6 +495,9 @@ export default function App() {
           <UpgradesPanel upgrades={upgrades} state={state} onBuyUpgrade={handleBuyUpgrade} />
         </div>
       </main>
+
+      {/* The phase you just lost, named while its panels come down behind it. */}
+      <PhaseTransition from={demolishing} />
 
       {/* Decision Branch Modal */}
       {state.pendingDecision && (

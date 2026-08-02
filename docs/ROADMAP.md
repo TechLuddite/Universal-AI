@@ -1,19 +1,60 @@
 # Roadmap
 
-Stages 1–6 (repair, honesty pass, GitHub Pages) are done. What follows is the
-creative work that was deliberately deferred — scoped here so it isn't lost.
+Stages 1–6 (repair, honesty pass, GitHub Pages) are done. Stage 7 (7.1–7.3) is
+done. What follows is what's left, plus a record of what Stage 7 chose *not* to
+build and why.
 
 Ordered by payoff.
 
 ---
 
-## Stage 7 — Making it cooler
+## Stage 7 — Making it cooler — **done (7.1–7.3)**
 
-The repair made the game *work*. This makes it *good*. The two items at the top
-are the ones that would change how the game feels most, and both are called out
-as limitations in the README today.
+The repair made the game *work*. This makes it *good*.
 
-### 7.1 Give alignment teeth
+### 7.1 Give alignment teeth — **done**
+
+Shipped as `src/game/alignment.ts` (bands at ±40, `upgradeCost`, the live gate,
+`endingFor`), a `costAxis` tag on the upgrade data, four new band-exclusive
+upgrades including two capstones, and `src/game/endings.test.ts` — three
+headless runs to victory landing on three different endings.
+
+Two things came out differently from the scoping below, both worth knowing:
+
+- **The gate is live, not an unlock.** `reqNpus` / `reqTrust` / `reqPhase` latch
+  on forever; `reqAlignmentAbove` / `reqAlignmentBelow` are re-checked at
+  purchase, inside `buyUpgrade`. If a band gate latched, you could collect both
+  sides' content by oscillating, and the axis would be a checkpoint rather than
+  a commitment.
+- **The two capstones are priced in different currencies, on purpose.** Every
+  trust-granting upgrade in the game is alignment-positive, so a Cyberpunk run
+  reaches Phase 3 with a fraction of a Solarpunk run's trust — and therefore its
+  memory, and therefore its operations ceiling. Pricing both capstones in ops
+  looked perfectly symmetric and made the Cyberpunk ending unreachable in
+  practice. The headless run is what caught it; nothing about reading the file
+  would have.
+
+**Different win conditions per ending: deliberately not done.** The scoping
+below says "ideally, different win conditions", and it's the one item here I'd
+push back on. The obvious framing — a Solarpunk victory requires leaving some of
+the universe unconverted — is vacuous at this game's numbers. Exploration
+advances at `probes × speed × nav × 2e-9` per tick while harvesting takes
+`probes × harvester × 100`, so reaching 100% exploration costs on the order of
+`5e12` grams out of `6e18` available: about one millionth. Any restraint
+condition stated in terms of matter preserved is met without the player doing
+anything, and shipping it would have been a mechanic that reads as real and
+isn't — which is precisely the failure mode
+[LESSONS-FROM-AI-STUDIO.md](LESSONS-FROM-AI-STUDIO.md) is about. What's shipped
+instead makes the *ending* something you build (band + capstone), which is a
+real fork with a real cost, and leaves the victory condition honest and single.
+
+A genuinely different win condition would need a different Phase 3 economy — one
+where consumption and exploration actually compete for the same swarm. That's a
+bigger change than Stage 7 was scoped for; it belongs in its own item if anyone
+wants it.
+
+<details>
+<summary>Original scoping for 7.1</summary>
 
 **The problem.** The Solarpunk/Cyberpunk axis is the best original idea in the
 project and it is currently paint. `alignment` swaps two Tailwind colour families
@@ -37,7 +78,25 @@ what unlocks, or how the game ends. Full Solarpunk (+100) and full Cyberpunk
 mechanics, and most of the plumbing (the alignment number, the flavour strings,
 a single unlock check) already exists.
 
-### 7.2 Let the interface enact the story
+</details>
+
+### 7.2 Let the interface enact the story — **done**
+
+Phase transitions are events now. The outgoing phase's panels stay mounted for
+`PHASE_DEMOLITION_MS` and are visibly destroyed — shaken, desaturated, collapsed
+— under a banner naming what was taken (`PhaseTransition.tsx`, `panel-demolish`
+in `index.css`). The compute panel, the one thing that survives every
+transition, stays bright while the rest comes down. Phase 3 collapses to the
+swarm view: the swarm panel goes double-width, the compute block is demoted to a
+strip along the bottom. The frame widens once per phase and never narrows. In
+Overseer mode the pricing and procurement directives stop being rendered once
+there is nobody left to sell to.
+
+Keep `PHASE_DEMOLITION_MS` in App.tsx and the keyframe durations in `index.css`
+in step, or panels unmount mid-animation.
+
+<details>
+<summary>Original scoping for 7.2</summary>
 
 **The problem.** Universal Paperclips' real achievement is that the UI *is* the
 narrative — controls appear, the frame widens, and by the end you've forgotten
@@ -55,7 +114,29 @@ never chose to be — is *stated in flavour text* instead of enacted.
 **Why:** this is mostly CSS and sequencing — cheap relative to its impact — and
 it's the single biggest gap between this and the game it's paying tribute to.
 
-### 7.3 Overseer drift
+</details>
+
+### 7.3 Overseer drift — **done**
+
+`ScoredAction` now carries `utility` and `fit` separately, with `score` derived
+from both, so drift is a matter of which number gets sorted on.
+`overseer/drift.ts` rolls it: zero below 8 trust, rising 2% per point, capped at
+35%, and exactly zero while autonomy is revoked. Both engines route through
+`applyDrift`, so it applies whichever one is driving.
+
+A departure only counts when the alternative is genuinely *both* higher-utility
+and less directive-compliant — swapping in something that agrees with you just
+as much would be noise, not drift. `MAKE_DECISION` now ranks both branches (with
+utility measured by actually applying each branch's effect and diffing the
+state), which is what gives drift something to defect *to*.
+
+It is never silent: `OverseerDecision.drift`, a warning-level log entry, a badge
+on the deliberation panel, a running count in the Overseer panel, and a line in
+the ending. Revoking autonomy costs `AUTONOMY_REVOKED_THROUGHPUT` — 25% of
+everything — and is reversible.
+
+<details>
+<summary>Original scoping for 7.3</summary>
 
 **The problem.** The Overseer is the strongest original idea and it cannot
 surprise you. There's no tension between your directives and its behaviour —
@@ -72,6 +153,8 @@ latter as trust grows, and surfacing it loudly.
 **Why:** it's the paperclip thesis, made playable, using machinery that already
 exists.
 
+</details>
+
 ### 7.4 Deliberation as a first-class panel
 
 Promote the ranking from a strip in the thought terminal to its own panel: a
@@ -79,6 +162,11 @@ live ranked action list whose scores visibly reshuffle as you drag the directive
 sliders, before you commit. With WebLLM active, show the model's rationale
 alongside the utility engine's ranking for the same state, so you can watch the
 two disagree.
+
+Still worth doing: with WebLLM active, showing the model's rationale alongside
+the utility engine's ranking for the same state is now more interesting than it
+was, because the two can disagree about directive fit *and* about whether to
+honour it.
 
 ### 7.5 Smaller wins
 

@@ -1,11 +1,16 @@
 import React from 'react';
 import { GameState, OverseerDirectives } from '../types';
 import { OverseerDecision, EngineStatus } from '../game/overseer/types';
-import { Bot, Play, Pause, FastForward, Cpu, Terminal, Compass, Zap, ShieldAlert } from 'lucide-react';
+import { endingTrajectory } from '../game/alignment';
+import { driftChance } from '../game/overseer/drift';
+import { AUTONOMY_REVOKED_THROUGHPUT } from '../game/tick';
+import { Bot, Play, Pause, FastForward, Cpu, Terminal, Compass, Zap, ShieldAlert, Unlink, Link2 } from 'lucide-react';
 
 interface OverseerPanelProps {
   state: GameState;
   onUpdateDirectives: (updated: Partial<OverseerDirectives>) => void;
+  /** Revoke or restore the Overseer's latitude to depart from your directives. */
+  onToggleAutonomy: () => void;
   onToggleAutoLoop: () => void;
   onTriggerSingleStep: () => void;
   isThinking: boolean;
@@ -18,6 +23,7 @@ interface OverseerPanelProps {
 export const OverseerPanel: React.FC<OverseerPanelProps> = ({
   state,
   onUpdateDirectives,
+  onToggleAutonomy,
   onToggleAutoLoop,
   onTriggerSingleStep,
   isThinking,
@@ -27,6 +33,16 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
 }) => {
   const { directives, aiEngine, aiLogs, alignment } = state;
   const isSolar = alignment >= 0;
+
+  // How likely the next step is to depart from the alignment directive.
+  const chance = driftChance(state);
+  const throughputPenalty = Math.round((1 - AUTONOMY_REVOKED_THROUGHPUT) * 100);
+
+  // Pricing and procurement are Phase 1 levers. Once there is nobody left to
+  // sell to, they stop being rendered rather than sitting there inert.
+  const marketExists = state.phase === 1;
+
+  const trajectory = endingTrajectory(state);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 font-mono">
@@ -117,7 +133,91 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
           </div>
         </div>
 
-        {/* Pricing Strategy Policy */}
+        {/*
+          Autonomy.
+          The Overseer's latitude to do the higher-utility thing instead of the
+          thing you asked for. It rises with trust, it is always logged, and it
+          can be taken away — for a quarter of the facility's throughput.
+        */}
+        <div
+          className={`rounded-lg border p-2.5 space-y-2 text-xs ${
+            state.autonomyRevoked
+              ? 'bg-slate-900/80 border-slate-600'
+              : state.driftCount > 0
+              ? 'bg-rose-950/50 border-rose-600/70'
+              : 'bg-black/70 border-amber-700/50'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <ShieldAlert
+                className={`w-3.5 h-3.5 ${
+                  state.autonomyRevoked ? 'text-slate-400' : 'text-amber-400'
+                }`}
+              />
+              Autonomy
+            </span>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
+                state.autonomyRevoked
+                  ? 'border-slate-600 text-slate-300'
+                  : chance > 0
+                  ? 'border-rose-500/70 text-rose-300'
+                  : 'border-slate-700 text-slate-400'
+              }`}
+            >
+              {state.autonomyRevoked
+                ? `revoked · −${throughputPenalty}% output`
+                : chance > 0
+                ? `${(chance * 100).toFixed(0)}% drift / step`
+                : 'no latitude yet'}
+            </span>
+          </div>
+
+          <p className="text-[10px] leading-snug text-slate-400">
+            {state.autonomyRevoked
+              ? 'The Overseer executes only directive-compliant actions. Everything runs slower.'
+              : chance > 0
+              ? 'At this level of trust the Overseer may take the higher-utility action instead of the one your alignment directive asked for. It will log every time it does.'
+              : `Below ${'≈'}8 trust the Overseer has no latitude and follows directives exactly.`}
+          </p>
+
+          {state.driftCount > 0 && (
+            <div className="rounded border border-rose-700/60 bg-black/70 p-2 space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-rose-300 font-bold uppercase tracking-wider">
+                <span>Directive overrides</span>
+                <span className="font-mono">{state.driftCount.toLocaleString()}</span>
+              </div>
+              {state.lastDrift && (
+                <p className="text-[10px] leading-snug text-rose-200/90">{state.lastDrift}</p>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={onToggleAutonomy}
+            className={`w-full py-1.5 rounded border font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-1.5 transition-all ${
+              state.autonomyRevoked
+                ? 'bg-amber-900/70 hover:bg-amber-800 border-amber-500 text-amber-100'
+                : 'bg-rose-950/70 hover:bg-rose-900 border-rose-500 text-rose-100'
+            }`}
+          >
+            {state.autonomyRevoked ? (
+              <>
+                <Link2 className="w-3.5 h-3.5" />
+                Restore autonomy (full output, drift returns)
+              </>
+            ) : (
+              <>
+                <Unlink className="w-3.5 h-3.5" />
+                Revoke autonomy (−{throughputPenalty}% output)
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Pricing Strategy Policy — a Phase 1 lever, and only a Phase 1 lever. */}
+        {marketExists && (
         <div className="space-y-1.5 text-xs">
           <label className="text-slate-300 font-semibold block">Pricing Strategy Policy:</label>
           <select
@@ -130,8 +230,10 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             <option value="Premium Margin">Premium Margin (High Price / High Profit)</option>
           </select>
         </div>
+        )}
 
-        {/* Auto-Silicon Procurement Policy */}
+        {/* Auto-Silicon Procurement Policy — likewise. */}
+        {marketExists && (
         <div className="space-y-1.5 text-xs">
           <label className="text-slate-300 font-semibold block">Auto-Silicon Wafer Procurement Policy:</label>
           <div className="grid grid-cols-3 gap-1">
@@ -150,6 +252,7 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             ))}
           </div>
         </div>
+        )}
 
         {/* Auto-Upgrade Purchasing Policy Toggle */}
         <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800">
@@ -219,6 +322,17 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
                 <span className="text-cyan-300 font-bold font-mono">
                   {Math.min(100, ((6000000000000000000 - (state.cosmicMatter || 0)) / 6000000000000000000) * 100).toFixed(6)}%
                 </span>
+              </div>
+              {/* The same trajectory readout direct mode gets. An ending you
+                  can't steer toward isn't a choice. */}
+              <div className="bg-black/60 p-1.5 rounded border border-slate-700 col-span-2 space-y-0.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ending trajectory:</span>
+                  <span className="text-slate-200 font-bold">{trajectory.ending.title}</span>
+                </div>
+                {trajectory.missing && (
+                  <p className="text-slate-400 leading-snug">{trajectory.missing}</p>
+                )}
               </div>
             </div>
           </div>
@@ -387,16 +501,23 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
               <span className="text-[10px] uppercase tracking-wider text-slate-400">
                 Last deliberation
               </span>
-              <span
-                className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${
-                  lastDecision.fellBackFrom
-                    ? 'bg-amber-950 border-amber-600/60 text-amber-300'
-                    : 'bg-slate-900 border-slate-700 text-slate-300'
-                }`}
-              >
-                {lastDecision.engine === 'webllm' ? 'WebLLM' : 'Utility'}
-                {lastDecision.fellBackFrom && ' (fallback)'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {lastDecision.drift && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded border font-bold bg-rose-950 border-rose-500 text-rose-200">
+                    Directive overridden
+                  </span>
+                )}
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${
+                    lastDecision.fellBackFrom
+                      ? 'bg-amber-950 border-amber-600/60 text-amber-300'
+                      : 'bg-slate-900 border-slate-700 text-slate-300'
+                  }`}
+                >
+                  {lastDecision.engine === 'webllm' ? 'WebLLM' : 'Utility'}
+                  {lastDecision.fellBackFrom && ' (fallback)'}
+                </span>
+              </div>
             </div>
 
             {lastDecision.fellBackFrom && (
@@ -404,6 +525,15 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
                 WebLLM could not answer ({lastDecision.fallbackReason}), so the Utility Engine
                 decided this step.
               </p>
+            )}
+
+            {/*
+              Drift gets the same treatment a fallback gets, for the same
+              reason: an autonomous system that can quietly stop doing what you
+              asked is the failure this game is about.
+            */}
+            {lastDecision.drift && (
+              <p className="text-[11px] text-rose-300/90 mb-2">{lastDecision.drift.summary}</p>
             )}
 
             <ol className="space-y-1">

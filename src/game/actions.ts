@@ -1,4 +1,5 @@
 import { GameState, ProbeAllocation, Upgrade } from '../types';
+import { meetsAlignmentRequirement, upgradeCost } from './alignment';
 
 /**
  * Every mutation a player or the Overseer can make, as pure functions.
@@ -234,30 +235,51 @@ export function quantumPulse(state: GameState): GameState {
     : { ...spent, yomi: spent.yomi + 5 };
 }
 
+/**
+ * Affordability against the *alignment-adjusted* price, not the sticker price.
+ * Everything that displays or spends a cost must go through `upgradeCost`, or
+ * the panel and the ledger disagree.
+ */
 export function canAffordUpgrade(state: GameState, up: Upgrade): boolean {
+  const cost = upgradeCost(state, up);
   switch (up.costType) {
     case 'funds':
-      return state.funds >= up.costAmount;
+      return state.funds >= cost;
     case 'ops':
-      return state.operations >= up.costAmount;
+      return state.operations >= cost;
     case 'creativity':
-      return state.creativity >= up.costAmount;
+      return state.creativity >= cost;
     case 'yomi':
-      return state.yomi >= up.costAmount;
+      return state.yomi >= cost;
   }
 }
 
-/** Deduct an upgrade's cost and apply its effect. */
-export function buyUpgrade(state: GameState, up: Upgrade): GameState {
-  if (!canAffordUpgrade(state, up) || state.purchasedUpgradeIds.includes(up.id)) return state;
+/** Everything that has to be true before an upgrade can be bought. */
+export function canBuyUpgrade(state: GameState, up: Upgrade): boolean {
+  return (
+    !state.purchasedUpgradeIds.includes(up.id) &&
+    meetsAlignmentRequirement(state, up) &&
+    canAffordUpgrade(state, up)
+  );
+}
 
+/**
+ * Deduct an upgrade's cost and apply its effect.
+ *
+ * The alignment gate is enforced *here* rather than in the UI, because the
+ * player and the Overseer both come through this function and there is exactly
+ * one place a mutation is allowed to be defined.
+ */
+export function buyUpgrade(state: GameState, up: Upgrade): GameState {
+  if (!canBuyUpgrade(state, up)) return state;
+
+  const cost = upgradeCost(state, up);
   const paid: GameState = {
     ...state,
-    funds: up.costType === 'funds' ? state.funds - up.costAmount : state.funds,
-    operations: up.costType === 'ops' ? state.operations - up.costAmount : state.operations,
-    creativity:
-      up.costType === 'creativity' ? state.creativity - up.costAmount : state.creativity,
-    yomi: up.costType === 'yomi' ? state.yomi - up.costAmount : state.yomi,
+    funds: up.costType === 'funds' ? state.funds - cost : state.funds,
+    operations: up.costType === 'ops' ? state.operations - cost : state.operations,
+    creativity: up.costType === 'creativity' ? state.creativity - cost : state.creativity,
+    yomi: up.costType === 'yomi' ? state.yomi - cost : state.yomi,
   };
 
   return {
@@ -266,6 +288,36 @@ export function buyUpgrade(state: GameState, up: Upgrade): GameState {
     alignment: Math.max(-100, Math.min(100, paid.alignment + up.alignmentImpact)),
     purchasedUpgradeIds: [...paid.purchasedUpgradeIds, up.id],
   };
+}
+
+/**
+ * Take the wheel back.
+ *
+ * A revoked Overseer executes only directive-compliant actions — it stops
+ * drifting entirely — and the whole facility runs at
+ * `AUTONOMY_REVOKED_THROUGHPUT` for as long as the revocation stands. That
+ * ratio is the price of the guarantee, and it is meant to hurt enough that
+ * leaving a drifting Overseer running is a real temptation.
+ */
+export function revokeAutonomy(state: GameState): GameState {
+  if (state.autonomyRevoked) return state;
+  return { ...state, autonomyRevoked: true };
+}
+
+/** Hand autonomy back: full throughput returns, and so does drift. */
+export function grantAutonomy(state: GameState): GameState {
+  if (!state.autonomyRevoked) return state;
+  return { ...state, autonomyRevoked: false };
+}
+
+/**
+ * Record that the Overseer knowingly departed from the alignment directive.
+ *
+ * Kept as an action rather than written inline by the caller so that the count
+ * and the narration can never disagree with what the log says happened.
+ */
+export function recordDrift(state: GameState, summary: string): GameState {
+  return { ...state, driftCount: state.driftCount + 1, lastDrift: summary };
 }
 
 /** Resolve a pending decision branch. `choice` is 0 for Solarpunk, 1 for Cyberpunk. */

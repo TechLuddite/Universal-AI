@@ -45,12 +45,30 @@ had never once worked looked healthy for the project's whole life.
 migration story: `save.ts` spreads loaded data over the initial state, so old
 saves get defaults instead of `undefined`.
 
+**Drift announces itself.** When the Overseer takes the higher-utility action
+over the one your alignment directive asked for, `OverseerDecision.drift` is
+set, the thought text says so, the log entry is a warning, and `driftCount` goes
+up. Same rule as the fallback, for the same reason.
+`src/game/overseer/drift.test.ts` asserts it.
+
+**`upgradeCost(state, upgrade)` is the only price.** Alignment moves it by up to
+±40%. Anything that displays or spends a cost goes through that function — a
+panel quoting the sticker while the ledger charges something else is the exact
+shape of bug this repo keeps finding.
+
+**Alignment gates are live.** `reqNpus` / `reqTrust` / `reqPhase` latch on once;
+`reqAlignmentAbove` / `reqAlignmentBelow` are re-checked at purchase, inside
+`buyUpgrade`. Drifting back to the middle takes band content away again. Don't
+move that check into the UI — the Overseer buys upgrades too.
+
 ## Testing philosophy
 
 Tests here assert **claims**, not implementation:
 
 - *Can this game be finished?* — `game/completability.test.ts` drives the pure
   tick through all three phases to the win condition.
+- *Does picking a side change how it ends?* — `game/endings.test.ts` plays three
+  committed runs to victory and asserts three different endings.
 - *Does a granted reward still exist one tick later?* — `game/rewards.test.ts`,
   every upgrade and decision branch.
 - *Can a fallback pretend to be the engine it replaced?* —
@@ -71,6 +89,14 @@ add a test that the README is telling the truth.
   you touch it.
 - **`probesCount` is fractional on purpose.** Flooring it each tick meant a
   100-probe swarm at 0.1%/tick growth rounded back to 100 forever.
+- **`PHASE_DEMOLITION_MS` (App.tsx) must match the `panel-demolish` /
+  `phase-banner` keyframes in `index.css`.** They're the same event, timed in two
+  places; if they diverge, panels unmount mid-animation.
+- **The two ending capstones are priced in different currencies deliberately.**
+  Every trust-granting upgrade is alignment-positive, so a Cyberpunk run reaches
+  Phase 3 with far less trust — and so far less memory and far fewer operations.
+  Symmetric ops pricing made the Cyberpunk ending unreachable in practice, and
+  only the headless run caught it.
 - **The price floor is advice.** Nothing clamps it. The tick used to force the
   price up every 100ms, disabling the genre's central lever.
 

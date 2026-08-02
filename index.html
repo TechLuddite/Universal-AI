@@ -34,11 +34,17 @@
         font-src 'self';
         connect-src 'self' blob: data: https://huggingface.co https://*.hf.co https://raw.githubusercontent.com;
         form-action 'none';
-        frame-ancestors 'none';
         base-uri 'self';
         object-src 'none'
       "
     />
+    <!--
+      No `frame-ancestors` here: it is ignored when delivered via <meta>, and
+      GitHub Pages cannot set response headers, so clickjacking protection
+      isn't available on this host. Listing it anyway would only imply a
+      protection that isn't there.
+    -->
+
 
     <title>Universal AI — an idle game about optimization</title>
     <meta

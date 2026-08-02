@@ -114,6 +114,58 @@ describe('directives visibly change the ranking', () => {
   });
 });
 
+describe('rankActions is safe to call from render', () => {
+  // The deliberation panel recomputes the ranking live, every React render,
+  // straight from the current state. That is only legitimate if ranking is a
+  // pure read: no mutation, no randomness, same input → same output.
+
+  it('does not mutate the state it ranks', () => {
+    const c = ctx({ funds: 10_000, silicon: 50_000, npuFabCount: 10 });
+    // A pending decision exercises branchGain, which applies effects to score
+    // them — the most likely place a mutation could sneak in.
+    c.state.pendingDecision = {
+      id: 'test',
+      title: 't',
+      category: 'Ethical/Aesthetic',
+      description: 'd',
+      solarpunkOption: {
+        label: 's',
+        subtext: '',
+        alignmentShift: 25,
+        rewardText: '',
+        effect: () => ({ funds: 99_999 }),
+      },
+      cyberpunkOption: {
+        label: 'c',
+        subtext: '',
+        alignmentShift: -25,
+        rewardText: '',
+        effect: () => ({ trust: 99 }),
+      },
+    };
+    const before = JSON.stringify(c.state);
+    rankActions(c);
+    expect(JSON.stringify(c.state)).toBe(before);
+  });
+
+  it('is deterministic: the same context ranks identically twice', () => {
+    const c = ctx({ funds: 10_000, silicon: 50_000, npuFabCount: 10, trust: 5 });
+    const first = rankActions(c);
+    const second = rankActions(c);
+    expect(second.map((a) => [a.action, a.score])).toEqual(
+      first.map((a) => [a.action, a.score])
+    );
+  });
+
+  it('never consumes randomness — drift belongs to deciding, not ranking', () => {
+    const c = ctx({ funds: 10_000, silicon: 50_000, npuFabCount: 10 });
+    c.rng = () => {
+      throw new Error('rankActions must not roll dice');
+    };
+    expect(() => rankActions(c)).not.toThrow();
+  });
+});
+
 describe('the engine narrates its own choice', () => {
   it('names the runner-up it beat', async () => {
     const engine = new UtilityOverseer();

@@ -4,57 +4,35 @@ import { QuantumPhoton } from '../types';
 
 interface NpuCanvasProps {
   alignment: number;
-  npus?: number;
-  clips?: number;
-  silicon?: number;
-  wire?: number;
-  npuFabCount?: number;
-  clipperCount?: number;
-  megaFabCount?: number;
-  megaClipperCount?: number;
+  npus: number;
+  silicon: number;
+  npuFabCount: number;
+  megaFabCount: number;
   quantumLevel: number;
   quantumPhotons: QuantumPhoton[];
   phase: number;
   probesCount: number;
-  driftersCount?: number;
-  honor?: number;
-  hazardCombat?: number;
-  probesLostInCombat?: number;
-  driftersDefeated?: number;
-  lastBattleOutcome?: string;
+  driftersCount: number;
+  honor: number;
+  hazardCombat: number;
+  probesLostInCombat: number;
+  driftersDefeated: number;
+  lastBattleOutcome: string;
   crtFilterEnabled: boolean;
 }
 
-export const NpuCanvasComponent: React.FC<NpuCanvasProps> = ({
-  alignment,
-  npus,
-  clips,
-  silicon,
-  wire,
-  npuFabCount,
-  clipperCount,
-  megaFabCount,
-  megaClipperCount,
-  quantumLevel,
-  quantumPhotons,
-  phase,
-  probesCount,
-  driftersCount = 0,
-  honor = 0,
-  hazardCombat = 0,
-  probesLostInCombat = 0,
-  driftersDefeated = 0,
-  lastBattleOutcome = 'PATROL',
-  crtFilterEnabled,
-}) => {
+export const NpuCanvasComponent: React.FC<NpuCanvasProps> = (props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tickRef = useRef<number>(0);
 
-  const displayNpus = npus ?? clips ?? 0;
-  const displaySilicon = silicon ?? wire ?? 0;
-  const displayFabCount = npuFabCount ?? clipperCount ?? 0;
-  const displayMegaFabCount = megaFabCount ?? megaClipperCount ?? 0;
+  // The rAF loop reads the latest props through this ref instead of listing
+  // them as effect dependencies. Most of these values change every 100ms game
+  // tick, so depending on them tore the loop down and rebuilt it ~10×/second.
+  const propsRef = useRef(props);
+  propsRef.current = props;
+
+  const { phase, driftersCount, alignment } = props;
 
   useEffect(() => {
     let animationFrameId: number;
@@ -67,38 +45,45 @@ export const NpuCanvasComponent: React.FC<NpuCanvasProps> = ({
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Match canvas internal resolution to container width
+      // Render at the device's real resolution, draw in CSS-pixel coordinates.
+      // Without the devicePixelRatio scale the canvas is blurry on any hiDPI
+      // display, which is most of them.
+      const dpr = window.devicePixelRatio || 1;
       const width = container.clientWidth || 600;
       const height = container.clientHeight || 200;
+      const deviceWidth = Math.round(width * dpr);
+      const deviceHeight = Math.round(height * dpr);
 
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
+      if (canvas.width !== deviceWidth || canvas.height !== deviceHeight) {
+        canvas.width = deviceWidth;
+        canvas.height = deviceHeight;
       }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       tickRef.current += 1;
 
+      const p = propsRef.current;
       renderPixelArtCanvas(
         ctx,
         width,
         height,
-        alignment,
-        displayNpus,
-        displaySilicon,
-        displayFabCount,
-        displayMegaFabCount,
-        quantumLevel,
-        quantumPhotons,
-        phase,
-        probesCount,
+        p.alignment,
+        p.npus,
+        p.silicon,
+        p.npuFabCount,
+        p.megaFabCount,
+        p.quantumLevel,
+        p.quantumPhotons,
+        p.phase,
+        p.probesCount,
         tickRef.current,
-        crtFilterEnabled,
-        driftersCount,
-        honor,
-        hazardCombat,
-        probesLostInCombat,
-        driftersDefeated,
-        lastBattleOutcome
+        p.crtFilterEnabled,
+        p.driftersCount,
+        p.honor,
+        p.hazardCombat,
+        p.probesLostInCombat,
+        p.driftersDefeated,
+        p.lastBattleOutcome
       );
 
       animationFrameId = requestAnimationFrame(handleRender);
@@ -109,24 +94,7 @@ export const NpuCanvasComponent: React.FC<NpuCanvasProps> = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [
-    alignment,
-    displayNpus,
-    displaySilicon,
-    displayFabCount,
-    displayMegaFabCount,
-    quantumLevel,
-    quantumPhotons,
-    phase,
-    probesCount,
-    driftersCount,
-    honor,
-    hazardCombat,
-    probesLostInCombat,
-    driftersDefeated,
-    lastBattleOutcome,
-    crtFilterEnabled,
-  ]);
+  }, []);
 
   return (
     <div

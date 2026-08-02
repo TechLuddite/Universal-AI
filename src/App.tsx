@@ -6,6 +6,8 @@ import { NpuCanvasComponent } from './components/NpuCanvasComponent';
 import { DirectControlPanel } from './components/DirectControlPanel';
 import { OverseerPanel } from './components/OverseerPanel';
 import { UpgradesPanel } from './components/UpgradesPanel';
+import { StatsPanel } from './components/StatsPanel';
+import { OfflineReportCard, OfflineReport } from './components/OfflineReportCard';
 import { DecisionModal } from './components/DecisionModal';
 import { DevSupportModal } from './components/DevSupportModal';
 import { EdgeWarningModal } from './components/EdgeWarningModal';
@@ -16,7 +18,7 @@ import { createInitialState, createNewGamePlusState } from './game/state';
 import { UtilityOverseer } from './game/overseer/utility';
 import { WebLlmOverseer, WEBLLM_MODELS } from './game/overseer/webllm';
 import { OverseerDecision, EngineStatus } from './game/overseer/types';
-import { save, load, clearSave } from './game/save';
+import { save, load, clearSave, MAX_OFFLINE_MS } from './game/save';
 import { tick, hasWon, TICK_MS, advisoryPriceFloor } from './game/tick';
 import {
   makeNpu,
@@ -69,7 +71,7 @@ export default function App() {
   const [demolishing, setDemolishing] = useState<1 | 2 | null>(null);
   const renderedPhase = useRef<1 | 2 | 3>(1);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
-  const [offlineReport, setOfflineReport] = useState<string | null>(null);
+  const [offlineReport, setOfflineReport] = useState<OfflineReport | null>(null);
 
   // The two engines. Both are real: a deterministic scorer, and a language
   // model running on the player's own GPU.
@@ -83,6 +85,14 @@ export default function App() {
   );
   const [lastDecision, setLastDecision] = useState<OverseerDecision | null>(null);
   const [showModelDownload, setShowModelDownload] = useState(false);
+
+  // What the engines can currently buy. Memoized on `upgrades` — which only
+  // changes on unlock/purchase — so the deliberation panel isn't handed a new
+  // array identity every 100ms tick.
+  const availableUpgrades = useMemo(
+    () => upgrades.filter((u) => u.unlocked && !u.purchased),
+    [upgrades]
+  );
 
   // Sync sound mute setting with audio engine
   useEffect(() => {
@@ -101,11 +111,11 @@ export default function App() {
     renderedPhase.current = restored.state.phase;
 
     if (restored.offlineNpus > 1) {
-      const minutes = Math.round(restored.offlineMs / 60000);
-      setOfflineReport(
-        `Welcome back. ${Math.floor(restored.offlineNpus).toLocaleString()} NPUs were ` +
-          `synthesized over ${minutes.toLocaleString()} minutes while you were away.`
-      );
+      setOfflineReport({
+        npus: restored.offlineNpus,
+        ms: restored.offlineMs,
+        capped: restored.offlineMs >= MAX_OFFLINE_MS,
+      });
     }
   }, []);
 
@@ -422,15 +432,7 @@ export default function App() {
         style={{ maxWidth: FRAME_WIDTH[state.phase] }}
       >
         {offlineReport && (
-          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border-2 border-emerald-600/60 bg-emerald-950/40 font-mono text-xs text-emerald-200">
-            <span>{offlineReport}</span>
-            <button
-              onClick={() => setOfflineReport(null)}
-              className="px-2 py-1 rounded border border-emerald-600/60 hover:bg-emerald-900/60 uppercase tracking-wider text-[11px] shrink-0"
-            >
-              Dismiss
-            </button>
-          </div>
+          <OfflineReportCard report={offlineReport} onDismiss={() => setOfflineReport(null)} />
         )}
 
         {/* 2D Vector Lithography & Tactical Combat Canvas */}
@@ -477,6 +479,7 @@ export default function App() {
         ) : (
           <OverseerPanel
             state={state}
+            availableUpgrades={availableUpgrades}
             onUpdateDirectives={(updated) =>
               setState((prev) => ({ ...prev, directives: { ...prev.directives, ...updated } }))
             }
@@ -494,6 +497,10 @@ export default function App() {
         <div className="w-full">
           <UpgradesPanel upgrades={upgrades} state={state} onBuyUpgrade={handleBuyUpgrade} />
         </div>
+
+        {/* Analytics. Existed for the project's whole life without ever being
+            imported — a dead component that looked alive. Now it's alive. */}
+        <StatsPanel state={state} />
       </main>
 
       {/* The phase you just lost, named while its panels come down behind it. */}

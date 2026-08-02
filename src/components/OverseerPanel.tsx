@@ -1,6 +1,7 @@
 import React from 'react';
-import { GameState, OverseerDirectives } from '../types';
+import { GameState, OverseerDirectives, Upgrade } from '../types';
 import { OverseerDecision, EngineStatus } from '../game/overseer/types';
+import { DeliberationPanel } from './DeliberationPanel';
 import { endingTrajectory } from '../game/alignment';
 import { driftChance } from '../game/overseer/drift';
 import { AUTONOMY_REVOKED_THROUGHPUT } from '../game/tick';
@@ -8,6 +9,8 @@ import { Bot, Play, Pause, FastForward, Cpu, Terminal, Compass, Zap, ShieldAlert
 
 interface OverseerPanelProps {
   state: GameState;
+  /** Unlocked, unpurchased — what the deliberation panel ranks live. */
+  availableUpgrades: Upgrade[];
   onUpdateDirectives: (updated: Partial<OverseerDirectives>) => void;
   /** Revoke or restore the Overseer's latitude to depart from your directives. */
   onToggleAutonomy: () => void;
@@ -22,6 +25,7 @@ interface OverseerPanelProps {
 
 export const OverseerPanel: React.FC<OverseerPanelProps> = ({
   state,
+  availableUpgrades,
   onUpdateDirectives,
   onToggleAutonomy,
   onToggleAutoLoop,
@@ -305,22 +309,22 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
                 <Compass className="w-3.5 h-3.5 text-purple-400" /> Interstellar Exploration
               </span>
               <span className="text-purple-200 font-mono">
-                {(state.spaceExploredPct || 0.0001).toFixed(4)}% Explored
+                {state.spaceExploredPct.toFixed(4)}% Explored
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-[10px]">
               <div className="bg-purple-950/40 p-1.5 rounded border border-purple-800/40 flex justify-between">
                 <span className="text-slate-400">Active Probes:</span>
-                <span className="text-purple-200 font-bold">{Math.floor(state.probesCount || 0).toLocaleString()}</span>
+                <span className="text-purple-200 font-bold">{Math.floor(state.probesCount).toLocaleString()}</span>
               </div>
               <div className="bg-purple-950/40 p-1.5 rounded border border-purple-800/40 flex justify-between">
                 <span className="text-slate-400">Space Drifters:</span>
-                <span className="text-rose-300 font-bold">{Math.floor(state.driftersCount || 0).toLocaleString()}</span>
+                <span className="text-rose-300 font-bold">{Math.floor(state.driftersCount).toLocaleString()}</span>
               </div>
               <div className="bg-purple-950/40 p-1.5 rounded border border-purple-800/40 flex justify-between col-span-2">
                 <span className="text-slate-400">Universe Converted:</span>
                 <span className="text-cyan-300 font-bold font-mono">
-                  {Math.min(100, ((6000000000000000000 - (state.cosmicMatter || 0)) / 6000000000000000000) * 100).toFixed(6)}%
+                  {Math.min(100, ((6000000000000000000 - state.cosmicMatter) / 6000000000000000000) * 100).toFixed(6)}%
                 </span>
               </div>
               {/* The same trajectory readout direct mode gets. An ending you
@@ -346,25 +350,25 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
                 <Zap className="w-3.5 h-3.5 text-amber-400" /> Silicon Supply & Lithography
               </span>
               <span className="text-[10px] text-slate-400">
-                {(state.siliconPerNpu || 1.0) < 1.0 ? `${((state.siliconPerNpu || 1.0) * 100).toFixed(0)}% Wafer Ratio` : 'Standard 1:1 Node'}
+                {state.siliconPerNpu < 1.0 ? `${(state.siliconPerNpu * 100).toFixed(0)}% Wafer Ratio` : 'Standard 1:1 Node'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-[10px]">
               <div className="bg-amber-950/40 p-1.5 rounded border border-amber-800/40 flex justify-between">
                 <span className="text-slate-400">Stock:</span>
-                <span className={`font-bold ${Math.floor(state.silicon || state.silicon || 0) < 100 ? 'text-rose-400 font-black' : 'text-amber-200'}`}>
-                  {Math.floor(state.silicon || state.silicon || 0).toLocaleString()}
+                <span className={`font-bold ${Math.floor(state.silicon) < 100 ? 'text-rose-400 font-black' : 'text-amber-200'}`}>
+                  {Math.floor(state.silicon).toLocaleString()}
                 </span>
               </div>
               <div className="bg-amber-950/40 p-1.5 rounded border border-amber-800/40 flex justify-between">
                 <span className="text-slate-400">Burn Rate:</span>
                 <span className="text-cyan-300 font-bold">
-                  {Math.floor(((state.npuFabCount || 0) + (state.megaFabCount || 0) * 500) * 10 * (state.siliconPerNpu || 1.0)).toLocaleString()} /s
+                  {Math.floor((state.npuFabCount + state.megaFabCount * 500) * 10 * state.siliconPerNpu).toLocaleString()} /s
                 </span>
               </div>
             </div>
 
-            {Math.floor(state.silicon || state.silicon || 0) < 50 && ((state.npuFabCount || 0) + (state.megaFabCount || 0)) > 0 && (
+            {Math.floor(state.silicon) < 50 && state.npuFabCount + state.megaFabCount > 0 && (
               <div className="p-1.5 rounded bg-rose-950/80 border border-rose-500 text-rose-200 text-[10px] font-bold flex items-center justify-between gap-1 animate-pulse">
                 <span className="flex items-center gap-1">
                   <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
@@ -466,8 +470,17 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
         </div>
       </div>
 
+      {/* Deliberation (live ranking, first-class) above the thought terminal. */}
+      <div className="lg:col-span-2 flex flex-col gap-4">
+      <DeliberationPanel
+        state={state}
+        availableUpgrades={availableUpgrades}
+        lastDecision={lastDecision}
+        isThinking={isThinking}
+      />
+
       {/* AI Autonomous Thought Terminal */}
-      <div className={`p-4 rounded-xl border-2 flex flex-col justify-between lg:col-span-2 ${
+      <div className={`p-4 rounded-xl border-2 flex flex-col justify-between flex-1 ${
         isSolar
           ? 'bg-stone-950/95 border-amber-600/50'
           : 'bg-slate-950/95 border-cyan-600/50'
@@ -489,77 +502,6 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             {aiLogs.length} Events Logged
           </span>
         </div>
-
-        {/*
-          The deliberation panel. The Overseer used to print canned strings from
-          an if/else chain; this is the actual ranking it chose from, and the
-          directive controls above visibly reorder it.
-        */}
-        {lastDecision && (
-          <div className="mb-3 p-3 rounded-lg bg-black/70 border border-slate-800">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] uppercase tracking-wider text-slate-400">
-                Last deliberation
-              </span>
-              <div className="flex items-center gap-1.5">
-                {lastDecision.drift && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded border font-bold bg-rose-950 border-rose-500 text-rose-200">
-                    Directive overridden
-                  </span>
-                )}
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${
-                    lastDecision.fellBackFrom
-                      ? 'bg-amber-950 border-amber-600/60 text-amber-300'
-                      : 'bg-slate-900 border-slate-700 text-slate-300'
-                  }`}
-                >
-                  {lastDecision.engine === 'webllm' ? 'WebLLM' : 'Utility'}
-                  {lastDecision.fellBackFrom && ' (fallback)'}
-                </span>
-              </div>
-            </div>
-
-            {lastDecision.fellBackFrom && (
-              <p className="text-[11px] text-amber-300/90 mb-2">
-                WebLLM could not answer ({lastDecision.fallbackReason}), so the Utility Engine
-                decided this step.
-              </p>
-            )}
-
-            {/*
-              Drift gets the same treatment a fallback gets, for the same
-              reason: an autonomous system that can quietly stop doing what you
-              asked is the failure this game is about.
-            */}
-            {lastDecision.drift && (
-              <p className="text-[11px] text-rose-300/90 mb-2">{lastDecision.drift.summary}</p>
-            )}
-
-            <ol className="space-y-1">
-              {lastDecision.ranked.slice(0, 4).map((action, i) => {
-                const chosen = action === lastDecision.chosen;
-                return (
-                  <li
-                    key={`${action.action}-${action.upgradeId ?? i}`}
-                    className={`flex items-baseline gap-2 text-[11px] ${
-                      chosen ? 'text-emerald-300' : 'text-slate-500'
-                    }`}
-                  >
-                    <span className="font-mono tabular-nums w-9 shrink-0 text-right">
-                      {action.score.toFixed(2)}
-                    </span>
-                    <span className={`font-bold shrink-0 ${chosen ? '' : 'opacity-70'}`}>
-                      {action.action}
-                    </span>
-                    <span className="truncate opacity-80">{action.reason}</span>
-                    {chosen && <span className="ml-auto shrink-0 font-bold">← chosen</span>}
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        )}
 
         {/* Friendly AI Mascot Companion Status Card */}
         <div className={`p-3 rounded-lg border flex items-center justify-between gap-3 ${
@@ -624,6 +566,7 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             This mode implements your agentic concept: the AI runs continuous inferencing loops to optimize NPU microchip growth while you tune macro parameters and directives.
           </span>
         </div>
+      </div>
       </div>
     </div>
   );

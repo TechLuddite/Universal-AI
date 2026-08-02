@@ -3,7 +3,7 @@ import { GameMode, AIEngine, GameState } from '../types';
 import { Cpu, Bot, Volume2, VolumeX, Tv, Heart, Activity, Globe, Factory, TrendingUp, Compass } from 'lucide-react';
 
 interface PixelHeaderProps {
-  state?: GameState;
+  state: GameState;
   mode: GameMode;
   aiEngine: AIEngine;
   alignment: number; // -100 to +100
@@ -57,11 +57,11 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
 
   const isSolarTheme = alignment >= 0;
 
-  const displayNpus = state?.npus ?? 0;
-  const displaySilicon = state?.silicon ?? 0;
-  const displayNpuFabCount = state?.npuFabCount ?? 0;
-  const displayMegaFabCount = state?.megaFabCount ?? 0;
-  const displayUnsoldNpus = state?.unsoldNpus ?? 0;
+  const displayNpus = state.npus;
+  const displaySilicon = state.silicon;
+  const displayNpuFabCount = state.npuFabCount;
+  const displayMegaFabCount = state.megaFabCount;
+  const displayUnsoldNpus = state.unsoldNpus;
 
   return (
     <header className={`border-b-2 p-3 sm:p-3.5 transition-colors duration-500 ${
@@ -197,7 +197,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
               </span>
               <span className="text-slate-400">ALIGNMENT:</span>
               <span className={`font-bold px-1.5 py-0.5 rounded border bg-black/60 ${isSolarTheme ? 'text-emerald-400 border-emerald-800' : 'text-rose-400 border-rose-800'}`}>
-                {(state?.alignment || 0) > 0 ? `+${state?.alignment}` : state?.alignment || 0}
+                {state.alignment > 0 ? `+${state.alignment}` : state.alignment}
               </span>
             </div>
           </div>
@@ -223,38 +223,38 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
             </div>
 
             {/* Category 2: PHASE-AWARE TELEMETRY PANEL (Market -> Planetary -> Cosmic Exploration) */}
-            {state?.phase === 3 ? (
+            {state.phase === 3 ? (
               <div className="bg-black/70 p-2 rounded-lg border border-purple-500/40 space-y-1">
                 <div className="flex items-center justify-between text-[10px] font-bold text-purple-400 pb-1 border-b border-purple-900/50">
                   <span className="flex items-center gap-1">
                     <Compass className="w-3 h-3 text-purple-400 animate-spin" style={{ animationDuration: '10s' }} /> COSMIC EXPLORATION
                   </span>
                   <span className="text-purple-300 font-bold font-mono">
-                    {Math.min(100, ((6000000000000000000 - (state?.cosmicMatter || 0)) / 6000000000000000000) * 100).toFixed(6)}% Converted
+                    {Math.min(100, ((6000000000000000000 - state.cosmicMatter) / 6000000000000000000) * 100).toFixed(6)}% Converted
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
-                  <div><span className="text-slate-400">Probes:</span> <span className="text-purple-200 font-bold">{Math.floor(state?.probesCount || 0).toLocaleString()}</span></div>
-                  <div><span className="text-slate-400">Explored:</span> <span className="text-purple-200 font-bold">{(state?.spaceExploredPct || 0.0001).toFixed(4)}%</span></div>
-                  <div><span className="text-slate-400">Drifters:</span> <span className="text-rose-300 font-bold">{Math.floor(state?.driftersCount || 0).toLocaleString()}</span></div>
-                  <div><span className="text-slate-400">Honor:</span> <span className="text-amber-300 font-bold">{Math.floor(state?.honor || 0).toLocaleString()}</span></div>
+                  <div><span className="text-slate-400">Probes:</span> <span className="text-purple-200 font-bold">{Math.floor(state.probesCount).toLocaleString()}</span></div>
+                  <div><span className="text-slate-400">Explored:</span> <span className="text-purple-200 font-bold">{state.spaceExploredPct.toFixed(4)}%</span></div>
+                  <div><span className="text-slate-400">Drifters:</span> <span className="text-rose-300 font-bold">{Math.floor(state.driftersCount).toLocaleString()}</span></div>
+                  <div><span className="text-slate-400">Honor:</span> <span className="text-amber-300 font-bold">{Math.floor(state.honor).toLocaleString()}</span></div>
                 </div>
               </div>
-            ) : state?.phase === 2 ? (
+            ) : state.phase === 2 ? (
               <div className="bg-black/70 p-2 rounded-lg border border-emerald-500/40 space-y-1">
                 <div className="flex items-center justify-between text-[10px] font-bold text-emerald-400 pb-1 border-b border-emerald-900/50">
                   <span className="flex items-center gap-1">
                     <Globe className="w-3 h-3 text-emerald-400" /> PLANETARY CONVERSION
                   </span>
                   <span className="text-emerald-300 font-bold font-mono">
-                    {Math.min(100, ((6000000000000 - (state?.earthMatter || 0)) / 6000000000000) * 100).toFixed(2)}% Converted
+                    {Math.min(100, ((6000000000000 - state.earthMatter) / 6000000000000) * 100).toFixed(2)}% Converted
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
-                  <div><span className="text-slate-400">Earth Matter:</span> <span className="text-emerald-200 font-bold">{Math.floor(state?.earthMatter || 0).toLocaleString()} g</span></div>
-                  <div><span className="text-slate-400">Acquired:</span> <span className="text-emerald-200 font-bold">{Math.floor(state?.acquiredMatter || 0).toLocaleString()} g</span></div>
-                  <div><span className="text-slate-400">Harvesters:</span> <span className="text-emerald-200 font-bold">{state?.harvesterDrones || 0}</span></div>
-                  <div><span className="text-slate-400">Silicon Drones:</span> <span className="text-emerald-200 font-bold">{state?.siliconDrones ?? 0}</span></div>
+                  <div><span className="text-slate-400">Earth Matter:</span> <span className="text-emerald-200 font-bold">{Math.floor(state.earthMatter).toLocaleString()} g</span></div>
+                  <div><span className="text-slate-400">Acquired:</span> <span className="text-emerald-200 font-bold">{Math.floor(state.acquiredMatter).toLocaleString()} g</span></div>
+                  <div><span className="text-slate-400">Harvesters:</span> <span className="text-emerald-200 font-bold">{state.harvesterDrones}</span></div>
+                  <div><span className="text-slate-400">Silicon Drones:</span> <span className="text-emerald-200 font-bold">{state.siliconDrones}</span></div>
                 </div>
               </div>
             ) : (
@@ -264,13 +264,13 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
                     <TrendingUp className="w-3 h-3 text-cyan-400" /> MARKET & FINANCE
                   </span>
                   <span className="text-emerald-400 font-bold font-mono">
-                    ${(state?.funds || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ${state.funds.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
-                  <div><span className="text-slate-400">Price:</span> <span className="text-cyan-200 font-bold">${(state?.margin || 0.25).toFixed(2)}</span></div>
-                  <div><span className="text-slate-400">Demand:</span> <span className="text-cyan-200 font-bold">{Math.round(state?.demand || 0)}%</span></div>
-                  <div><span className="text-slate-400">Marketing:</span> <span className="text-cyan-200 font-bold">Lvl {state?.marketingLevel || 1}</span></div>
+                  <div><span className="text-slate-400">Price:</span> <span className="text-cyan-200 font-bold">${state.margin.toFixed(2)}</span></div>
+                  <div><span className="text-slate-400">Demand:</span> <span className="text-cyan-200 font-bold">{Math.round(state.demand)}%</span></div>
+                  <div><span className="text-slate-400">Marketing:</span> <span className="text-cyan-200 font-bold">Lvl {state.marketingLevel}</span></div>
                   <div><span className="text-slate-400">Unsold:</span> <span className="text-cyan-200 font-bold">{Math.floor(displayUnsoldNpus).toLocaleString()}</span></div>
                 </div>
               </div>
@@ -283,14 +283,14 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
                   <Cpu className="w-3 h-3 text-purple-400" /> COMPUTE & TRUST
                 </span>
                 <span className="text-purple-300 font-bold font-mono">
-                  Trust {state?.trust || 0}/{state?.maxTrust || 0}
+                  Trust {state.trust}/{state.maxTrust}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px]">
-                <div><span className="text-slate-400">Ops:</span> <span className="text-purple-200 font-bold">{Math.floor(state?.operations || 0).toLocaleString()}</span></div>
-                <div><span className="text-slate-400">Proc/Mem:</span> <span className="text-purple-200 font-bold">{state?.processors || 1}P / {state?.memory || 1}M</span></div>
-                <div><span className="text-slate-400">Quantum:</span> <span className="text-purple-200 font-bold">{state?.quantumLevel ? `Lvl ${state.quantumLevel}` : 'Locked'}</span></div>
-                <div><span className="text-slate-400">Decisions:</span> <span className="text-purple-200 font-bold">{state?.completedDecisionIds?.length || 0}</span></div>
+                <div><span className="text-slate-400">Ops:</span> <span className="text-purple-200 font-bold">{Math.floor(state.operations).toLocaleString()}</span></div>
+                <div><span className="text-slate-400">Proc/Mem:</span> <span className="text-purple-200 font-bold">{state.processors}P / {state.memory}M</span></div>
+                <div><span className="text-slate-400">Quantum:</span> <span className="text-purple-200 font-bold">{state.quantumLevel > 0 ? `Lvl ${state.quantumLevel}` : 'Locked'}</span></div>
+                <div><span className="text-slate-400">Decisions:</span> <span className="text-purple-200 font-bold">{state.completedDecisionIds.length}</span></div>
               </div>
             </div>
           </div>

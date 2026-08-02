@@ -16,7 +16,7 @@ import { OverseerContext } from './types';
 
 function ctx(overrides: Partial<GameState> = {}): OverseerContext {
   const state: GameState = { ...createInitialState(), funds: 5000, silicon: 20000, ...overrides };
-  return { state, directives: state.directives, availableUpgrades: [] };
+  return { state, directives: state.directives, availableUpgrades: [], rng: () => 0.99 };
 }
 
 describe('WebLLM fallback is always visible', () => {

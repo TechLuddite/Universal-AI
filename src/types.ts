@@ -2,7 +2,17 @@ export type GameMode = 'direct' | 'overseer';
 
 export type AIEngine = 'utility' | 'webllm';
 
+/** Which side of the axis you're actually on. See `game/alignment.ts`. */
 export type AlignmentPhase = 'Cyberpunk' | 'Neutral' | 'Solarpunk';
+
+/**
+ * Which lever an upgrade pulls, for alignment-dependent pricing.
+ *
+ * Solarpunk buys `trust` cheaply and `throughput` expensively; Cyberpunk the
+ * reverse. Untagged upgrades cost the same either way — the tag is a claim that
+ * this upgrade sits on one side of that trade, so don't apply it by default.
+ */
+export type CostAxis = 'trust' | 'throughput';
 
 export interface DecisionOption {
   label: string;
@@ -26,10 +36,20 @@ export interface Upgrade {
   name: string;
   description: string;
   costType: 'funds' | 'ops' | 'creativity' | 'yomi';
+  /** Sticker price. What you actually pay is `upgradeCost(state, upgrade)`. */
   costAmount: number;
   reqNpus?: number;
   reqTrust?: number;
   reqPhase?: number;
+  /**
+   * Alignment gates, in contrast to the requirements above, are **live**: they
+   * are re-checked every time, including at purchase. Drifting out of the band
+   * takes the upgrade away again. That's what makes the axis a commitment
+   * rather than a checkpoint you pass once.
+   */
+  reqAlignmentAbove?: number;
+  reqAlignmentBelow?: number;
+  costAxis?: CostAxis;
   alignmentImpact: number; // -15 to +15
   unlocked: boolean;
   purchased: boolean;
@@ -138,6 +158,18 @@ export interface GameState {
   pendingDecision: DecisionBranch | null;
   completedDecisionIds: string[];
   purchasedUpgradeIds: string[];
+
+  // Overseer Autonomy & Drift
+  /**
+   * Set when the player takes the wheel back. A revoked Overseer never drifts —
+   * and costs `AUTONOMY_REVOKED_THROUGHPUT` of the facility's output, because
+   * supervision is not free. Reversible: you can hand autonomy back.
+   */
+  autonomyRevoked: boolean;
+  /** How many times the Overseer has knowingly defied the alignment directive. */
+  driftCount: number;
+  /** What it did the last time, in its own words. Null before the first drift. */
+  lastDrift: string | null;
 
   // Game Settings & Preferences
   mode: GameMode;

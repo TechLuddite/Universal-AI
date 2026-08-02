@@ -15,6 +15,19 @@ const PROBE_TRUST_PER_PCT = 2;
 /** Probe trust granted on entering Phase 3, so the radar starts usable. */
 const INITIAL_PROBE_TRUST = 10;
 
+/**
+ * What the facility runs at once you've revoked the Overseer's autonomy.
+ *
+ * The trade the game is about: an Overseer that can depart from your directives
+ * is faster than one that can't. Buying the guarantee costs a quarter of
+ * everything, permanently, for as long as you hold it.
+ */
+export const AUTONOMY_REVOKED_THROUGHPUT = 0.75;
+
+function throughputMultiplier(state: GameState): number {
+  return state.autonomyRevoked ? AUTONOMY_REVOKED_THROUGHPUT : 1;
+}
+
 export type Rng = () => number;
 
 /**
@@ -73,8 +86,11 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
 
   const { purchasedUpgradeIds, siliconPerNpu } = prev;
 
+  /** Everything the facility produces is scaled by this. 1 unless supervised. */
+  const throughput = throughputMultiplier(prev);
+
   /** Chips per tick from all fabs. A megafab is 500× a standard fab. */
-  const fabOutputPerTick = (npuFabCount * 1 + megaFabCount * 500) / TPS;
+  const fabOutputPerTick = ((npuFabCount * 1 + megaFabCount * 500) / TPS) * throughput;
 
   // ================= PHASE 1: EARTH ENTERPRISE =================
   if (phase === 1) {
@@ -148,13 +164,13 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
     unsoldNpus = 0;
 
     if (harvesterDrones > 0 && earthMatter > 0) {
-      const harvested = Math.min(earthMatter, harvesterDrones * 50);
+      const harvested = Math.min(earthMatter, harvesterDrones * 50 * throughput);
       earthMatter -= harvested;
       acquiredMatter += harvested;
     }
 
     if (siliconDrones > 0 && acquiredMatter > 0) {
-      const converted = Math.min(acquiredMatter, siliconDrones * 50);
+      const converted = Math.min(acquiredMatter, siliconDrones * 50 * throughput);
       acquiredMatter -= converted;
       silicon += converted;
     }
@@ -183,7 +199,7 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
       // which made Phase 3 unfinishable. Display floors it instead.
       probesCount = Math.min(
         MAX_PROBES,
-        probesCount * (1 + probeAllocation.replication * 0.0005)
+        probesCount * (1 + probeAllocation.replication * 0.0005 * throughput)
       );
 
       spaceExploredPct = Math.min(
@@ -201,7 +217,10 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
     }
 
     if (cosmicMatter > 0) {
-      const harvested = Math.min(cosmicMatter, probesCount * probeAllocation.harvester * 100);
+      const harvested = Math.min(
+        cosmicMatter,
+        probesCount * probeAllocation.harvester * 100 * throughput
+      );
       cosmicMatter -= harvested;
       const produced = harvested * probeAllocation.factory;
       npus += produced;

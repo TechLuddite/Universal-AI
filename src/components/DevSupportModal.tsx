@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, ExternalLink, Coffee, X, Code, Cpu, CheckCircle2, Building2 } from 'lucide-react';
+import { Heart, ExternalLink, Coffee, X, Code, Cpu, CheckCircle2, Building2, GitCommitHorizontal } from 'lucide-react';
 
 interface DevSupportModalProps {
   onClose: () => void;
@@ -166,6 +166,42 @@ export const DevSupportModal: React.FC<DevSupportModalProps> = ({ onClose }) => 
           <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-800">
             There is no backend. No analytics, no telemetry, no accounts. Don't take our word for
             it — open DevTools, play a normal game, and watch the Network tab stay empty.
+          </p>
+        </div>
+
+        {/* Build provenance. Stated, not certified — see the comment below. */}
+        <div className="space-y-2 bg-black/60 p-4 rounded-lg border border-slate-800">
+          <h3 className="text-xs uppercase font-bold text-slate-300 flex items-center gap-1.5">
+            <GitCommitHorizontal className="w-4 h-4 text-slate-400" />
+            This build
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+            <div className="p-2 rounded bg-slate-900/80 border border-slate-800 flex justify-between gap-2">
+              <span className="text-slate-500">Commit</span>
+              <a
+                href={`https://github.com/TechLuddite/Universal-AI/commit/${__COMMIT_SHA__}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-cyan-400 hover:text-cyan-300 underline font-bold"
+              >
+                {__COMMIT_SHA__}
+              </a>
+            </div>
+            <div className="p-2 rounded bg-slate-900/80 border border-slate-800 flex justify-between gap-2">
+              <span className="text-slate-500">Built</span>
+              <span className="text-slate-300">{new Date(__BUILD_TIME__).toLocaleString()}</span>
+            </div>
+          </div>
+          {/*
+            Deliberately no "verified" badge here. A page cannot prove its own
+            integrity — anything it draws about itself, a tampered copy could
+            draw too. The honest offer is the pointer to check it from outside.
+          */}
+          <p className="text-[11px] text-slate-500 leading-snug">
+            These values are stamped in at build time, and this page can't prove them — a page
+            can't vouch for its own integrity. To check from outside: the site deploys from that
+            commit via a public GitHub Actions run, so compare against the repository, or build
+            from source and diff the output.
           </p>
         </div>
 

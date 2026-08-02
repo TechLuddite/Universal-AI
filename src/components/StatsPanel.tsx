@@ -10,14 +10,12 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ state }) => {
   const isSolar = state.alignment >= 0;
 
   // Combat Stats Calculations
-  const drifters = state.driftersCount || 0;
-  const defeated = state.driftersDefeated || 0;
-  const losses = state.probesLostInCombat || 0;
+  const drifters = state.driftersCount;
+  const defeated = state.driftersDefeated;
+  const losses = state.probesLostInCombat;
   const killLossRatio = losses > 0 ? (defeated / losses).toFixed(2) : (defeated > 0 ? '∞' : '1.00');
 
-  const totalNpusCreated = state.totalNpusCreated ?? state.totalNpusCreated ?? 0;
-  const npuFabCount = state.npuFabCount ?? state.npuFabCount ?? 0;
-  const megaFabCount = state.megaFabCount ?? state.megaFabCount ?? 0;
+  const { totalNpusCreated, npuFabCount, megaFabCount } = state;
 
   let threatLevel = 'SECURED';
   let threatBg = 'border-emerald-500/40 text-emerald-400 bg-emerald-950/20';
@@ -101,7 +99,8 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ state }) => {
                 <Globe className="w-3 h-3 text-cyan-400" /> Active Probes
               </div>
               <div className="text-cyan-200 font-black text-sm mt-0.5">
-                {state.probesCount.toLocaleString()}
+                {/* The state keeps probes fractional so growth compounds; only the display floors. */}
+                {Math.floor(state.probesCount).toLocaleString()}
               </div>
             </div>
 
@@ -146,7 +145,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({ state }) => {
                 <Award className="w-3 h-3 text-yellow-400" /> Combat Honor
               </div>
               <div className="text-yellow-300 font-black text-sm mt-0.5">
-                {(state.honor || 0).toLocaleString()}
+                {state.honor.toLocaleString()}
               </div>
             </div>
           </div>

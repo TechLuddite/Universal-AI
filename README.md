@@ -59,9 +59,12 @@ What makes it worth watching is that it shows its work:
 0.12  BUY_MARKETING  demand at 240%
 ```
 
-Drag the expansion pace slider and the ranking visibly reorders. That loop — you
-tune the objective, you watch the objective change the behaviour — is what the
-game is about, so it happens in front of you rather than inside a black box.
+Drag the expansion pace slider and the ranking visibly reorders — live, in the
+deliberation panel, before the Overseer commits to anything. The panel is
+recomputed every frame from the current state by the same pure ranking function
+both engines use, not replayed from the last decision. That loop — you tune the
+objective, you watch the objective change the behaviour — is what the game is
+about, so it happens in front of you rather than inside a black box.
 
 Instant, works in every browser, makes no network requests at all.
 

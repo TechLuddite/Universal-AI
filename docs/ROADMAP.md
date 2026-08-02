@@ -155,32 +155,42 @@ exists.
 
 </details>
 
-### 7.4 Deliberation as a first-class panel
+### 7.4 Deliberation as a first-class panel — **done**
 
-Promote the ranking from a strip in the thought terminal to its own panel: a
-live ranked action list whose scores visibly reshuffle as you drag the directive
-sliders, before you commit. With WebLLM active, show the model's rationale
-alongside the utility engine's ranking for the same state, so you can watch the
-two disagree.
+Shipped as `src/components/DeliberationPanel.tsx`. The ranking is its own panel
+now, above the thought terminal: recomputed live every render from the current
+state by the same pure `rankActions` both engines use, so dragging a directive
+slider reorders the rows before the Overseer commits to anything. Rows whose
+`fit` is below 1 are marked — those are the rows drift can defect to.
 
-Still worth doing: with WebLLM active, showing the model's rationale alongside
-the utility engine's ranking for the same state is now more interesting than it
-was, because the two can disagree about directive fit *and* about whether to
-honour it.
+Below the live ranking sits what the engine actually did last step, with the
+existing drift and fallback badges, plus a new one: when WebLLM's pick differs
+from the scorer's favourite, the panel names both actions and both scores
+("Model overruled scorer"). The two engines disagreeing over the same state is
+the interesting part, and now it's legible.
 
-### 7.5 Smaller wins
+One thing to know: calling `rankActions` from render is only legitimate because
+it is a pure read. `utility.test.ts` now asserts that — no state mutation, fully
+deterministic, and it never consumes the context's `rng` (drift rolls dice at
+decision time, never at ranking time).
 
-- **"While you were away" summary** — offline catch-up already computes this
-  (`save.ts` returns `offlineNpus` / `offlineMs`); it currently renders as a
-  single dismissible line. It could be a proper summary card.
-- **Provenance panel** — `__COMMIT_SHA__` and `__BUILD_TIME__` are already
-  injected by `vite.config.ts` and currently unused. Surface them with a "no
-  network — here's how to check" note. Important: don't let the app draw itself
-  a green "verified" badge; a page cannot prove its own integrity.
-- **Mobile layout.** Functional, not designed.
-- **Canvas polish.** `NpuCanvasComponent`'s effect lists values that change every
-  100ms in its deps, so the rAF loop is torn down and rebuilt ~10×/second. No
-  `devicePixelRatio` handling either, so it's blurry on retina displays.
+### 7.5 Smaller wins — **done except mobile**
+
+- **"While you were away" summary** — **done.** A proper card now
+  (`OfflineReportCard.tsx`): time away, chips produced, average rate, and an
+  honest note when the 8-hour cap was hit. The card reports what the catch-up
+  replay in `save.ts` produced; it computes nothing itself.
+- **Provenance panel** — **done.** `__COMMIT_SHA__` and `__BUILD_TIME__` are
+  surfaced in the support modal, the commit linking to GitHub. Deliberately no
+  "verified" badge — a page cannot prove its own integrity, and the comment in
+  `DevSupportModal.tsx` says so. What it offers instead is the pointer to check
+  from outside: the public Actions run, or build-and-diff.
+- **Mobile layout.** Functional, not designed. Still open.
+- **Canvas polish** — **done.** The rAF loop reads live values through a ref and
+  is created once, instead of being torn down and rebuilt ~10×/second by its own
+  dependency array; rendering is scaled by `devicePixelRatio` so it's no longer
+  blurry on hiDPI displays. The legacy `clips`/`wire`/`clipperCount` props and
+  their `??` fallbacks are gone — App was never passing them.
 
 ---
 
@@ -193,8 +203,10 @@ honour it.
 - **More WebLLM models.** `WEBLLM_MODELS` in `webllm.ts` is already a list; a
   picker is a small change. Larger models mean better narration and a much
   bigger download.
-- **Achievements / stats screen.** `StatsPanel.tsx` exists and is wired in but
-  under-used.
+- **Achievements / stats screen.** `StatsPanel.tsx` is now actually rendered
+  (below the upgrades panel — for the project's whole prior life it was a dead
+  component nothing imported, despite this file claiming otherwise). Achievements
+  proper are still unbuilt.
 
 ---
 

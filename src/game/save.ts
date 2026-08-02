@@ -7,7 +7,7 @@ const STORAGE_KEY = 'universal_ai_save_v1';
 const SAVE_VERSION = 1;
 
 /** Cap offline catch-up so a laptop left closed for a month isn't an instant win. */
-const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000; // 8 hours
+export const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000; // 8 hours
 
 /** Ticks simulated per batch when catching up, to bound the work on load. */
 const MAX_CATCHUP_TICKS = 20_000;

@@ -18,6 +18,7 @@ import { CosmicVictoryModal } from './components/CosmicVictoryModal';
 import { audio } from './utils/sound';
 import { generateLocalDecision } from './utils/localAiEngine';
 import { createInitialState, createNewGamePlusState } from './game/state';
+import { save, load, clearSave } from './game/save';
 import { tick, hasWon, TICK_MS, advisoryPriceFloor } from './game/tick';
 import {
   makeNpu,
@@ -51,11 +52,29 @@ export default function App() {
   const [upgrades, setUpgrades] = useState<Upgrade[]>(INITIAL_UPGRADES);
   const [showDevSupport, setShowDevSupport] = useState<boolean>(false);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
+  const [offlineReport, setOfflineReport] = useState<string | null>(null);
 
   // Sync sound mute setting with audio engine
   useEffect(() => {
     audio.enabled = state.soundEnabled;
   }, [state.soundEnabled]);
+
+  // Restore the previous run, including progress made while the tab was closed.
+  useEffect(() => {
+    const restored = load();
+    if (!restored) return;
+
+    setState(restored.state);
+    setUpgrades(restored.upgrades);
+
+    if (restored.offlineNpus > 1) {
+      const minutes = Math.round(restored.offlineMs / 60000);
+      setOfflineReport(
+        `Welcome back. ${Math.floor(restored.offlineNpus).toLocaleString()} NPUs were ` +
+          `synthesized over ${minutes.toLocaleString()} minutes while you were away.`
+      );
+    }
+  }, []);
 
   // Main game tick. All simulation lives in the pure reducer in game/tick.ts.
   useEffect(() => {
@@ -96,6 +115,21 @@ export default function App() {
   // reading a dozen more, so it reasoned over an out-of-date snapshot.
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  const upgradesRef = useRef(upgrades);
+  upgradesRef.current = upgrades;
+
+  // Autosave. An idle game that loses everything when the tab closes isn't one.
+  useEffect(() => {
+    const interval = setInterval(() => save(stateRef.current, upgradesRef.current), 5000);
+    const flush = () => save(stateRef.current, upgradesRef.current);
+    window.addEventListener('beforeunload', flush);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('beforeunload', flush);
+      flush();
+    };
+  }, []);
 
   // Execute one Overseer step in the autonomous loop
   const executeAiStep = useCallback(async () => {
@@ -280,6 +314,7 @@ export default function App() {
   const handleResetNewGamePlus = () => {
     setShowVictoryModal(false);
     setVictoryModalShownOnce(false);
+    clearSave();
     setState(createNewGamePlusState);
     setUpgrades(INITIAL_UPGRADES);
   };
@@ -308,6 +343,18 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6">
+        {offlineReport && (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border-2 border-emerald-600/60 bg-emerald-950/40 font-mono text-xs text-emerald-200">
+            <span>{offlineReport}</span>
+            <button
+              onClick={() => setOfflineReport(null)}
+              className="px-2 py-1 rounded border border-emerald-600/60 hover:bg-emerald-900/60 uppercase tracking-wider text-[11px] shrink-0"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* 2D Vector Lithography & Tactical Combat Canvas */}
         <NpuCanvasComponent
           alignment={state.alignment}

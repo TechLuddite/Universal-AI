@@ -8,11 +8,12 @@ import { OverseerPanel } from './components/OverseerPanel';
 import { UpgradesPanel } from './components/UpgradesPanel';
 import { DecisionModal } from './components/DecisionModal';
 import { DevSupportModal } from './components/DevSupportModal';
+import { EdgeWarningModal } from './components/EdgeWarningModal';
 import { CosmicVictoryModal } from './components/CosmicVictoryModal';
 import { audio } from './utils/sound';
 import { createInitialState, createNewGamePlusState } from './game/state';
 import { UtilityOverseer } from './game/overseer/utility';
-import { WebLlmOverseer } from './game/overseer/webllm';
+import { WebLlmOverseer, WEBLLM_MODELS } from './game/overseer/webllm';
 import { OverseerDecision, EngineStatus } from './game/overseer/types';
 import { save, load, clearSave } from './game/save';
 import { tick, hasWon, TICK_MS, advisoryPriceFloor } from './game/tick';
@@ -61,6 +62,7 @@ export default function App() {
     []
   );
   const [lastDecision, setLastDecision] = useState<OverseerDecision | null>(null);
+  const [showModelDownload, setShowModelDownload] = useState(false);
 
   // Sync sound mute setting with audio engine
   useEffect(() => {
@@ -418,7 +420,7 @@ export default function App() {
             isThinking={isAiThinking}
             lastDecision={lastDecision}
             engineStatus={engineStatus}
-            onLoadModel={() => engines.webllm.load()}
+            onLoadModel={() => setShowModelDownload(true)}
           />
         )}
 
@@ -434,6 +436,19 @@ export default function App() {
           decision={state.pendingDecision}
           state={state}
           onSelectOption={handleSelectDecisionOption}
+        />
+      )}
+
+      {/* Confirmation before spending ~900MB of the player's bandwidth */}
+      {showModelDownload && (
+        <EdgeWarningModal
+          modelLabel={WEBLLM_MODELS[0].label}
+          approxMb={WEBLLM_MODELS[0].approxMb}
+          onCancel={() => setShowModelDownload(false)}
+          onConfirm={() => {
+            setShowModelDownload(false);
+            void engines.webllm.load();
+          }}
         />
       )}
 

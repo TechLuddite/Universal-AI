@@ -3,11 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Universal AI</title>
+
+    <!--
+      Content Security Policy — the network guarantee, in enforceable form.
+
+      There is no backend. The page has no analytics, no telemetry, no fonts,
+      no trackers, and no API. `connect-src` lists the only origins this page
+      is permitted to reach, ever:
+
+        huggingface.co, *.hf.co      model weights, if you opt into WebLLM
+        raw.githubusercontent.com    the compiled model libraries
+
+      Those are contacted only when you explicitly choose the WebLLM Overseer
+      and press download. The default Utility Engine contains no network code
+      at all, so on a default game nothing leaves your machine — open DevTools
+      and watch. What CSP guarantees on top of that is the harder part: even a
+      compromised dependency could not exfiltrate anything anywhere else.
+
+      `wasm-unsafe-eval` is required to compile WebLLM's WebAssembly. It does
+      not permit eval() of JavaScript.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'wasm-unsafe-eval';
+        worker-src 'self' blob:;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self';
+        connect-src 'self' blob: data: https://huggingface.co https://*.hf.co https://raw.githubusercontent.com;
+        form-action 'none';
+        frame-ancestors 'none';
+        base-uri 'self';
+        object-src 'none'
+      "
+    />
+
+    <title>Universal AI — an idle game about optimization</title>
+    <meta
+      name="description"
+      content="A Universal Paperclips tribute. Build NPU chips, hand the wheel to an autonomous Overseer, and watch what optimization does when nobody stops it. Runs entirely in your browser."
+    />
+    <meta name="theme-color" content="#0c0a09" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="10" fill="#0c0a09"/>
+  <!-- NPU die: a chip with pins, in the Solarpunk amber -->
+  <rect x="18" y="18" width="28" height="28" rx="3" fill="none" stroke="#f59e0b" stroke-width="3"/>
+  <rect x="27" y="27" width="10" height="10" fill="#f59e0b"/>
+  <g stroke="#f59e0b" stroke-width="3" stroke-linecap="round">
+    <path d="M24 18V11M32 18V11M40 18V11"/>
+    <path d="M24 53V46M32 53V46M40 53V46"/>
+    <path d="M18 24H11M18 32H11M18 40H11"/>
+    <path d="M53 24H46M53 32H46M53 40H46"/>
+  </g>
+</svg>

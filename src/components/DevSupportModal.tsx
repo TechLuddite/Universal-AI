@@ -127,26 +127,46 @@ export const DevSupportModal: React.FC<DevSupportModalProps> = ({ onClose }) => 
           </div>
         </div>
 
-        {/* Answer regarding AI Edge in Firefox & Sandbox */}
+        {/* What the two Overseer engines actually are */}
         <div className="space-y-3 bg-black/60 p-4 rounded-lg border border-slate-800">
           <h3 className="text-xs uppercase font-bold text-cyan-300 flex items-center gap-1.5">
             <Cpu className="w-4 h-4 text-cyan-400" />
-            Is Google AI Edge working in Firefox & Sandboxes?
+            What is the Overseer actually running?
           </h3>
           <ul className="text-xs text-slate-300 space-y-2">
             <li className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-white">Yes, seamlessly!</strong> In Firefox and sandboxed iframe environments, our local AI engine employs a client-side WebAssembly heuristic and quantized neural decision pipeline that requires zero external server roundtrips and zero WebGPU restrictions.
+                <strong className="text-white">Utility Engine (default).</strong> A deterministic
+                scorer, not a neural network. It ranks every legal action against your directives
+                and shows you the scores. Instant, works in every browser, and makes{' '}
+                <em>no network requests at all</em>.
               </div>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-white">Dual Engine Mode:</strong> You can switch anytime between <span className="text-purple-300">Google AI Edge (In-Browser / On-Device)</span> and <span className="text-amber-300">Cloud Gemini 3.6 Flash</span> using the top toolbar!
+                <strong className="text-white">WebLLM (opt-in).</strong> Llama 3.2 1B, quantized to
+                4-bit, running on your GPU via WebGPU and WebAssembly. Weights download once
+                (~900MB) from HuggingFace and are cached; after that it works offline. Your game
+                state is fed to a model on your own machine and never leaves it. Requires Chrome or
+                Edge 113+.
+              </div>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-white">If WebLLM can't answer, it says so.</strong> No
+                WebGPU, model not loaded, or a malformed response, and the Utility Engine decides
+                that step — with the log and the deliberation panel both marked as a fallback. You
+                will always know which engine actually made a decision.
               </div>
             </li>
           </ul>
+          <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-800">
+            There is no backend. No analytics, no telemetry, no accounts. Don't take our word for
+            it — open DevTools, play a normal game, and watch the Network tab stay empty.
+          </p>
         </div>
 
         <div className="flex justify-end pt-1">

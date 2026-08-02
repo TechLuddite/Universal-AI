@@ -1,0 +1,13 @@
+{
+  "name": "Universal AI",
+  "short_name": "Universal AI",
+  "description": "An idle game about optimization. Runs entirely in your browser.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c0a09",
+  "theme_color": "#0c0a09",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

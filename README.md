@@ -169,6 +169,20 @@ codebase carrying eighty-nine.
 
 ---
 
+## Docs
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — how the code is laid out,
+  the invariants that hold it together, and the gotchas that will bite you.
+- **[docs/LESSONS-FROM-AI-STUDIO.md](docs/LESSONS-FROM-AI-STUDIO.md)** — this
+  app was generated in Google AI Studio and then audited. The bugs weren't
+  random; they fell into seven recurring shapes. Worth reading before generating
+  a codebase this way yourself.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — what's deliberately not built yet, and
+  why those things are the ones worth building next.
+- **[CLAUDE.md](CLAUDE.md)** — conventions, for agents and humans alike.
+
+---
+
 ## Credits
 
 Built by [TechLuddite](https://github.com/TechLuddite).

@@ -146,9 +146,8 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
                 onChange={(e) => onChangeEngine(e.target.value as AIEngine)}
                 className="bg-black/70 border border-cyan-500/50 text-cyan-200 text-[11px] rounded px-2 py-1 font-mono cursor-pointer focus:outline-none hover:border-cyan-400"
               >
-                <option value="edge_local">Google AI Edge (In-Browser)</option>
-                <option value="cloud_gemini">Cloud Gemini 3.6 Flash</option>
-                <option value="heuristic_fast">Fast Rule Engine</option>
+                <option value="utility">Utility Engine — instant, no download</option>
+                <option value="webllm">WebLLM — Llama 3.2 1B on your GPU (~900MB)</option>
               </select>
             )}
 
@@ -191,7 +190,7 @@ export const PixelHeader: React.FC<PixelHeaderProps> = ({
             <div className="flex flex-wrap items-center gap-2 text-[10px]">
               <span className="text-slate-400">ENGINE:</span>
               <span className="text-cyan-300 font-bold uppercase px-1.5 py-0.5 rounded bg-black/60 border border-slate-800">
-                {aiEngine === 'edge_local' ? 'Google AI Edge' : aiEngine === 'cloud_gemini' ? 'Gemini 3.6 Flash' : 'Fast Rule Engine'}
+                {aiEngine === 'webllm' ? 'WebLLM · Llama 3.2 1B' : 'Utility Engine'}
               </span>
               <span className="text-slate-400">ALIGNMENT:</span>
               <span className={`font-bold px-1.5 py-0.5 rounded border bg-black/60 ${isSolarTheme ? 'text-emerald-400 border-emerald-800' : 'text-rose-400 border-rose-800'}`}>

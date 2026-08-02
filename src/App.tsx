@@ -1,11 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  GameState,
-  AILogEntry,
-  AIDecisionResponse,
-  Upgrade,
-  ProbeAllocation,
-} from './types';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { GameState, AILogEntry, Upgrade, ProbeAllocation } from './types';
 import { INITIAL_UPGRADES } from './data/upgrades';
 import { PixelHeader } from './components/PixelHeader';
 import { NpuCanvasComponent } from './components/NpuCanvasComponent';
@@ -16,8 +10,10 @@ import { DecisionModal } from './components/DecisionModal';
 import { DevSupportModal } from './components/DevSupportModal';
 import { CosmicVictoryModal } from './components/CosmicVictoryModal';
 import { audio } from './utils/sound';
-import { generateLocalDecision } from './utils/localAiEngine';
 import { createInitialState, createNewGamePlusState } from './game/state';
+import { UtilityOverseer } from './game/overseer/utility';
+import { WebLlmOverseer } from './game/overseer/webllm';
+import { OverseerDecision, EngineStatus } from './game/overseer/types';
 import { save, load, clearSave } from './game/save';
 import { tick, hasWon, TICK_MS, advisoryPriceFloor } from './game/tick';
 import {
@@ -53,6 +49,18 @@ export default function App() {
   const [showDevSupport, setShowDevSupport] = useState<boolean>(false);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
   const [offlineReport, setOfflineReport] = useState<string | null>(null);
+
+  // The two engines. Both are real: a deterministic scorer, and a language
+  // model running on the player's own GPU.
+  const [engineStatus, setEngineStatus] = useState<EngineStatus>({ kind: 'idle' });
+  const engines = useMemo(
+    () => ({
+      utility: new UtilityOverseer(),
+      webllm: new WebLlmOverseer(setEngineStatus),
+    }),
+    []
+  );
+  const [lastDecision, setLastDecision] = useState<OverseerDecision | null>(null);
 
   // Sync sound mute setting with audio engine
   useEffect(() => {
@@ -136,27 +144,31 @@ export default function App() {
     setIsAiThinking(true);
     try {
       const current = stateRef.current;
-      const availableUpgradeIds = upgrades
-        .filter((u) => u.unlocked && !u.purchased)
-        .map((u) => u.id);
+      const engine = engines[current.aiEngine] ?? engines.utility;
 
-      const decision: AIDecisionResponse = generateLocalDecision(
-        { ...current, availableUpgradeIds },
-        current.directives
-      );
+      const decision = await engine.decide({
+        state: current,
+        directives: current.directives,
+        availableUpgrades: upgradesRef.current.filter((u) => u.unlocked && !u.purchased),
+      });
+
+      setLastDecision(decision);
 
       setState((prev) => {
         let next = prev;
+        const { chosen } = decision;
 
         const newLog: AILogEntry = {
-          id: String(Date.now()),
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           timestamp: new Date().toLocaleTimeString(),
-          text: decision.thought || 'Autonomous evaluation completed.',
-          type: decision.actionType === 'MAKE_DECISION' ? 'decision' : 'thought',
-          engine: prev.aiEngine,
+          text: decision.thought,
+          type: chosen.action === 'MAKE_DECISION' ? 'decision' : 'thought',
+          // The engine that actually decided, which is not necessarily the one
+          // selected — a fallback must never be labelled as the engine it replaced.
+          engine: decision.engine,
         };
 
-        switch (decision.actionType) {
+        switch (chosen.action) {
           case 'MAKE_NPU':
             next = makeNpu(next);
             break;
@@ -175,7 +187,7 @@ export default function App() {
             next = buyMarketing(next);
             break;
           case 'ADJUST_PRICE':
-            if (decision.newPrice) next = setPrice(next, decision.newPrice);
+            if (chosen.newPrice !== undefined) next = setPrice(next, chosen.newPrice);
             break;
           case 'BUY_HARVESTER_DRONE':
             next = buyHarvesterDrone(next);
@@ -213,8 +225,8 @@ export default function App() {
             );
             break;
           case 'BUY_UPGRADE': {
-            const up = upgrades.find(
-              (u) => u.id === decision.upgradeIdToBuy && u.unlocked && !u.purchased
+            const up = upgradesRef.current.find(
+              (u) => u.id === chosen.upgradeId && u.unlocked && !u.purchased
             );
             if (up) {
               next = buyUpgrade(next, up);
@@ -232,12 +244,12 @@ export default function App() {
             break;
           case 'ALLOCATE_TRUST':
             next =
-              decision.targetProcessor && decision.targetProcessor > next.processors
+              chosen.targetProcessor && chosen.targetProcessor > next.processors
                 ? changeProcessor(next, 1)
                 : changeMemory(next, 1);
             break;
           case 'MAKE_DECISION':
-            next = resolveDecision(next, decision.decisionChoiceIndex === 1 ? 1 : 0);
+            next = resolveDecision(next, chosen.decisionChoiceIndex === 1 ? 1 : 0);
             break;
           case 'IDLE':
             break;
@@ -246,11 +258,11 @@ export default function App() {
         return { ...next, aiLogs: [...next.aiLogs.slice(-40), newLog] };
       });
     } catch {
-      // Quietly handle any step execution anomalies
+      // A failed step must not stop the loop.
     } finally {
       setIsAiThinking(false);
     }
-  }, [upgrades]);
+  }, [engines]);
 
   // Autonomous Loop Refs to prevent timer reset on high-frequency state ticks
   const isAiThinkingRef = useRef(isAiThinking);
@@ -404,6 +416,9 @@ export default function App() {
             onToggleAutoLoop={handleToggleAutoLoop}
             onTriggerSingleStep={executeAiStep}
             isThinking={isAiThinking}
+            lastDecision={lastDecision}
+            engineStatus={engineStatus}
+            onLoadModel={() => engines.webllm.load()}
           />
         )}
 

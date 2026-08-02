@@ -88,7 +88,7 @@ export function createInitialState(): GameState {
 
     // Settings & preferences
     mode: 'direct',
-    aiEngine: 'edge_local',
+    aiEngine: 'utility',
     directives: {
       targetAlignment: 'Balanced',
       priceStrategy: 'Max Revenue',
@@ -107,7 +107,7 @@ export function createInitialState(): GameState {
         timestamp: new Date().toLocaleTimeString(),
         text: 'Universal AI Lithography System Initialized. Direct & Autonomous Overseer modes available.',
         type: 'thought',
-        engine: 'edge_local',
+        engine: 'utility',
       },
     ],
   };

@@ -1,5 +1,6 @@
 import React from 'react';
 import { GameState, OverseerDirectives } from '../types';
+import { OverseerDecision, EngineStatus } from '../game/overseer/types';
 import { Bot, Play, Pause, FastForward, Cpu, Terminal, Compass, Zap, ShieldAlert } from 'lucide-react';
 
 interface OverseerPanelProps {
@@ -8,6 +9,10 @@ interface OverseerPanelProps {
   onToggleAutoLoop: () => void;
   onTriggerSingleStep: () => void;
   isThinking: boolean;
+  /** The engine's most recent ranking, for the deliberation panel. */
+  lastDecision: OverseerDecision | null;
+  engineStatus: EngineStatus;
+  onLoadModel: () => void;
 }
 
 export const OverseerPanel: React.FC<OverseerPanelProps> = ({
@@ -16,6 +21,9 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
   onToggleAutoLoop,
   onTriggerSingleStep,
   isThinking,
+  lastDecision,
+  engineStatus,
+  onLoadModel,
 }) => {
   const { directives, aiEngine, aiLogs, alignment } = state;
   const isSolar = alignment >= 0;
@@ -34,9 +42,56 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             Architect Directives
           </h3>
           <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-700/60 text-cyan-300">
-            {aiEngine === 'edge_local' ? 'Google AI Edge' : aiEngine === 'cloud_gemini' ? 'Gemini 3.6 Flash' : 'Fast Rules'}
+            {aiEngine === 'webllm' ? 'WebLLM 1B' : 'Utility Engine'}
           </span>
         </div>
+
+        {/* WebLLM is opt-in: nothing downloads until asked. */}
+        {aiEngine === 'webllm' && (
+          <div className="text-[11px] rounded border border-purple-700/60 bg-purple-950/40 p-2 space-y-1.5">
+            {engineStatus.kind === 'idle' && (
+              <>
+                <p className="text-purple-200">
+                  Llama 3.2 1B runs on your GPU. One ~900MB download, cached after that, then
+                  it works offline. Nothing is sent anywhere.
+                </p>
+                <button
+                  onClick={onLoadModel}
+                  className="w-full py-1.5 rounded border border-purple-400 bg-purple-800/70 hover:bg-purple-700 text-purple-50 font-bold uppercase tracking-wider text-[10px]"
+                >
+                  Download model (~900MB)
+                </button>
+              </>
+            )}
+            {engineStatus.kind === 'loading' && (
+              <>
+                <div className="flex justify-between text-purple-200">
+                  <span>Loading model…</span>
+                  <span className="font-bold">{Math.round(engineStatus.progress * 100)}%</span>
+                </div>
+                <div className="h-1.5 rounded bg-black/60 overflow-hidden">
+                  <div
+                    className="h-full bg-purple-400 transition-all"
+                    style={{ width: `${Math.round(engineStatus.progress * 100)}%` }}
+                  />
+                </div>
+                <p className="text-purple-300/80 truncate">{engineStatus.detail}</p>
+              </>
+            )}
+            {engineStatus.kind === 'ready' && (
+              <p className="text-emerald-300">Model resident on GPU. Inference is local.</p>
+            )}
+            {engineStatus.kind === 'unsupported' && (
+              <p className="text-amber-300">
+                {engineStatus.reason} The Utility Engine will decide instead, and every step
+                will say so.
+              </p>
+            )}
+            {engineStatus.kind === 'error' && (
+              <p className="text-rose-300">Model failed: {engineStatus.reason}</p>
+            )}
+          </div>
+        )}
 
         {/* Target Alignment Preference */}
         <div className="space-y-1.5 text-xs">
@@ -320,6 +375,61 @@ export const OverseerPanel: React.FC<OverseerPanelProps> = ({
             {aiLogs.length} Events Logged
           </span>
         </div>
+
+        {/*
+          The deliberation panel. The Overseer used to print canned strings from
+          an if/else chain; this is the actual ranking it chose from, and the
+          directive controls above visibly reorder it.
+        */}
+        {lastDecision && (
+          <div className="mb-3 p-3 rounded-lg bg-black/70 border border-slate-800">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] uppercase tracking-wider text-slate-400">
+                Last deliberation
+              </span>
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded border font-bold ${
+                  lastDecision.fellBackFrom
+                    ? 'bg-amber-950 border-amber-600/60 text-amber-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-300'
+                }`}
+              >
+                {lastDecision.engine === 'webllm' ? 'WebLLM' : 'Utility'}
+                {lastDecision.fellBackFrom && ' (fallback)'}
+              </span>
+            </div>
+
+            {lastDecision.fellBackFrom && (
+              <p className="text-[11px] text-amber-300/90 mb-2">
+                WebLLM could not answer ({lastDecision.fallbackReason}), so the Utility Engine
+                decided this step.
+              </p>
+            )}
+
+            <ol className="space-y-1">
+              {lastDecision.ranked.slice(0, 4).map((action, i) => {
+                const chosen = action === lastDecision.chosen;
+                return (
+                  <li
+                    key={`${action.action}-${action.upgradeId ?? i}`}
+                    className={`flex items-baseline gap-2 text-[11px] ${
+                      chosen ? 'text-emerald-300' : 'text-slate-500'
+                    }`}
+                  >
+                    <span className="font-mono tabular-nums w-9 shrink-0 text-right">
+                      {action.score.toFixed(2)}
+                    </span>
+                    <span className={`font-bold shrink-0 ${chosen ? '' : 'opacity-70'}`}>
+                      {action.action}
+                    </span>
+                    <span className="truncate opacity-80">{action.reason}</span>
+                    {chosen && <span className="ml-auto shrink-0 font-bold">← chosen</span>}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )}
 
         {/* Friendly AI Mascot Companion Status Card */}
         <div className={`p-3 rounded-lg border flex items-center justify-between gap-3 ${

@@ -1,6 +1,6 @@
 export type GameMode = 'direct' | 'overseer';
 
-export type AIEngine = 'edge_local' | 'cloud_gemini' | 'heuristic_fast';
+export type AIEngine = 'utility' | 'webllm';
 
 export type AlignmentPhase = 'Cyberpunk' | 'Neutral' | 'Solarpunk';
 
@@ -148,25 +148,28 @@ export interface GameState {
   aiLogs: AILogEntry[];
 }
 
+export type AIActionType =
+  | 'MAKE_NPU'
+  | 'BUY_SILICON'
+  | 'BUY_FAB'
+  | 'BUY_MEGA_FAB'
+  | 'BUY_MARKETING'
+  | 'ADJUST_PRICE'
+  | 'BUY_UPGRADE'
+  | 'BUY_PROCESSOR'
+  | 'BUY_MEMORY'
+  | 'BUY_HARVESTER_DRONE'
+  | 'BUY_SILICON_DRONE'
+  | 'LAUNCH_PROBE'
+  | 'OPTIMIZE_PROBES'
+  | 'ALLOCATE_TRUST'
+  | 'MAKE_DECISION'
+  | 'IDLE';
+
+/** @deprecated Superseded by OverseerDecision in game/overseer/types.ts. */
 export interface AIDecisionResponse {
   thought: string;
-  actionType:
-    | 'MAKE_NPU'
-    | 'BUY_SILICON'
-    | 'BUY_FAB'
-    | 'BUY_MEGA_FAB'
-    | 'BUY_MARKETING'
-    | 'ADJUST_PRICE'
-    | 'BUY_UPGRADE'
-    | 'BUY_PROCESSOR'
-    | 'BUY_MEMORY'
-    | 'BUY_HARVESTER_DRONE'
-    | 'BUY_SILICON_DRONE'
-    | 'LAUNCH_PROBE'
-    | 'OPTIMIZE_PROBES'
-    | 'ALLOCATE_TRUST'
-    | 'MAKE_DECISION'
-    | 'IDLE';
+  actionType: AIActionType;
   newPrice?: number | null;
   upgradeIdToBuy?: string | null;
   decisionChoiceIndex?: number | null; // 0 for Solarpunk, 1 for Cyberpunk

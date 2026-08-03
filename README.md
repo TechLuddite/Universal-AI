@@ -55,7 +55,7 @@ What makes it worth watching is that it shows its work:
 ```
 0.82  BUY_MEGA_FAB   megafab = 500x a standard fab, 12% of capital   ← chosen
 0.61  BUY_SILICON    8s of wafers buffered
-0.44  ADJUST_PRICE   Max Revenue wants $0.31, currently $0.25
+0.44  ADJUST_PRICE   Max Revenue wants $82.80, currently $100.00
 0.12  BUY_MARKETING  demand at 240%
 ```
 

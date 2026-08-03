@@ -12,7 +12,7 @@ import { meetsAlignmentRequirement, upgradeCost } from './alignment';
  * callers don't need to pre-check.
  */
 
-const MEGA_FAB_BASE_COST = 500;
+const MEGA_FAB_BASE_COST = 200000;
 
 /** Fabricate a single chip by hand. */
 export function makeNpu(state: GameState): GameState {

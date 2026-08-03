@@ -69,7 +69,7 @@ function midGameState(phase: 1 | 2 | 3 = 1): GameState {
     memory: 10,
     npuFabCount: 50,
     megaFabCount: 5,
-    megaFabCost: 500,
+    megaFabCost: 200000,
     marketingLevel: 5,
   };
 }
@@ -109,7 +109,8 @@ describe('decision rewards survive the next tick', () => {
       ['cyberpunk', branch.cyberpunkOption],
     ] as const) {
       it(`${branch.id} / ${label}`, () => {
-        const before = midGameState(branch.id === 'branch_1_cosmic' ? 2 : 1);
+        // The cosmic doctrine only ever fires in phase 3, after the launch.
+        const before = midGameState(branch.id === 'branch_1_cosmic' ? 3 : 1);
         const effect = option.effect(before);
         const granted = { ...before, ...effect };
         const after = tickOnce(granted);
@@ -136,6 +137,25 @@ describe('specific rewards that were previously no-ops', () => {
     const after = tickOnce({ ...before, ...upgrade!.effect(before) });
 
     expect(after.megaFabCost).toBeGreaterThan(0);
+  });
+
+  it('algorithmic pricing actually adjusts the price', () => {
+    // Shipped as `effect: (state) => state // Handled in auto loop` with no
+    // loop handling it — a paid upgrade that did nothing at all.
+    const glutted = {
+      ...midGameState(),
+      purchasedUpgradeIds: ['algorithmic_pricing'],
+      unsoldNpus: 1_000_000,
+      // Priced high enough that demand sits below its ceiling — at the ceiling
+      // the arbitrage correctly raises instead of cutting.
+      margin: 400,
+    };
+    const adjusted = tick(glutted, 1000, () => 0.99);
+    expect(adjusted.margin).toBeLessThan(glutted.margin);
+
+    // And without the purchase, the tick keeps its hands off the price lever.
+    const unpurchased = { ...glutted, purchasedUpgradeIds: [] };
+    expect(tick(unpurchased, 1000, () => 0.99).margin).toBe(unpurchased.margin);
   });
 
   it('the capstone upgrade actually grants its chips', () => {

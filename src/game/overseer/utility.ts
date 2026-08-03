@@ -6,7 +6,7 @@ import {
   ScoredAction,
   EngineStatus,
 } from './types';
-import { advisoryPriceFloor } from '../tick';
+import { advisoryPriceFloor, BASE_NPU_PRICE } from '../tick';
 import { upgradeCost } from '../alignment';
 import {
   megaFabUnlocked,
@@ -185,15 +185,16 @@ function scorePhase1(state: GameState, directives: OverseerDirectives): ScoredAc
     );
   }
 
-  // Price: move toward the strategy's target.
+  // Price: move toward the strategy's target. Deadband and urgency are relative
+  // to the launch price so the scorer survives currency rescales.
   const want = targetPrice(state);
   const drift = want - state.margin;
-  if (Math.abs(drift) > 0.02) {
+  if (Math.abs(drift) > BASE_NPU_PRICE * 0.08) {
     out.push(
       scored({
         action: 'ADJUST_PRICE',
         newPrice: Number(want.toFixed(2)),
-        utility: 0.3 + Math.min(0.35, Math.abs(drift)),
+        utility: 0.3 + Math.min(0.35, Math.abs(drift) / BASE_NPU_PRICE),
         reason: `${state.directives.priceStrategy} wants $${want.toFixed(2)}, currently $${state.margin.toFixed(2)}`,
       })
     );
@@ -282,7 +283,10 @@ function scorePhase3(state: GameState): ScoredAction[] {
 function branchGain(state: GameState, option: DecisionOption): number {
   const after = { ...state, ...option.effect(state) };
   return (
-    (after.funds - state.funds) / 1000 +
+    // Funds are weighed relative to the launch price (a point per ~4,000 chips
+    // of revenue) so a currency rescale doesn't let cash payouts drown out
+    // every other kind of reward in the ranking.
+    (after.funds - state.funds) / (BASE_NPU_PRICE * 4000) +
     (after.silicon - state.silicon) / 1000 +
     (after.npuFabCount - state.npuFabCount) +
     (after.megaFabCount - state.megaFabCount) * 500 +

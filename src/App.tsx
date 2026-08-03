@@ -172,10 +172,13 @@ export default function App() {
         if (u.reqNpus && state.totalNpusCreated >= u.reqNpus) unlock = true;
         if (u.reqTrust && state.maxTrust >= u.reqTrust) unlock = true;
         if (u.reqPhase && state.phase >= u.reqPhase) unlock = true;
+        // The thresholds above are OR'd; a prerequisite upgrade is an AND.
+        // Deploying hypno-drones you never built is not a milestone.
+        if (u.reqUpgradeId && !state.purchasedUpgradeIds.includes(u.reqUpgradeId)) unlock = false;
         return unlock ? { ...u, unlocked: true } : u;
       })
     );
-  }, [state.totalNpusCreated, state.maxTrust, state.phase]);
+  }, [state.totalNpusCreated, state.maxTrust, state.phase, state.purchasedUpgradeIds]);
 
   // Latest state, for readers that must not go stale. The Overseer's callback
   // previously listed only a handful of fields in its dependency array while

@@ -1,8 +1,9 @@
 # Roadmap
 
 Stages 1–6 (repair, honesty pass, GitHub Pages) are done. Stage 7 (7.1–7.3) is
-done. What follows is what's left, plus a record of what Stage 7 chose *not* to
-build and why.
+done, and Stage 8 (the cohesion pass and currency rescale) after it. What
+follows is what's left, plus a record of what Stage 7 chose *not* to build and
+why.
 
 Ordered by payoff.
 
@@ -207,6 +208,28 @@ decision time, never at ranking time).
   (below the upgrades panel — for the project's whole prior life it was a dead
   component nothing imported, despite this file claiming otherwise). Achievements
   proper are still unbuilt.
+
+---
+
+## Stage 8 — Cohesion pass and the $100 chip — **done**
+
+A sweep for claims the game made and didn't keep, in the spirit of the Stage 1–6
+honesty pass; the details live in the invariants sections of `CLAUDE.md` and
+`ARCHITECTURE.md`.
+
+- **Phase transitions are purchases now.** There were three doors into Phase 3
+  (the launch project, a silent tick transition on matter exhaustion, and the
+  cosmic decision branch), and taking the wrong two in sequence reset a grown
+  swarm. `space_exploration_initiative` is the only door, priced to the
+  Cyberpunk ops ceiling so every band can afford to leave Earth. Hypno-drone
+  deployment likewise requires the drones to have been built (`reqUpgradeId`).
+- **Paid no-ops made real.** `algorithmic_pricing` actually prices (opt-in tick
+  exception, floored at silicon cost); "permanent" wafer prices survive the
+  market wobble; the laser defense array defends; the radar presets stopped
+  spending probe trust on a legacy `wire` field that nothing reads.
+- **Currency rescale.** An NPU launches at $100, not $0.25 — everything
+  dollar-priced moved ×400 with it, anchored to `BASE_NPU_PRICE` in `tick.ts`.
+  `SAVE_VERSION` is 2; v1 saves are declined rather than half-loaded.
 
 ---
 

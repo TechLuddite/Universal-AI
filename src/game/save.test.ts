@@ -107,7 +107,7 @@ describe('saves round-trip', () => {
     localStorage.setItem(
       'universal_ai_save_v1',
       JSON.stringify({
-        version: 1,
+        version: 2,
         savedAt: Date.now(),
         state: partial,
         unlockedUpgradeIds: [],

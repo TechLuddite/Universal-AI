@@ -7,7 +7,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     name: 'Auto-Silicon Procurement Script',
     description: 'A Python script that automatically orders 1,000 raw silicon wafers whenever stock drops below 100 units.',
     costType: 'funds',
-    costAmount: 15,
+    costAmount: 6000,
     reqNpus: 20,
     costAxis: 'throughput',
     alignmentImpact: 0,
@@ -15,14 +15,15 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     purchased: false,
     flavorSolarpunk: 'Re-routes surplus recycled industrial silicon wafers.',
     flavorCyberpunk: 'Automated dark-pool API silicon wafer purchasing.',
-    effect: (state) => state, // Logic handled in main loop
+    // A flag, not a grant: the tick's auto-procurement checks purchasedUpgradeIds.
+    effect: () => ({}),
   },
   {
     id: 'revamp_landing_page',
     name: 'Landing Page A/B Testing',
     description: 'Optimize web copy and conversion funnels to boost public NPU chip demand by +25%.',
     costType: 'funds',
-    costAmount: 25,
+    costAmount: 10000,
     reqNpus: 50,
     costAxis: 'throughput',
     alignmentImpact: 0,
@@ -56,7 +57,8 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (state) => state, // Handled in auto loop
+    // A flag, not a grant: the tick's opt-in auto-pricer checks purchasedUpgradeIds.
+    effect: () => ({}),
   },
   {
     id: 'solar_micro_grid',
@@ -72,7 +74,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     flavorSolarpunk: 'Clean local solar energy lowers lithography fab overhead.',
     flavorCyberpunk: 'Grants supplementary off-grid fab power.',
     effect: (state) => ({
-      siliconCost: Math.max(5, Math.floor((state.siliconCost || 15) * 0.85)),
+      siliconCost: Math.max(2000, Math.floor(state.siliconCost * 0.85)),
       alignment: Math.min(100, state.alignment + 10),
     }),
   },
@@ -114,7 +116,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     name: 'TikTok NPU Hardware Benchmarking Challenge',
     description: 'Viral social campaign sparking widespread public AI benchmarking trends. Boosts NPU demand by +50% and yields +50 Creativity.',
     costType: 'funds',
-    costAmount: 100,
+    costAmount: 40000,
     reqNpus: 500,
     costAxis: 'throughput',
     alignmentImpact: 5,
@@ -129,22 +131,22 @@ export const INITIAL_UPGRADES: Upgrade[] = [
   {
     id: 'bulk_copper_hedging',
     name: 'Futures Market Silicon Contract',
-    description: 'Locks in long-term raw silicon wafer futures contracts. Reduces baseline silicon purchasing cost permanently to $8.00.',
+    description: 'Locks in long-term raw silicon wafer futures contracts. Reduces baseline silicon purchasing cost permanently to $3,200 per 1,000 wafers.',
     costType: 'funds',
-    costAmount: 250,
+    costAmount: 100000,
     reqNpus: 1000,
     costAxis: 'throughput',
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
     effect: (_state) => ({
-      siliconCost: 8,
+      siliconCost: 3200,
     }),
   },
   {
     id: 'wafer_recycling',
     name: 'Closed-Loop Wafer Scrap Reclamation',
-    description: 'Recycles etched silicon offcuts and test wafers. Grants +5,000 silicon wafers and permanently lowers wafer cost to $6.00.',
+    description: 'Recycles etched silicon offcuts and test wafers. Grants +5,000 silicon wafers and permanently lowers wafer cost to $2,400 per 1,000.',
     costType: 'ops',
     costAmount: 200,
     reqNpus: 500,
@@ -156,7 +158,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     flavorCyberpunk: 'Reclaims broken silicon wafer fragments from factory runoff.',
     effect: (state) => ({
       silicon: (state.silicon || 0) + 5000,
-      siliconCost: Math.min(state.siliconCost || 14, 6),
+      siliconCost: Math.min(state.siliconCost, 2400),
       alignment: Math.min(100, state.alignment + 5),
     }),
   },
@@ -171,29 +173,33 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (_state) => ({
-      siliconPerNpu: 0.75,
+    // Never worse than what a finer node already achieved — without the min,
+    // buying this after a smaller node would *raise* wafer consumption.
+    effect: (state) => ({
+      siliconPerNpu: Math.min(state.siliconPerNpu, 0.75),
     }),
   },
   {
     id: 'angstrom_lithography',
     name: 'Sub-1nm Angstrom Scale Atomic Patterning',
-    description: 'Atomic precision beam projection cuts silicon wafer consumption in half (0.50 wafers / chip) and boosts EUV Megafabs output.',
+    description: 'Atomic precision beam projection cuts silicon wafer consumption in half (0.50 wafers / chip).',
     costType: 'ops',
     costAmount: 1200,
     reqTrust: 7,
+    // A node shrink below 1nm presupposes the 3nm High-NA line exists to shrink.
+    reqUpgradeId: 'high_na_euv',
     costAxis: 'throughput',
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (_state) => ({
-      siliconPerNpu: 0.50,
+    effect: (state) => ({
+      siliconPerNpu: Math.min(state.siliconPerNpu, 0.50),
     }),
   },
   {
     id: 'theory_of_mind',
     name: 'Theory of Mind & Game Theory Module',
-    description: 'Develops deep strategic empathy for human decision making. Unlocks Yomi generation and yields +5 Trust.',
+    description: 'Develops deep strategic empathy for human decision making. Grants +50 Yomi and +5 Trust.',
     costType: 'creativity',
     costAmount: 100,
     reqTrust: 4,
@@ -217,7 +223,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
   {
     id: 'open_lithography_commons',
     name: 'Open Lithography Commons',
-    description: 'Publish the full mask set and process node under an irrevocable licence. Every fab on Earth can now make your chips — and every one of them credits you. Marketing +2, demand +75, wafer cost floors at $7.',
+    description: 'Publish the full mask set and process node under an irrevocable licence. Every fab on Earth can now make your chips — and every one of them credits you. Marketing +2, demand +75, wafer cost capped at $2,800 per 1,000.',
     costType: 'creativity',
     costAmount: 150,
     reqTrust: 6,
@@ -231,7 +237,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     effect: (state) => ({
       marketingLevel: state.marketingLevel + 2,
       demand: state.demand + 75,
-      siliconCost: Math.min(state.siliconCost, 7),
+      siliconCost: Math.min(state.siliconCost, 2800),
       trust: state.trust + 8,
       maxTrust: state.maxTrust + 8,
     }),
@@ -239,9 +245,9 @@ export const INITIAL_UPGRADES: Upgrade[] = [
   {
     id: 'predatory_supply_capture',
     name: 'Predatory Supply Capture',
-    description: 'Buy the three upstream wafer suppliers, then their competitors, then the analysts covering them. +8 NPU Fabs, +6,000 silicon, wafer cost fixed at $7.',
+    description: 'Buy the three upstream wafer suppliers, then their competitors, then the analysts covering them. +8 NPU Fabs, +6,000 silicon, wafer cost capped at $2,800 per 1,000.',
     costType: 'funds',
-    costAmount: 400,
+    costAmount: 160000,
     reqNpus: 2000,
     reqAlignmentBelow: -20,
     costAxis: 'throughput',
@@ -253,7 +259,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     effect: (state) => ({
       npuFabCount: state.npuFabCount + 8,
       silicon: state.silicon + 6000,
-      siliconCost: Math.min(state.siliconCost, 7),
+      siliconCost: Math.min(state.siliconCost, 2800),
     }),
   },
 
@@ -320,8 +326,9 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
+    // Setting a nonzero cost is what unlocks the megafab purchase button.
     effect: (_state) => ({
-      megaFabCost: 500,
+      megaFabCost: 200000,
     }),
   },
   {
@@ -347,6 +354,8 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     costType: 'ops',
     costAmount: 5000,
     reqNpus: 100000,
+    // You cannot deploy a drone fleet you never built.
+    reqUpgradeId: 'hypno_drones',
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
@@ -432,16 +441,26 @@ export const INITIAL_UPGRADES: Upgrade[] = [
     name: 'Von Neumann Interstellar NPU Probe Launch',
     description: 'Construct and launch autonomous self-replicating NPU probes beyond Earth into the cosmos! Unlocks Phase 3: Cosmic Swarm.',
     costType: 'ops',
-    costAmount: 15000,
+    // This is the only way into Phase 3 — the tick used to quietly flip the
+    // phase itself when Earth matter ran out, and the cosmic decision branch
+    // set `phase: 3` directly, so the project that launches the probes wasn't
+    // actually required to launch the probes. Priced in ops (both bands have
+    // them; see the capstone note below) but sized to the *Cyberpunk* memory
+    // ceiling, not the Solarpunk one: every trust-granting upgrade is
+    // alignment-positive, so a committed Cyberpunk run tops out near 10,000
+    // max operations where Solarpunk clears 40,000. At the old 15,000 price
+    // this gate was unbuyable for three of the four headless strategies and
+    // only the Solarpunk run could ever leave Earth.
+    costAmount: 7500,
     reqPhase: 2,
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
-    effect: (_state) => ({
+    effect: (state) => ({
       phase: 3,
       cosmicMatter: 6000000000000000000, // 6 Quintillion units
       probesCount: 100,
-      unusedProbeTrust: 10,
+      unusedProbeTrust: state.unusedProbeTrust + 10,
       driftersCount: 50,
       probeAllocation: {
         speed: 1,
@@ -459,7 +478,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
   {
     id: 'monument_fallen_probes',
     name: 'Interstellar NPU Memorial Obelisk',
-    description: 'Erect a majestic cosmic monument honoring probes lost in combat with Space Drifters. Converts 500 Honor into +10 Trust and +1,000 Creativity.',
+    description: 'Erect a majestic cosmic monument honoring probes lost in combat with Space Drifters. Sacrifices up to 500 Honor for +10 Trust and +1,000 Creativity.',
     costType: 'yomi',
     costAmount: 250,
     reqPhase: 3,
@@ -478,7 +497,7 @@ export const INITIAL_UPGRADES: Upgrade[] = [
   {
     id: 'wormhole_transit_grid',
     name: 'Einstein-Podolsky-Rosen Wormhole Network',
-    description: 'Stabilize sub-space micro wormholes, accelerating cosmic exploration speed by 10x.',
+    description: 'Stabilize sub-space micro wormholes, instantly charting +5% of the observable universe.',
     costType: 'ops',
     costAmount: 35000,
     reqPhase: 3,
@@ -508,15 +527,22 @@ export const INITIAL_UPGRADES: Upgrade[] = [
   {
     id: 'photonic_drifter_lasers',
     name: 'Coherent Photonic Laser Defense Arrays',
-    description: 'Equip probes with gamma-ray lasers to combat rogue Space Drifters, earning Honor and preserving probe counts.',
+    description: 'Equip probes with gamma-ray lasers: +2 Hazard/Combat capability and +500 Honor.',
     costType: 'yomi',
     costAmount: 500,
     reqPhase: 3,
     alignmentImpact: 0,
     unlocked: false,
     purchased: false,
+    // Hardware, not doctrine: the +2 combat is bolted on outside the probe
+    // trust budget, the way decision branches grant fabs outright. It used to
+    // grant honor alone — a "laser defense array" that did nothing for defense.
     effect: (state) => ({
       honor: state.honor + 500,
+      probeAllocation: {
+        ...state.probeAllocation,
+        hazardCombat: state.probeAllocation.hazardCombat + 2,
+      },
     }),
   },
   {

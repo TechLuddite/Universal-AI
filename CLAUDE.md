@@ -61,6 +61,20 @@ shape of bug this repo keeps finding.
 `buyUpgrade`. Drifting back to the middle takes band content away again. Don't
 move that check into the UI — the Overseer buys upgrades too.
 
+**Phase transitions are projects, not accidents.** Phase 2 is entered only by
+deploying hypno-drones you actually built (`release_hypno_drones`, which
+requires `hypno_drones` via `reqUpgradeId`); Phase 3 only by buying
+`space_exploration_initiative`. The tick used to flip phase 2 → 3 itself when
+Earth matter ran out, conjuring 100 probes nobody launched — and the cosmic
+decision branch set `phase: 3` directly, which let buying the leftover launch
+project *reset* a grown swarm. `completability.test.ts` asserts the gate.
+
+**Dollar figures are anchored to `BASE_NPU_PRICE`** (`tick.ts`, $100/chip at
+launch). The demand curve, advisory floors, and the Overseer's price scoring
+are all expressed relative to it; data files carry absolute numbers sized
+against it. If you rescale the currency, move the constant and the data, and
+bump `SAVE_VERSION` — a save from the old scale is meaningless in the new one.
+
 ## Testing philosophy
 
 Tests here assert **claims**, not implementation:
@@ -98,7 +112,14 @@ add a test that the README is telling the truth.
   Symmetric ops pricing made the Cyberpunk ending unreachable in practice, and
   only the headless run caught it.
 - **The price floor is advice.** Nothing clamps it. The tick used to force the
-  price up every 100ms, disabling the genre's central lever.
+  price up every 100ms, disabling the genre's central lever. The one sanctioned
+  exception is the purchased `algorithmic_pricing` auto-pricer in `tick.ts` —
+  opt-in, 1%/second, and it refuses to price below silicon cost.
+- **`space_exploration_initiative` is priced to the Cyberpunk ops ceiling.**
+  Same reason the capstones are priced in different currencies: a Cyberpunk run
+  tops out near 10,000 max operations where Solarpunk clears 40,000, and at the
+  old 15,000-ops sticker only Solarpunk could ever leave Earth. Raise it past
+  ~10,000 and `endings.test.ts` goes red.
 
 ## Style
 

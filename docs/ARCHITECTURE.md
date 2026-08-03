@@ -152,6 +152,11 @@ existed loads with that field's default instead of crashing.
 the whole migration story, and it's why New Game+ can no longer omit `aiLogs`
 and crash the Overseer panel the way it used to.
 
+`SAVE_VERSION` is 2 as of the currency rescale (NPU launch price $0.25 → $100,
+anchored to `BASE_NPU_PRICE` in `tick.ts`). A v1 save carries old-scale prices
+the new demand curve would misread by 400×, so it is declined, not half-loaded.
+Bump the version again if the scale ever moves.
+
 Offline progress replays `tick` for the elapsed wall time on load, capped at
 8 hours.
 
@@ -230,3 +235,10 @@ say `paperclips.opsvibe.systems`. Keep them in sync or drop the root one.
   floors it; the state does not.
 - The advisory price floor is advice. Nothing clamps the player's price — the
   tick used to force it up every 100ms, which disabled the genre's central lever.
+  The purchased `algorithmic_pricing` upgrade is the sole exception: an opt-in
+  1%/second nudge that never prices below silicon cost.
+- Phase transitions are purchases. `release_hypno_drones` (which needs
+  `hypno_drones` built first, via `reqUpgradeId`) is the only door to Phase 2;
+  `space_exploration_initiative` is the only door to Phase 3. The tick never
+  changes `phase`, and the cosmic decision branch decides what the launched
+  swarm is *for*, not whether it launches.

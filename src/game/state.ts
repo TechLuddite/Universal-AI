@@ -9,24 +9,26 @@ import { GameState } from '../types';
  */
 export function createInitialState(): GameState {
   return {
-    // Core inventory & finance
+    // Core inventory & finance. The currency scale is anchored to
+    // BASE_NPU_PRICE in tick.ts: an NPU chip launches at $100, and every other
+    // dollar figure in the game is sized against that.
     npus: 0,
     unsoldNpus: 0,
     totalNpusCreated: 0,
     funds: 0.0,
-    margin: 0.25,
+    margin: 100.0,
     silicon: 1000,
-    siliconCost: 14.0,
+    siliconCost: 5600.0,
     siliconPerNpu: 1.0,
     demand: 100,
 
     // Marketing & auto-manufacturing
     marketingLevel: 1,
-    marketingCost: 100.0,
+    marketingCost: 40000.0,
     npuFabCount: 0,
-    npuFabCost: 5.0,
+    npuFabCost: 2000.0,
     megaFabCount: 0,
-    megaFabCost: 0, // unlocked via the hyperscale_mega_fabs upgrade
+    megaFabCost: 0, // unlocked via the hyperscale_mega_clippers upgrade
 
     // Trust & compute architecture
     trust: 1,
@@ -54,9 +56,9 @@ export function createInitialState(): GameState {
     earthMatter: 6_000_000_000_000,
     acquiredMatter: 0,
     harvesterDrones: 0,
-    harvesterDroneCost: 500,
+    harvesterDroneCost: 200000,
     siliconDrones: 0,
-    siliconDroneCost: 500,
+    siliconDroneCost: 200000,
 
     // Phase 3: Von Neumann cosmic expansion
     cosmicMatter: 6_000_000_000_000_000_000,
@@ -131,9 +133,9 @@ export function createNewGamePlusState(prev: GameState): GameState {
     ...createInitialState(),
 
     // Head start earned by finishing a run
-    funds: 500.0,
+    funds: 200000.0,
     silicon: 5000,
-    siliconCost: 10.0,
+    siliconCost: 4000.0,
     demand: 150,
     marketingLevel: 2,
     npuFabCount: 5,

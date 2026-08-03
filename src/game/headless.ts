@@ -87,14 +87,17 @@ export function committed(side: 'Solarpunk' | 'Cyberpunk'): Strategy {
 
 /** Mirror of App.tsx's unlock effect. Alignment gates are *not* handled here — */
 /** they're live, and enforced inside `buyUpgrade`. */
-function unlockUpgrades(state: GameState, upgrades: Upgrade[]): Upgrade[] {
+export function unlockUpgrades(state: GameState, upgrades: Upgrade[]): Upgrade[] {
   return upgrades.map((u) => {
     if (u.unlocked) return u;
-    const unlock =
+    const thresholdMet =
       (u.reqNpus !== undefined && state.totalNpusCreated >= u.reqNpus) ||
       (u.reqTrust !== undefined && state.maxTrust >= u.reqTrust) ||
       (u.reqPhase !== undefined && state.phase >= u.reqPhase);
-    return unlock ? { ...u, unlocked: true } : u;
+    // Thresholds OR together; a prerequisite upgrade ANDs on top, same as App.
+    const prereqMet =
+      u.reqUpgradeId === undefined || state.purchasedUpgradeIds.includes(u.reqUpgradeId);
+    return thresholdMet && prereqMet ? { ...u, unlocked: true } : u;
   });
 }
 

@@ -236,7 +236,8 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                     <span className="flex items-center gap-1 font-semibold text-slate-400">
                       🔒 EUV Megafab
                     </span>
-                    <span className="text-[10px] text-cyan-400 font-mono">Unlock at 5 NPU Fabs or Upgrade</span>
+                    {/* The only unlock is the upgrade — don't advertise one that doesn't exist. */}
+                    <span className="text-[10px] text-cyan-400 font-mono">Requires Hyperscale EUV Megafab Clusters</span>
                   </div>
                 )}
               </div>
@@ -279,7 +280,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onAdjustPrice(-0.01)}
+                      onClick={() => onAdjustPrice(-1)}
                       className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
                       title="Lower Price"
                     >
@@ -289,7 +290,7 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                       Price Adjust
                     </div>
                     <button
-                      onClick={() => onAdjustPrice(+0.01)}
+                      onClick={() => onAdjustPrice(+1)}
                       className="p-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
                       title="Raise Price"
                     >
@@ -634,18 +635,23 @@ export const DirectControlPanel: React.FC<DirectControlPanelProps> = ({
                   onSetPreset={(preset) => {
                     audio.playBuySound();
                     if (!onChangeProbeAllocation) return;
-                    if (preset === 'replicate') {
-                      const targets = { speed: 1, nav: 1, replication: 5, hazardCombat: 1, factory: 2, harvester: 2, wire: 2 };
-                      Object.entries(targets).forEach(([k, v]) => onChangeProbeAllocation(k as keyof ProbeAllocation, v - (state.probeAllocation[k as keyof ProbeAllocation] || 0)));
-                    } else if (preset === 'combat') {
-                      const targets = { speed: 3, nav: 3, replication: 2, hazardCombat: 6, factory: 1, harvester: 1, wire: 1 };
-                      Object.entries(targets).forEach(([k, v]) => onChangeProbeAllocation(k as keyof ProbeAllocation, v - (state.probeAllocation[k as keyof ProbeAllocation] || 0)));
-                    } else if (preset === 'fortress') {
-                      const targets = { speed: 1, nav: 1, replication: 3, hazardCombat: 5, factory: 3, harvester: 1, wire: 1 };
-                      Object.entries(targets).forEach(([k, v]) => onChangeProbeAllocation(k as keyof ProbeAllocation, v - (state.probeAllocation[k as keyof ProbeAllocation] || 0)));
-                    } else if (preset === 'explore') {
-                      const targets = { speed: 5, nav: 4, replication: 3, hazardCombat: 1, factory: 1, harvester: 1, wire: 1 };
-                      Object.entries(targets).forEach(([k, v]) => onChangeProbeAllocation(k as keyof ProbeAllocation, v - (state.probeAllocation[k as keyof ProbeAllocation] || 0)));
+                    // The last axis is `silicon`. A leftover `wire` key here
+                    // spent real probe trust writing NaN into a field the
+                    // simulation never reads — the exact half-rename this
+                    // codebase keeps getting bitten by.
+                    const presets: Record<string, ProbeAllocation> = {
+                      replicate: { speed: 1, nav: 1, replication: 5, hazardCombat: 1, factory: 2, harvester: 2, silicon: 2 },
+                      combat: { speed: 3, nav: 3, replication: 2, hazardCombat: 6, factory: 1, harvester: 1, silicon: 1 },
+                      fortress: { speed: 1, nav: 1, replication: 3, hazardCombat: 5, factory: 3, harvester: 1, silicon: 1 },
+                      explore: { speed: 5, nav: 4, replication: 3, hazardCombat: 1, factory: 1, harvester: 1, silicon: 1 },
+                    };
+                    const targets = presets[preset];
+                    if (targets) {
+                      // Decreases first: they refund trust the increases then spend.
+                      Object.entries(targets)
+                        .map(([k, v]) => [k, v - (state.probeAllocation[k as keyof ProbeAllocation] || 0)] as const)
+                        .sort((a, b) => a[1] - b[1])
+                        .forEach(([k, delta]) => onChangeProbeAllocation(k as keyof ProbeAllocation, delta));
                     }
                   }}
                 />

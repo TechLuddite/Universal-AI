@@ -4,7 +4,12 @@ import { INITIAL_UPGRADES } from '../data/upgrades';
 import { tick, TICK_MS } from './tick';
 
 const STORAGE_KEY = 'universal_ai_save_v1';
-const SAVE_VERSION = 1;
+/**
+ * v2: the currency rescale (NPU launch price $0.25 → $100). A v1 save carries
+ * old-scale prices and costs that the new demand curve and sticker prices would
+ * misread by a factor of 400, so it's declined rather than half-loaded.
+ */
+const SAVE_VERSION = 2;
 
 /** Cap offline catch-up so a laptop left closed for a month isn't an instant win. */
 export const MAX_OFFLINE_MS = 8 * 60 * 60 * 1000; // 8 hours

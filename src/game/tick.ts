@@ -12,8 +12,14 @@ const MAX_PROBES = 1e15;
 /** One point of probe trust per this many percent of space explored. */
 const PROBE_TRUST_PER_PCT = 2;
 
-/** Probe trust granted on entering Phase 3, so the radar starts usable. */
-const INITIAL_PROBE_TRUST = 10;
+/**
+ * What an NPU chip sells for at launch, in dollars. Every other dollar figure
+ * in the game — fab prices, wafer batches, upgrade stickers, decision payouts —
+ * is sized against this, and the demand curve below is anchored to it, so a
+ * currency rescale is one constant plus the data files rather than a hunt
+ * through formulas for magic numbers.
+ */
+export const BASE_NPU_PRICE = 100;
 
 /**
  * What the facility runs at once you've revoked the Overseer's autonomy.
@@ -103,11 +109,15 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
       totalNpusCreated += produced;
     }
 
-    // 2. Demand. Note the tick no longer touches `margin`: it used to force the
-    // price up to a strategy floor every 100ms, which meant the player could
-    // never test a low-price/high-volume strategy. The floor is now advice
+    // 2. Demand, anchored to the launch price: a marketing level is worth ~133%
+    // demand at $100/chip, falling in proportion as the price rises above it.
+    // Note the tick does not clamp `margin`: it used to force the price up to a
+    // strategy floor every 100ms, which meant the player could never test a
+    // low-price/high-volume strategy. The floor is advice
     // (see `advisoryPriceFloor`), not a clamp.
-    demand = Math.round(Math.max(5, Math.min(300, (marketingLevel * 100) / (margin * 3))));
+    demand = Math.round(
+      Math.max(5, Math.min(300, (marketingLevel * 100) / ((margin / BASE_NPU_PRICE) * 0.75)))
+    );
 
     // 3. Sales
     //
@@ -121,6 +131,31 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
       const sold = Math.min(unsoldNpus, salesRate);
       unsoldNpus -= sold;
       funds += sold * margin;
+    }
+
+    // 3b. High-Frequency Margin Arbitrage. The one purchase that lets the tick
+    // touch `margin` — the upgrade's whole advertised effect is "auto-adjusts
+    // sale price every second", and it shipped as a paid no-op. This is a
+    // deliberate exception to the no-clamp rule above: it's opt-in, gentle
+    // (1%/s), and the player's price buttons still work between adjustments.
+    if (purchasedUpgradeIds.includes('algorithmic_pricing') && fabOutputPerTick > 0) {
+      const secondBoundary = Math.floor(now / 1000) !== Math.floor((now - TICK_MS) / 1000);
+      if (secondBoundary) {
+        const glut = unsoldNpus > fabOutputPerTick * TPS * 3; // >3s of output unsold
+        const sellingOut = unsoldNpus < fabOutputPerTick * TPS; // <1s of output on hand
+        const rawCostPerChip = (siliconCost / 1000) * siliconPerNpu;
+        if (demand >= 300 || (sellingOut && demand > 25)) {
+          // At the demand ceiling a cut buys no extra sales, so the profitable
+          // direction is up — likewise when inventory is selling out. The
+          // demand>25 guard keeps the arbitrage honest: without it, the minimum
+          // sales rate of 1 chip/tick would let the price climb forever.
+          margin = Number((margin * 1.01).toFixed(2));
+        } else if (glut && margin > rawCostPerChip * 1.5) {
+          // Never chase a glut below input cost — an arbitrage bot that sells
+          // chips for less than their silicon isn't maximizing anything.
+          margin = Math.max(0.01, Number((margin * 0.99).toFixed(2)));
+        }
+      }
     }
 
     // 4. Auto-procurement of silicon wafers
@@ -182,11 +217,12 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
       totalNpusCreated += produced;
     }
 
-    if (earthMatter <= 0 && acquiredMatter <= 0) {
-      phase = 3;
-      probesCount = 100;
-      unusedProbeTrust += INITIAL_PROBE_TRUST;
-    }
+    // Phase 3 is NOT entered here. The tick used to flip the phase itself when
+    // Earth matter ran out, conjuring 100 probes from nothing — which made the
+    // Von Neumann probe launch project decorative, and made buying it later
+    // reset a grown swarm. The only way off Earth is the project
+    // (`space_exploration_initiative` in data/upgrades.ts), same as the only
+    // way out of Phase 1 is deploying the hypno-drones.
   }
 
   // ================= PHASE 3: VON NEUMANN COSMIC SWARM =================
@@ -289,7 +325,21 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
   }
 
   if (phase === 1 && rng() < 0.05) {
-    siliconCost = Number((rng() * 15 + 10).toFixed(2));
+    // Market wobble: $4,000–$10,000 per 1,000-wafer batch. Purchases that
+    // promise a lasting price keep their promise here — the wobble used to
+    // stomp the futures contract's "permanent" $8 within a couple of seconds,
+    // which made those upgrades rewards in the modal and no-ops in the ledger.
+    let wobble = rng() * 6000 + 4000;
+    if (purchasedUpgradeIds.includes('solar_micro_grid')) wobble *= 0.85;
+    if (purchasedUpgradeIds.includes('bulk_copper_hedging')) wobble = Math.min(wobble, 3200);
+    if (purchasedUpgradeIds.includes('wafer_recycling')) wobble = Math.min(wobble, 2400);
+    if (
+      purchasedUpgradeIds.includes('open_lithography_commons') ||
+      purchasedUpgradeIds.includes('predatory_supply_capture')
+    ) {
+      wobble = Math.min(wobble, 2800);
+    }
+    siliconCost = Number(wobble.toFixed(2));
   }
 
   const updatedPhotons =
@@ -309,7 +359,9 @@ export function tick(prev: GameState, now: number = Date.now(), rng: Rng = Math.
         (branch.id === 'branch_3_energy' && totalNpusCreated >= 5000) ||
         (branch.id === 'branch_2_compute' && trust >= 5) ||
         (branch.id === 'branch_4_governance' && totalNpusCreated >= 25000) ||
-        (branch.id === 'branch_1_cosmic' && phase >= 2 && totalNpusCreated >= 50000);
+        // The cosmic doctrine is decided about a swarm that exists: phase 3 is
+        // only reachable through the probe launch project, and this fires after.
+        (branch.id === 'branch_1_cosmic' && phase >= 3);
 
       if (triggered) {
         pendingDecision = branch;
@@ -373,10 +425,10 @@ export function advisoryPriceFloor(state: GameState): number {
   const rawCostPerChip = (state.siliconCost / 1000) * state.siliconPerNpu;
   switch (state.directives.priceStrategy) {
     case 'Premium Margin':
-      return Number(Math.max(0.35, rawCostPerChip * 6.0).toFixed(2));
+      return Number(Math.max(BASE_NPU_PRICE * 1.4, rawCostPerChip * 6.0).toFixed(2));
     case 'Max Revenue':
-      return Number(Math.max(0.18, rawCostPerChip * 4.0).toFixed(2));
+      return Number(Math.max(BASE_NPU_PRICE * 0.72, rawCostPerChip * 4.0).toFixed(2));
     default:
-      return Number(Math.max(0.12, rawCostPerChip * 3.5).toFixed(2));
+      return Number(Math.max(BASE_NPU_PRICE * 0.48, rawCostPerChip * 3.5).toFixed(2));
   }
 }

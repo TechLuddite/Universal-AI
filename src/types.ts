@@ -42,6 +42,14 @@ export interface Upgrade {
   reqTrust?: number;
   reqPhase?: number;
   /**
+   * Another upgrade that must be purchased before this one appears. This is how
+   * "Deploy Hypno-Drones" is prevented from unlocking before any hypno-drones
+   * exist — the threshold requirements above are OR'd together, so without this
+   * a milestone alone could surface an upgrade whose fiction depends on a
+   * predecessor. Latches like the thresholds; checked in the unlock pass.
+   */
+  reqUpgradeId?: string;
+  /**
    * Alignment gates, in contrast to the requirements above, are **live**: they
    * are re-checked every time, including at purchase. Drifting out of the band
    * takes the upgrade away again. That's what makes the axis a commitment

@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      entry: ${{ steps.entry.outputs.entry }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,6 +40,20 @@ jobs:
       - name: Build
         run: npm run build
 
+      # The hashed entry filename is this build's fingerprint. `verify` asserts
+      # the live site references exactly this one, which is the only way to tell
+      # "the deploy worked" apart from "something else published something else".
+      - name: Record the built entry script
+        id: entry
+        run: |
+          entry=$(grep -o 'assets/index-[A-Za-z0-9_-]*\.js' dist/index.html | head -1)
+          if [ -z "$entry" ]; then
+            echo "::error::dist/index.html has no hashed entry script — the build did not produce a bundled page."
+            exit 1
+          fi
+          echo "entry=$entry" >> "$GITHUB_OUTPUT"
+          echo "Built entry: $entry"
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
@@ -50,6 +66,52 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # A green deploy job only means the artifact was accepted. It does not mean the
+  # artifact is what the domain serves: Pages will also publish the raw repository
+  # from a branch if its source is set that way, and that publish can land after
+  # this one and win. When it does, visitors get index.html with `src/main.tsx` in
+  # it, no bundle, and a grey screen — while every check here stays green. This
+  # job is what makes that condition fail out loud instead.
+  verify:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert the live site is the build we just published
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          ENTRY: ${{ needs.build.outputs.entry }}
+        run: |
+          url="${PAGE_URL:-https://paperclips.opsvibe.systems/}"
+          echo "Expecting $url to reference $ENTRY"
+
+          # Pages fronts the site with a CDN; a fresh publish takes a moment to
+          # reach the edge. Poll rather than race it.
+          for attempt in $(seq 1 12); do
+            html=$(curl -fsSL --max-time 30 "$url?cachebust=$GITHUB_RUN_ID-$attempt" || true)
+
+            if printf '%s' "$html" | grep -qF "$ENTRY"; then
+              echo "OK — live site is serving $ENTRY"
+              exit 0
+            fi
+
+            if printf '%s' "$html" | grep -qF 'src/main.tsx'; then
+              echo "Attempt $attempt: still serving the unbuilt source index.html"
+            else
+              echo "Attempt $attempt: $ENTRY not present yet"
+            fi
+            sleep 20
+          done
+
+          echo "::error::$url is not serving this build's entry script ($ENTRY)."
+          if printf '%s' "$html" | grep -qF 'src/main.tsx'; then
+            echo "::error::It is serving the repository's source index.html, which loads /src/main.tsx — a file browsers cannot execute. That is the grey screen."
+            echo "::error::Cause: GitHub Pages is publishing from a branch, so the pages-build-deployment workflow uploads the repo root and overwrites this artifact."
+            echo "::error::Fix: Settings -> Pages -> Build and deployment -> Source -> GitHub Actions."
+          fi
+          exit 1

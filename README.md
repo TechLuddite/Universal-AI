@@ -188,7 +188,10 @@ can confirm by watching, and by reading
 React 19 + TypeScript + Vite + Tailwind 4. Canvas pixel-art renderer, SVG radar,
 Web Audio synthesizer. Deployed to GitHub Pages from `main` by
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), which typechecks
-and tests before it builds.
+and tests before it builds — and then fetches the live URL and fails unless it's
+serving the build it just published. (Pages' source has to be *GitHub Actions*;
+[ARCHITECTURE.md](docs/ARCHITECTURE.md#deploy) explains what breaks if it isn't,
+because it did.)
 
 The simulation is a pure reducer:
 

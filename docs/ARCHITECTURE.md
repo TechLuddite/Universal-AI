@@ -223,7 +223,9 @@ say `paperclips.opsvibe.systems`. Keep them in sync or drop the root one.
 ### Pages source must be "GitHub Actions"
 
 Settings → Pages → Build and deployment → Source. This is a repository setting,
-not something the repo can assert, and getting it wrong is silent.
+not something the repo can assert, and getting it wrong is silent. It is set to
+*GitHub Actions* as of 2026-08-06, with **Enforce HTTPS** on; if the site ever
+serves this repo's own `package.json`, that is the setting that moved.
 
 If the source is *Deploy from a branch* instead, GitHub runs its own
 `pages-build-deployment` workflow on every push to `main` and publishes the

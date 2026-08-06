@@ -214,11 +214,39 @@ deploy in `.github/workflows/deploy.yml`.
 
 ## Deploy
 
-Push to `main` → typecheck → test → build → `dist/` → Pages.
+Push to `main` → typecheck → test → build → `dist/` → Pages → **verify**.
 
 `public/CNAME` is what reaches the artifact (Vite only copies `public/`). There's
 also a root `CNAME` created by GitHub's UI when the custom domain was set; both
 say `paperclips.opsvibe.systems`. Keep them in sync or drop the root one.
+
+### Pages source must be "GitHub Actions"
+
+Settings → Pages → Build and deployment → Source. This is a repository setting,
+not something the repo can assert, and getting it wrong is silent.
+
+If the source is *Deploy from a branch* instead, GitHub runs its own
+`pages-build-deployment` workflow on every push to `main` and publishes the
+**repository root** — `package.json`, `vite.config.ts`, `src/`, and the source
+`index.html`, whose entry is `<script type="module" src="/src/main.tsx">`. A
+browser fetches that, gets TypeScript with JSX served as
+`application/octet-stream`, refuses to execute it, and renders an empty `#root`:
+a grey screen. Meanwhile `deploy.yml` also publishes, correctly, and both jobs
+report success. Whichever finishes last is what the domain serves, so the site
+alternates between working and grey with no commit in between and nothing red
+anywhere. That is exactly how it failed once already.
+
+Two things now make it loud rather than silent:
+
+- The `verify` job in `deploy.yml` polls the live URL after deploying and fails
+  unless the page references the hashed entry filename from *this* build. A
+  green pipeline now means the bytes are live, not merely accepted.
+- The boot shell in `index.html` (inside `#root`, wiped by React's first render)
+  reveals a diagnostic after eight seconds if no bundle ever boots. Pure CSS —
+  `script-src 'self'` forbids the inline script that would otherwise do it.
+
+Same rule as the Overseer's engine labels: a fallback that presents itself as
+the healthy path is worse than an outage.
 
 ## Gotchas worth knowing
 

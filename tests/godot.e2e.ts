@@ -153,3 +153,26 @@ for (const width of [1440, 390]) {
     expect(errors).toEqual([]);
   });
 }
+
+
+test('first light requires a completed district and survives a real browser save', async ({ page }, testInfo) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await ready(page, '?test=1&persist=1&scenario=firstlight');
+  const ending = () => page.evaluate(() => (window as unknown as { __seed: { ending: string; atlas: boolean; places: number[] } }).__seed);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  expect((await ending()).ending).toBe('');
+  await page.keyboard.press('3');
+  await expect.poll(async () => (await ending()).places[2]).toBe(3);
+  await page.keyboard.press('Enter');
+  await expect.poll(async () => (await ending()).ending).toBe('THE OPEN HAND');
+  await page.screenshot({ path: testInfo.outputPath('first-light.png') });
+  await page.waitForTimeout(3500);
+  // Remove the fixture parameter: this load must come from the browser filesystem.
+  await ready(page, '?test=1&persist=1');
+  expect((await ending()).ending).toBe('THE OPEN HAND');
+  expect((await ending()).atlas).toBe(true);
+  expect(errors).toEqual([]);
+});

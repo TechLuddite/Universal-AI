@@ -58,6 +58,8 @@ func _ready() -> void:
 	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=chorus"):
 		# Browser regression starts from a known old-format save; normal play has no setter.
 		sim.restore({"version":1, "capital":60000, "wafers":300, "chips":1200, "fabs":6, "overclock":true, "controller":true, "linked":true, "sound_enabled":false})
+	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=firstlight"):
+		sim.restore({"version":2, "capital":30000, "wafers":300, "chips":2000, "fabs":6, "overclock":true, "controller":true, "linked":true, "sound_enabled":false, "places":[4,2,2], "signals":1000, "resonance":300.0, "charter":0})
 	_create_environment()
 	room=Chamber.new()
 	add_child(room)

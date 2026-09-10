@@ -81,7 +81,7 @@ elapsed time; the cap does not halve production speed.
 ## Build and verification
 
 ```sh
-npm run godot:test          # 23 economy checks plus a headless scene smoke test
+npm run godot:test          # economy, migration, four endings, and a headless scene check
 npm run godot:test:browser  # export, then Chromium and Firefox integration tests
 npm run build              # existing React application
 npm run godot:stage        # copy the previously exported game into dist/seed/
@@ -113,7 +113,8 @@ A separate manual browser playthrough also reached six fabs and the uplink.
 
 `?test=1` exposes a read-only `window.__seed` snapshot for browser assertions and
 disables saving. `?test=1&persist=1` enables saving for the reload test. There are
-no browser resource-grant or arbitrary game-action debug hooks.
+no arbitrary browser state setters. In test mode, `scenario=chorus` and
+`scenario=firstlight` load fixed saved-run fixtures for chapter UI coverage.
 
 The Pages workflow builds both applications and publishes this prototype at
 `/seed/`, linked from the React header. The export uses single-threaded

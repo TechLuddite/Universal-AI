@@ -329,7 +329,7 @@ func update(sim: SeedSimulation, delta: float, saving: bool) -> void:
 	buttons.fab.disabled=sim.capital<sim.fab_cost() or sim.fabs>=6
 	buttons.upgrade.disabled=sim.overclock or sim.fabs<2 or sim.capital<sim.OVERCLOCK_COST
 	buttons.controller.disabled=sim.fabs<3
-	buttons.uplink.disabled=sim.linked or sim.fabs<6 or sim.capital<sim.UPLINK_COST
+	buttons.uplink.disabled=not sim.linked and (sim.fabs<6 or sim.capital<sim.UPLINK_COST)
 	# Disabled primary controls stay legible on the darker surface.
 	headings.etch.add_theme_color_override("font_color",MUTED if buttons.etch.disabled else INK)
 	captions.etch.add_theme_color_override("font_color",MUTED if buttons.etch.disabled else Color("384b44"))
@@ -340,13 +340,14 @@ func update(sim: SeedSimulation, delta: float, saving: bool) -> void:
 	captions.upgrade.text="ACTIVE · 1.8s / chip" if sim.overclock else "$2,400 · 1.8s / chip" if sim.fabs>=2 else "2 fabs required"
 	captions.controller.text="ON · buys low stock" if sim.controller else "OFF · click to enable" if sim.fabs>=3 else "3 fabs required"
 	headings.controller.text="Supply controller"
-	captions.uplink.text="DISTRICT CONNECTED" if sim.linked else "$6,000 · ignite network" if sim.fabs>=6 else "6 fabs required"
+	captions.uplink.text="TAB · OPEN THE CHORUS" if sim.linked else "$6,000 · ignite network" if sim.fabs>=6 else "6 fabs required"
 	mute_button.text="SOUND ON" if sim.sound_enabled else "MUTED"
 	if sim.linked:
+		headings.uplink.text="Open The Chorus"
 		title.text="A much larger beginning."
 		chapter_title.text="The district\nis listening."
-		chapter_note.text="Your factory is now a node in something larger. This is where The Seed ends. Your machines can keep running."
-		objective.text="PROTOTYPE COMPLETE"
+		chapter_note.text="Your factory is now a node in something larger. Open The Chorus to grow a district, write its charter, and send its first light."
+		objective.text="THE CHORUS / CHAPTER 02"
 		objective_progress.value=100
 		objective_numbers.text="6 / 6 bays · uplink established"
 	elif sim.fabs>0:

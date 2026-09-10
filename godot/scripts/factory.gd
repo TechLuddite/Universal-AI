@@ -3,11 +3,14 @@ extends Node3D
 const Simulation = preload("res://scripts/simulation.gd")
 const Chamber = preload("res://scripts/chamber.gd")
 const Machine = preload("res://scripts/machine.gd")
+const Chorus = preload("res://scripts/chorus.gd")
 const Interface = preload("res://scripts/interface.gd")
 const SAVE_PATH: String = "user://the-seed-v1.json"
 var sim: SeedSimulation
 var room: FactoryChamber
 var ui: FactoryInterface
+var chorus: ChorusInterface
+var atlas: bool = false
 var manual: FabMachine
 var machines: Array[FabMachine] = []
 var prepared_machines: Array[FabMachine] = []
@@ -52,6 +55,9 @@ func _ready() -> void:
 	if OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("persist=1"):
 		saving=true
 	if saving:_load_game()
+	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=chorus"):
+		# Browser regression starts from a known old-format save; normal play has no setter.
+		sim.restore({"version":1, "capital":60000, "wafers":300, "chips":1200, "fabs":6, "overclock":true, "controller":true, "linked":true, "sound_enabled":false})
 	_create_environment()
 	room=Chamber.new()
 	add_child(room)
@@ -75,7 +81,15 @@ func _ready() -> void:
 	ui=Interface.new()
 	add_child(ui)
 	ui.action_requested.connect(_action)
+	var atlas_layer := CanvasLayer.new()
+	atlas_layer.layer = 20
+	add_child(atlas_layer)
+	chorus = Chorus.new()
+	atlas_layer.add_child(chorus)
+	chorus.action_requested.connect(_action)
+	chorus.visible = false
 	selected_ring=FactoryGeometry.ring(self,Vector3(0,0.14,-0.4),1.65,0.014,FactoryGeometry.material(Color("f4cb80"),0,0.3,1))
+	if sim.linked:_toggle_atlas()
 	if sim.fabs>0:ui.notify("Run restored. Your machines were waiting for you.")
 	print("THE SEED: ready — %d fabs, %d chips"%[sim.fabs,sim.chips])
 
@@ -167,13 +181,15 @@ func _process(delta: float) -> void:
 	time+=delta
 	production_chime=maxf(0,production_chime-delta)
 	_handle_events()
-	manual.animate(delta,sim.manual_progress,sim.overclock)
-	for i in machines.size():machines[i].animate(delta,sim.cycles[i],sim.overclock)
-	room.animate(delta,time,sim.fabs,sim.linked)
+	if not atlas:
+		manual.animate(delta,sim.manual_progress,sim.overclock)
+		for i in machines.size():machines[i].animate(delta,sim.cycles[i],sim.overclock)
+		room.animate(delta,time,sim.fabs,sim.linked)
 	if sim.linked:target_zoom=maxf(target_zoom,39.0)
 	_camera_update(delta)
 	ui.selected=inspecting
-	ui.update(sim,delta,saving)
+	if not atlas:ui.update(sim,delta,saving)
+	chorus.update(sim,delta)
 	selected_ring.position=(manual.position if inspecting<0 else machines[inspecting].position)+Vector3(0,0.02,0)
 	selected_ring.rotation.y=time*0.08
 	if ambience.playing:
@@ -192,6 +208,7 @@ func _process(delta: float) -> void:
 			snapshot["nodes"]=get_tree().get_node_count()
 			snapshot["render_width"]=get_viewport().get_visible_rect().size.x
 			snapshot["render_height"]=get_viewport().get_visible_rect().size.y
+			snapshot["atlas"]=atlas
 			snapshot["cinema"]=ui.focus_mode
 			snapshot["camera_focus"]=camera_focus
 			snapshot["draw_calls"]=Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
@@ -223,6 +240,19 @@ func _add_machine(index: int, animate: bool=true) -> void:
 func _action(action: String) -> void:
 	if ui.reset_confirm.visible and action!="reset":return
 	match action:
+		"atlas":
+			if sim.linked:_toggle_atlas()
+		"garden":sim.plant(0)
+		"archive":sim.plant(1)
+		"foundry":sim.plant(2)
+		"charter0":sim.choose_charter(0)
+		"charter1":sim.choose_charter(1)
+		"charter2":sim.choose_charter(2)
+		"autonomy":sim.toggle_autonomy()
+		"directive":
+			sim.directive = (sim.directive + 1) % 3
+			sim.report("DIRECTIVE / Prefer %s. At six places an autonomous controller may depart." % sim.NAMES[sim.directive])
+		"broadcast":sim.broadcast()
 		"etch":sim.etch()
 		"supply":
 			if not sim.buy_wafers() and not sim.reclaim():ui.notify("A wafer shipment costs $600. Keep etching.")
@@ -230,7 +260,9 @@ func _action(action: String) -> void:
 			if not sim.build_fab():ui.notify("Earn $%d to commission the next machine."%sim.fab_cost())
 		"upgrade":sim.upgrade()
 		"controller":sim.toggle_controller()
-		"uplink":sim.uplink()
+		"uplink":
+			if sim.linked:_toggle_atlas()
+			else:sim.uplink()
 		"sound":
 			sim.sound_enabled=not sim.sound_enabled
 			# Web sample playback restarts its source on every unpause assignment.
@@ -277,13 +309,22 @@ func _handle_events() -> void:
 				_sound("build",-14)
 				ui.notify("Overclock online. Fabrication cycle: 3.2s → 1.8s.",true)
 			"controller":ui.notify("Supply controller enabled. It buys wafers below the reserve threshold." if sim.controller else "Supply controller paused. Procurement is yours again.",true)
+			"chorus":ui.notify(str(event.message), true)
 			"uplink":
+				if not atlas:_toggle_atlas()
 				_sound("uplink",-10)
 				ui.notify("UPLINK ESTABLISHED. You are no longer the only factory.",true)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and not ui.reset_confirm.visible:
 		match event.physical_keycode:
+			KEY_TAB:_action("atlas")
+			KEY_1:
+				if atlas:_action("garden")
+			KEY_2:
+				if atlas:_action("archive")
+			KEY_3:
+				if atlas:_action("foundry")
 			KEY_SPACE:_action("etch")
 			KEY_B:_action("fab")
 			KEY_R:_action("supply")
@@ -306,6 +347,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if atlas:return
 	if event is InputEventMouseButton:
 		if event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN] and event.pressed:
 			if camera_focus:target_zoom=zoom
@@ -359,6 +401,16 @@ func _pick(screen_pos: Vector2) -> void:
 				if i==sim.fabs:_action("fab")
 				else:ui.notify("Connect bay %02d first. The line expands in sequence."%(sim.fabs+1))
 				return
+
+func _toggle_atlas() -> void:
+	atlas = not atlas
+	chorus.visible = atlas
+	ui.root.visible = not atlas
+	room.visible = not atlas
+	manual.visible = not atlas
+	selected_ring.visible = not atlas
+	for machine in machines:machine.visible = not atlas
+	camera_focus = false
 
 func _save_game() -> void:
 	var file:=FileAccess.open(SAVE_PATH,FileAccess.WRITE)

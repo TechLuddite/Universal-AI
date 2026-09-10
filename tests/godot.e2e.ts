@@ -123,3 +123,33 @@ test('ambient audio remains bounded through two fabs and repeated mute toggles',
   await page.waitForTimeout(3000);
   expect(await sources() - resumed).toBeLessThan(10);
 });
+
+for (const width of [1440, 390]) {
+  test(`the Chorus migrates an uplink save and builds a living district at ${width}px`, async ({ page }, testInfo) => {
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    await ready(page, '?test=1&scenario=chorus');
+    const city = () => page.evaluate(() => (window as unknown as { __seed: { atlas: boolean; places: number[]; signal: number; charter: number; autonomous: boolean; nodes: number } }).__seed);
+    await expect.poll(async () => (await city()).atlas).toBe(true);
+    const nodes = (await city()).nodes;
+    // Signal is earned by the six real fabs from the restored factory.
+    for (let i = 0; i < 3; i++) {
+      await expect.poll(async () => (await city()).signal, { timeout: 30_000 }).toBeGreaterThanOrEqual(20 + i * 10);
+      // First action card: use the actual pointer/touch target on both layouts.
+      await page.mouse.click(width === 390 ? 100 : 130, width === 390 ? 630 : 825);
+      await expect.poll(async () => (await city()).places[0]).toBe(i + 1);
+    }
+    // The permanent charter choice appears after the third place.
+    await page.mouse.click(width === 390 ? 175 : 1210, width === 390 ? 305 : 282);
+    await expect.poll(async () => (await city()).charter).toBe(0);
+    expect((await city()).nodes).toBe(nodes);
+    await page.screenshot({ path: testInfo.outputPath('chorus.png') });
+    await page.keyboard.press('Tab');
+    await expect.poll(async () => (await city()).atlas).toBe(false);
+    await page.keyboard.press('Tab');
+    await expect.poll(async () => (await city()).atlas).toBe(true);
+    expect(errors).toEqual([]);
+  });
+}

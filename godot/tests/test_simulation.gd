@@ -74,5 +74,47 @@ func _initialize() -> void:
 	advance(run,10)
 	advance(resumed,10)
 	check(run.to_save()==resumed.to_save(),"Resumed automation behaves identically to uninterrupted play")
+	# Pre-Chorus saves migrate in place; no reset or new save location.
+	var legacy: Dictionary = {"version": 1, "capital": 2400, "wafers": 30, "chips": 90, "fabs": 6, "linked": true}
+	var migrated := Simulation.new()
+	check(migrated.restore(legacy) and migrated.linked and migrated.district_count() == 0, "Original uplink saves enter the new chapter without losing their factory")
+	check(not migrated.plant(0), "District construction cannot spend signal it has not earned")
+	var endings: Array[String] = []
+	for kind in 3:
+		var city := Simulation.new()
+		city.restore(saved)
+		# Continue a legitimately earned factory through every ending; no resource grants.
+		for frame in 60 * 1200:
+			city.step(1.0 / 60)
+			city.plant(kind)
+			city.choose_charter(kind)
+			city.take_events()
+			if city.broadcast():break
+		endings.append(city.ending)
+		check(not city.ending.is_empty(), "Each committed district can finish within twenty minutes of the uplink")
+		check(city.places[kind] == 9 and city.capital >= 0 and city.signal >= 0, "Endings require real funded construction")
+		var copy := Simulation.new()
+		check(copy.restore(city.to_save()), "A completed district can be restored")
+		advance(city, 12)
+		advance(copy, 12)
+		check(copy.to_save() == city.to_save(), "District resources, promises and ending survive save/reload")
+	check(endings == ["THE OPEN HAND", "THE MANY", "THE UNFINISHED SUN"], "Different committed places and charters produce distinct endings")
+	var auto := Simulation.new()
+	auto.restore(saved)
+	auto.toggle_autonomy()
+	for frame in 60 * 1200:
+		auto.step(1.0 / 60)
+		auto.choose_charter(0)
+		auto.take_events()
+		if auto.district_count() == 9:break
+	check(auto.places == [6, 0, 3] and auto.drift_count == 3, "Autonomy follows six garden requests then explicitly records three higher-output departures")
+	check(auto.transmission.begins_with("DRIFT") and auto.history.size() <= 8, "Drift remains visible and the persisted journal is bounded")
+	auto.toggle_autonomy()
+	var rate: float = auto.resonance_rate()
+	check(is_equal_approx(rate, 9.0), "Revoked autonomy applies its advertised 25 percent resonance cost")
+	var invalid: Dictionary = auto.to_save()
+	invalid.places = [10, 0, 0]
+	var unchanged: Dictionary = auto.to_save()
+	check(not auto.restore(invalid) and auto.to_save() == unchanged, "Invalid district saves are rejected atomically")
 	print("The Seed: %d checks, %d failures. Full run: %.1fs, %d chips."%[checks,failures.size(),finished_at,run.chips])
 	quit(0 if failures.is_empty() else 1)

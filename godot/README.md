@@ -9,7 +9,10 @@ interpret the audio regression fix or passing tests as a complete resolution.
 A playable Godot 4.7.2 prototype of Universal AI's opening: turn one silicon
 wafer into a chip, install the first autonomous fab, fill six bays, research
 faster production, automate procurement, and connect the surrounding district.
-A focused run takes roughly three minutes. Production continues after the uplink.
+The opening leads into **The Chorus**, a playable district chapter. Nine places,
+a permanent charter, an autonomous builder with visible departures, and four
+possible first transmissions turn the factory into a question about purpose.
+Existing opening saves migrate automatically; production continues in both views.
 
 This is a standalone economy and save, not yet a port of the original game's
 three phases, alignment system, market, or optional local language model. The
@@ -39,6 +42,7 @@ are retained. On other platforms, install the matching editor and set
 | --- | --- |
 | Space (hold to repeat), click the central machine, or Etch button | Fabricate and sell a chip |
 | B / R | Build a fab / order wafers |
+| Tab / 1 / 2 / 3 | Switch factory/district after uplink / build garden, archive, foundry in district |
 | O / A / U | Research overclock / toggle supply controller / district uplink |
 | Drag / mouse wheel | Orbit / zoom |
 | Click a fab / C | Inspect machine / toggle close-up |
@@ -132,3 +136,32 @@ Godot and third-party engine notices ship in `licenses/`.
 The next substantial step is porting the original simulation's systems into
 this presentation, with explicit save migration and visual designs for each
 later phase. This prototype establishes the room and production loop first.
+
+## The Chorus
+
+Every chip shipped after the uplink earns one signal. A district place costs
+$2,500 + $750 per existing place and 20 + 10 signal per existing place. There
+are exactly nine places. Gardens generate 1 resonance/s, archives 1.5, foundries
+2. Manual district control applies a 25% resonance penalty; granting autonomy
+restores the full rate. This is a deterministic utility controller, not an LLM.
+
+The controller checks every eight seconds, uses the same purchase method as
+the player, and reserves $600 for silicon. Its first six places follow your
+directive. From six onward, it prefers foundries for higher output; departures
+are explicitly recorded. Revoke autonomy to stop automatic construction. It
+never chooses your charter or broadcasts on your behalf.
+
+At three places choose a permanent charter. At nine places, spend $12,000 and
+240 resonance to send first light. Four or more places matching the charter
+produce The Open Hand, The Many, or The Unfinished Sun. A district whose
+infrastructure diverges from its promise produces The Common Ground.
+
+The atlas is a native vector drawing, limited to nine nodes and 27 travelling
+signals, refreshed at 10 Hz while visible. Factory geometry is hidden and
+machine/chamber animation is suspended in this view; the same simulation keeps
+producing. No new audio assets, lights, particles, or external model downloads.
+The performance investigation remains open.
+
+Version 2 saves keep the original `the-seed-v1.json` location and accept version
+1 factory saves. The browser regression fixture is enabled only by
+`?test=1&scenario=chorus`; normal play exposes no state setter.

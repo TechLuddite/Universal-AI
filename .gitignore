@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+playwright-report/
+test-results/
+
+# Godot imported resources are rebuilt from the source assets.
+godot/.godot/
+godot/.godot-export/

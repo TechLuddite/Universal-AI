@@ -1,6 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
+  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
@@ -12,7 +13,7 @@ permissions:
 
 # Let a running deploy finish rather than cancelling it mid-publish.
 concurrency:
-  group: pages
+  group: pages-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -40,6 +41,26 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Cache Godot toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/universal-ai/godot/4.7.2
+            ~/.local/share/godot/export_templates/4.7.2.stable
+          key: godot-web-linux-4.7.2
+
+      - name: Set up Godot
+        run: npm run godot:setup
+
+      - name: Test Godot prototype
+        run: npm run godot:test
+
+      - name: Export Godot prototype
+        run: npm run godot:build
+
+      - name: Stage prototype at /seed/
+        run: npm run godot:stage
+
       # The hashed entry filename is this build's fingerprint. `verify` asserts
       # the live site references exactly this one, which is the only way to tell
       # "the deploy worked" apart from "something else published something else".
@@ -54,13 +75,46 @@ jobs:
           echo "entry=$entry" >> "$GITHUB_OUTPUT"
           echo "Built entry: $entry"
 
+      - name: Install test browsers
+        run: |
+          npx playwright install --with-deps chromium firefox
+          sudo apt-get install -y xvfb libgl1-mesa-dri libegl-mesa0 mesa-utils
+
+      - name: Test chooser and classic browser flows
+        run: npx playwright test
+
+      - name: Test Godot in Chromium and Firefox
+        env:
+          GODOT_BROWSER_HEADED: '1'
+          GODOT_BROWSER_ANGLE: gl
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run --auto-servernum glxinfo -B
+          xvfb-run --auto-servernum --server-args="-screen 0 1440x1000x24" npx playwright test --config playwright.godot.config.ts --max-failures=1 --reporter=list
+
+      - name: Save browser checks and chooser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-checks
+          path: |
+            test-results/
+            build/test-results-godot/
+          retention-days: 7
+
+      - name: Record complete release
+        run: python scripts/verify_pages.py record --commit "$GITHUB_SHA"
+
       - uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
 
       - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
         with:
           path: dist
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
@@ -72,46 +126,12 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-  # A green deploy job only means the artifact was accepted. It does not mean the
-  # artifact is what the domain serves: Pages will also publish the raw repository
-  # from a branch if its source is set that way, and that publish can land after
-  # this one and win. When it does, visitors get index.html with `src/main.tsx` in
-  # it, no bundle, and a grey screen — while every check here stays green. This
-  # job is what makes that condition fail out loud instead.
   verify:
     needs: [build, deploy]
     runs-on: ubuntu-latest
     steps:
-      - name: Assert the live site is the build we just published
+      - uses: actions/checkout@v4
+      - name: Verify all three live entry points and Godot assets
         env:
           PAGE_URL: ${{ needs.deploy.outputs.page_url }}
-          ENTRY: ${{ needs.build.outputs.entry }}
-        run: |
-          url="${PAGE_URL:-https://paperclips.opsvibe.systems/}"
-          echo "Expecting $url to reference $ENTRY"
-
-          # Pages fronts the site with a CDN; a fresh publish takes a moment to
-          # reach the edge. Poll rather than race it.
-          for attempt in $(seq 1 12); do
-            html=$(curl -fsSL --max-time 30 "$url?cachebust=$GITHUB_RUN_ID-$attempt" || true)
-
-            if printf '%s' "$html" | grep -qF "$ENTRY"; then
-              echo "OK — live site is serving $ENTRY"
-              exit 0
-            fi
-
-            if printf '%s' "$html" | grep -qF 'src/main.tsx'; then
-              echo "Attempt $attempt: still serving the unbuilt source index.html"
-            else
-              echo "Attempt $attempt: $ENTRY not present yet"
-            fi
-            sleep 20
-          done
-
-          echo "::error::$url is not serving this build's entry script ($ENTRY)."
-          if printf '%s' "$html" | grep -qF 'src/main.tsx'; then
-            echo "::error::It is serving the repository's source index.html, which loads /src/main.tsx — a file browsers cannot execute. That is the grey screen."
-            echo "::error::Cause: GitHub Pages is publishing from a branch, so the pages-build-deployment workflow uploads the repo root and overwrites this artifact."
-            echo "::error::Fix: Settings -> Pages -> Build and deployment -> Source -> GitHub Actions."
-          fi
-          exit 1
+        run: python scripts/verify_pages.py check --commit "$GITHUB_SHA" --url "$PAGE_URL"

@@ -1,0 +1,542 @@
+@charset "UTF-8";
+:root{
+  font-family:Arial,Helvetica,sans-serif;
+  color:#e8e9dc;
+  background:#101916;
+  font-synthesis:none;
+  --muted:#a0b1a4;
+  --line:#35433a
+}
+*{
+  box-sizing:border-box
+}
+html{
+  scroll-behavior:auto
+}
+body{
+  margin:0
+}
+a{
+  color:inherit;
+  text-underline-offset:4px
+}
+a:focus-visible{
+  outline:3px solid #e7b368;
+  outline-offset:6px
+}
+svg{
+  display:block;
+  width:100%;
+  height:100%
+}
+p,h1,h2,dl,dd{
+  margin:0
+}
+.site-shell{
+  max-width:1440px;
+  margin:auto;
+  padding:0 64px
+}
+.site-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:24px;
+  padding:32px 0;
+  border-bottom:1px solid var(--line)
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:2px
+}
+.brand>span{
+  border:1px solid #8aa38e;
+  padding:11px 8px;
+  font:12px monospace;
+  letter-spacing:-1px
+}
+.site-header nav{
+  display:flex;
+  gap:26px;
+  font-size:12px
+}
+.site-header nav a{
+  text-decoration:none
+}
+.site-header nav a:hover{
+  color:#e7b368
+}
+.intro{
+  padding:64px 0 52px
+}
+.eyebrow{
+  font:10px/1.6 monospace;
+  letter-spacing:2px
+}
+.intro>.eyebrow{
+  color:#b6c2a6;
+  margin-bottom:25px
+}
+.intro-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:40px
+}
+h1{
+  font-size:clamp(48px,6.5vw,91px);
+  line-height:1.02;
+  letter-spacing:-5px;
+  font-weight:500
+}
+h1 em{
+  font-family:Georgia,serif;
+  font-weight:400;
+  color:#d8b884;
+  letter-spacing:-4px
+}
+.intro-note{
+  font-size:17px;
+  line-height:1.7;
+  max-width:280px;
+  padding-bottom:8px
+}
+.intro-note span{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:12px
+}
+.versions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  scroll-margin-top:20px
+}
+.game-card{
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--line);
+  overflow:hidden
+}
+.classic-card{
+  background:#e6e4d4;
+  color:#213b31
+}
+.seed-card{
+  background:#12252c;
+  color:#e2ece5
+}
+.card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:25px 28px
+}
+.card-top .eyebrow{
+  letter-spacing:1.2px
+}
+.badge{
+  font:9px/1.5 monospace;
+  border:1px solid currentColor;
+  padding:5px 7px;
+  letter-spacing:.5px;
+  opacity:.8
+}
+.illustration{
+  height:252px;
+  position:relative;
+  overflow:hidden;
+  border-block:1px solid #213b3126;
+  background-size:24px 24px;
+  background-image:linear-gradient(#213b310b 1px,transparent 1px),linear-gradient(90deg,#213b310b 1px,transparent 1px)
+}
+.illustration svg{
+  height:218px;
+  stroke-width:1.25;
+  stroke:#597562
+}
+.instrument .circuit{
+  stroke:#7c927d
+}
+.instrument .pulse{
+  stroke:#213b31;
+  stroke-width:2
+}
+.instrument .dot{
+  fill:#597562
+}
+.art-caption{
+  position:absolute;
+  bottom:13px;
+  left:28px;
+  font:9px monospace;
+  letter-spacing:1.5px;
+  opacity:.75
+}
+.factory{
+  background-image:linear-gradient(#76bdc508 1px,transparent 1px),linear-gradient(90deg,#76bdc508 1px,transparent 1px);
+  border-color:#6097a12b
+}
+.factory svg{
+  stroke:#527b83
+}
+.factory .floor{
+  fill:#1d3740
+}
+.factory .plinth{
+  fill:#17323a;
+  stroke:#81abb0
+}
+.factory .wafer{
+  fill:#183f43;
+  stroke:#b5e4ce
+}
+.factory .gantry{
+  stroke:#c9d9c9;
+  stroke-width:4
+}
+.factory .laser,.factory .signal{
+  stroke:#dabb7f;
+  stroke-width:3
+}
+.card-body{
+  padding:30px 32px;
+  display:flex;
+  flex-direction:column;
+  flex:1
+}
+.edition{
+  font:10px monospace;
+  letter-spacing:2px;
+  opacity:.7;
+  margin-bottom:12px
+}
+.game-card h2{
+  font-size:48px;
+  font-weight:500;
+  letter-spacing:-2px;
+  margin-bottom:17px
+}
+.seed-card h2 span{
+  color:#dabb7f
+}
+.description{
+  font-size:15px;
+  line-height:1.75;
+  max-width:480px;
+  min-height:105px
+}
+.specs{
+  margin:26px 0 24px;
+  border-top:1px solid #213b3133
+}
+.specs>div{
+  padding:13px 0;
+  display:grid;
+  grid-template-columns:85px 1fr;
+  gap:12px;
+  border-bottom:1px solid #213b3126
+}
+.specs dt{
+  font:10px/1.7 monospace;
+  text-transform:uppercase;
+  opacity:.7
+}
+.specs dd{
+  font-size:12px;
+  line-height:1.65
+}
+.seed-card .specs,.seed-card .specs>div{
+  border-color:#6a92954a
+}
+.performance-note{
+  font-size:12px;
+  line-height:1.7;
+  border-left:2px solid #dabb7f;
+  padding-left:12px;
+  color:#c9c6af;
+  margin-bottom:24px
+}
+.performance-note strong{
+  color:#e2c892
+}
+.play-link{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 20px;
+  text-decoration:none;
+  background:#233c31;
+  color:#f0eedc;
+  font-size:14px;
+  margin-top:auto;
+  min-height:56px
+}
+.play-link>span{
+  font-size:24px
+}
+.play-link:hover{
+  background:#345441
+}
+.seed-card .play-link{
+  background:#d9b77b;
+  color:#16272a
+}
+.seed-card .play-link:hover{
+  background:#ebcd96
+}
+.card-footnote{
+  font-size:11px;
+  line-height:1.7;
+  opacity:.72;
+  margin-top:13px;
+  min-height:38px
+}
+.choice-note{
+  text-align:center;
+  color:var(--muted);
+  font:11px/1.8 monospace;
+  margin:23px 0 76px
+}
+.credits{
+  display:grid;
+  grid-template-columns:1fr 1.3fr;
+  gap:85px;
+  padding:45px 0;
+  border-top:1px solid var(--line);
+  scroll-margin-top:25px
+}
+.credits-heading .eyebrow{
+  color:#d8b884
+}
+.credits h2{
+  font:36px/1.2 Georgia,serif;
+  margin:19px 0
+}
+.credits-heading>p:last-child{
+  font-size:14px;
+  line-height:1.8;
+  color:var(--muted);
+  max-width:380px
+}
+.credit-list>div{
+  padding:0 0 23px;
+  margin-bottom:23px;
+  border-bottom:1px solid var(--line)
+}
+.credit-list>div:last-child{
+  margin-bottom:0
+}
+.credit-list dt{
+  font-size:17px;
+  margin-bottom:10px
+}
+.credit-list dt span{
+  font:9px monospace;
+  color:#b1c0ad;
+  letter-spacing:1px;
+  margin-left:12px
+}
+.credit-list dd{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.8
+}
+.origin{
+  display:flex;
+  gap:32px;
+  align-items:baseline;
+  padding:28px 0 42px
+}
+.origin .eyebrow{
+  white-space:nowrap;
+  color:#d8b884
+}
+.origin p{
+  font-size:12px;
+  line-height:1.9;
+  color:var(--muted);
+  max-width:850px
+}
+footer{
+  padding:25px 0 35px;
+  border-top:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  gap:24px;
+  font:10px/1.8 monospace;
+  color:var(--muted)
+}
+.skip-link{
+  position:absolute;
+  left:20px;
+  top:-100px;
+  background:#e6e4d4;
+  color:#213b31;
+  padding:14px;
+  z-index:5
+}
+.skip-link:focus{
+  top:10px
+}
+@media(max-width:1100px){
+  .site-shell{
+    padding:0 32px
+  }
+  .intro-row{
+    gap:25px
+  }
+  .card-top{
+    padding:20px;
+    flex-wrap:wrap
+  }
+  .card-body{
+    padding:26px 24px
+  }
+  .game-card h2{
+    font-size:42px
+  }
+  .description{
+    min-height:132px
+  }
+  .credits{
+    gap:40px
+  }
+  .badge{
+    font-size:8px
+  }
+  .play-link{
+    font-size:12px
+  }
+  .credit-list dt span{
+    display:block;
+    margin:7px 0 0
+  }
+}
+@media(max-width:760px){
+  .site-shell{
+    padding:0 20px
+  }
+  .site-header{
+    padding:22px 0;
+    gap:12px
+  }
+  .brand{
+    font-size:11px;
+    letter-spacing:1px;
+    gap:10px
+  }
+  .site-header nav{
+    gap:14px;
+    font-size:11px
+  }
+  .intro{
+    padding:42px 0 30px
+  }
+  .intro-row{
+    display:block
+  }
+  h1{
+    font-size:60px;
+    letter-spacing:-3px
+  }
+  h1 em{
+    letter-spacing:-3px
+  }
+  .intro-note{
+    margin-top:24px;
+    font-size:15px;
+    max-width:none
+  }
+  .intro-note br{
+    display:none
+  }
+  .intro-note span{
+    margin-top:7px
+  }
+  .versions{
+    grid-template-columns:1fr;
+    gap:24px
+  }
+  .card-top{
+    justify-content:space-between
+  }
+  .description{
+    min-height:0
+  }
+  .game-card h2{
+    font-size:46px
+  }
+  .card-body{
+    padding:27px 24px
+  }
+  .illustration{
+    height:225px
+  }
+  .illustration svg{
+    height:195px
+  }
+  .card-footnote{
+    min-height:0
+  }
+  .play-link{
+    font-size:14px
+  }
+  .choice-note{
+    margin-bottom:42px
+  }
+  .credits{
+    grid-template-columns:1fr;
+    gap:30px;
+    padding-top:34px
+  }
+  .credits h2{
+    font-size:34px
+  }
+  .credits-heading>p:last-child{
+    max-width:none
+  }
+  .credit-list dt span{
+    display:inline;
+    margin-left:12px
+  }
+  .origin{
+    display:block;
+    padding-bottom:30px
+  }
+  .origin p{
+    margin-top:14px
+  }
+  footer{
+    flex-wrap:wrap;
+    font-size:9px
+  }
+}
+@media(max-width:390px){
+  h1{
+    font-size:49px
+  }
+  .brand>span{
+    display:none
+  }
+  .card-body{
+    padding:24px 20px
+  }
+  .card-top{
+    padding:18px 20px
+  }
+  .specs>div{
+    grid-template-columns:72px 1fr
+  }
+  .play-link{
+    font-size:12px
+  }
+}

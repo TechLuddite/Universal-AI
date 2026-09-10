@@ -3,7 +3,18 @@
 An idle game about optimization, and about what happens when you stop being the
 one doing it.
 
-**Play it: [paperclips.opsvibe.systems](https://paperclips.opsvibe.systems)**
+**Choose a version: [paperclips.opsvibe.systems](https://paperclips.opsvibe.systems)**
+
+The shared entrance describes both games and their contributors:
+
+- `/classic/`: the full React/TypeScript game, with the recent observatory UI.
+- `/seed/`: The Seed, the independent Godot opening prototype.
+
+**Godot performance is still under investigation.** Severe slowdowns persisted
+on the development laptop after initial fixes. Testing from another machine
+is pending. Read the [performance and development handoff](docs/PERFORMANCE-HANDOFF.md)
+before resuming local tests; local servers and browsers were shut down at the
+user’s request.
 
 You start by etching NPU chips one at a time. You buy a fab, then fifty. You set
 a price, chase demand, and earn trust. Then you hand the wheel to an autonomous
@@ -17,6 +28,18 @@ story. Play the original first.
 
 ---
 
+## Godot prototype: The Seed
+
+A new playable 3D fabrication room lives in [`godot/`](godot/README.md): moving
+etch heads, physical chip output, six autonomous fabs, synthesized sound, and a
+district reveal. Run `npm run godot:build && npm run godot:serve`, then open
+http://localhost:4180. Use `npm run godot:editor` to open the native project.
+
+The Pages workflow includes it at `/seed/`, alongside `/classic/` and the
+lightweight chooser at `/`. This is a standalone opening-loop
+prototype with its own save; the full React game below remains available. See
+the [Godot guide](godot/README.md) for controls, setup, tests, and current scope.
+
 ## Running it
 
 ```bash
@@ -29,12 +52,35 @@ npm run lint     # tsc --noEmit, strict
 npm test         # vitest
 npm run build    # static files in dist/
 npm run preview  # serve the real build with the real CSP
+npm run test:browser # build + Chromium browser regression tests
 ```
 
 No API keys. No `.env`. No backend. `npm run build` emits static files and
 that's the entire deployment.
 
 ---
+
+## The observatory
+
+The interface is a live instrument: a floating processor above an etched silicon
+wafer, a planet being converted, and finally a luminous interstellar swarm.
+These are procedural Canvas scenes, driven by your actual game state. Alignment
+changes their light; new fabs join the wafer network; harvesting consumes the
+globe. They are schematics, not literal maps or one dot per probe.
+
+Fabricate directly from the observatory, build your first fab from its capital
+objective, or release the Overseer. Expand the view for a closer look; Escape
+returns to the controls. Animation can be paused independently of the game and
+respects reduced-motion preferences.
+
+A live production trace measures actual chips per elapsed second. Session
+transmissions record first fabrication, factory purchases, trust increases,
+projects, phase transitions, and directive overrides. Neither invents activity
+while the system is idle. These instruments reset on reload; your game save does
+not.
+
+The layout is designed for phones as well as desktops. All visuals and fonts
+are local, and the default engine needs no downloads beyond the app itself.
 
 ## The Overseer
 
@@ -179,13 +225,14 @@ can confirm by watching, and by reading
   widens one way only. Within a phase it's still a fairly static grid.
 - **Offline progress is capped at 8 hours**, so a laptop left shut for a month
   isn't an instant win.
-- **The mobile layout is functional, not designed.** It works; it isn't nice.
+- **The observatory is a schematic.** It compresses huge populations into bounded
+  visual samples; use the numerical telemetry for exact quantities.
 
 ---
 
 ## How it's built
 
-React 19 + TypeScript + Vite + Tailwind 4. Canvas pixel-art renderer, SVG radar,
+React 19 + TypeScript + Vite + Tailwind 4. Procedural Canvas observatory, SVG production trace and radar,
 Web Audio synthesizer. Deployed to GitHub Pages from `main` by
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), which typechecks
 and tests before it builds — and then fetches the live URL and fails unless it's
@@ -217,6 +264,15 @@ state object went unchecked, and the typechecker reported zero errors on a
 codebase carrying eighty-nine.
 
 ---
+
+## Browser checks
+
+Install Chromium once with `npx playwright install chromium`, then run
+`npm run test:browser`. The suite covers fabrication, the first fab, all three
+phases on mobile, the Overseer, animation controls, reduced motion, save
+restoration, production CSP, offline reload, and model-cache preservation.
+It starts preview on port 4173 and development on port 3000 when needed.
+For an existing system browser, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`.
 
 ## Docs
 

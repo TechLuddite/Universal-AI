@@ -1,5 +1,15 @@
 # Roadmap
 
+## Current priority: unresolved Godot performance
+
+Severe resource-use issues remain open after the initial rendering and audio
+fixes. The user requested that all local services and test browsers stay off.
+Test the deployed game from another machine before drawing further conclusions.
+See [PERFORMANCE-HANDOFF.md](PERFORMANCE-HANDOFF.md) for evidence, constraints,
+and the cross-machine investigation plan. The shared landing page keeps the
+complete React game and experimental Godot version available separately.
+
+
 Stages 1–6 (repair, honesty pass, GitHub Pages) are done. Stage 7 (7.1–7.3) is
 done, and Stage 8 (the cohesion pass and currency rescale) after it. What
 follows is what's left, plus a record of what Stage 7 chose *not* to build and
@@ -175,7 +185,7 @@ it is a pure read. `utility.test.ts` now asserts that — no state mutation, ful
 deterministic, and it never consumes the context's `rng` (drift rolls dice at
 decision time, never at ranking time).
 
-### 7.5 Smaller wins — **done except mobile**
+### 7.5 Smaller wins — **done**
 
 - **"While you were away" summary** — **done.** A proper card now
   (`OfflineReportCard.tsx`): time away, chips produced, average rate, and an
@@ -186,7 +196,8 @@ decision time, never at ranking time).
   "verified" badge — a page cannot prove its own integrity, and the comment in
   `DevSupportModal.tsx` says so. What it offers instead is the pointer to check
   from outside: the public Actions run, or build-and-diff.
-- **Mobile layout.** Functional, not designed. Still open.
+- **Mobile layout** — **done in the observatory pass.** Dedicated stacked scene,
+  two-column telemetry, responsive controls, and production browser coverage.
 - **Canvas polish** — **done.** The rAF loop reads live values through a ref and
   is created once, instead of being torn down and rebuilt ~10×/second by its own
   dependency array; rendering is scaled by `devicePixelRatio` so it's no longer
@@ -241,3 +252,15 @@ honesty pass; the details live in the invariants sections of `CLAUDE.md` and
 - Root `CNAME` and `public/CNAME` are duplicates. Only `public/` reaches the
   build artifact; the root one was created by GitHub's UI. Harmless while they
   agree — worth collapsing to one.
+
+## Observatory pass — complete
+
+- Procedural wafer, conversion globe, and cosmic swarm driven by game state.
+- New command header, chapter narrative, alignment telemetry, and actionable
+  first-fab objective.
+- Expanded observatory view with focus management, animation pause, reduced
+  motion, and bounded rendering work.
+- Real production history and a session transmission log.
+- Desktop and mobile layouts, plus Chromium regression coverage under the real CSP.
+- Save restoration before effects mount; app-shell cache isolation and offline
+  preview reload; preservation of separately owned model caches.

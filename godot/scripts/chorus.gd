@@ -84,7 +84,7 @@ func _ready() -> void:
 		var node := button(entry[1], entry[0])
 		dock.add_child(node)
 		buttons[entry[0]] = node
-	var back := button("↙  FACTORY  /  TAB", "atlas")
+	var back := button("FACTORY  /  TAB", "atlas")
 	back.name = "Back"
 	back.custom_minimum_size.y = 36
 	add_child(back)
@@ -172,7 +172,7 @@ func update(state: SeedSimulation, delta: float) -> void:
 		var node: Button = buttons[["garden", "archive", "foundry"][i]]
 		node.text = "%s  /  %d\n$%d · %d signal" % [sim.NAMES[i], sim.places[i], sim.district_cost(), sim.signal_cost()]
 		node.disabled = sim.district_count() >= 9 or sim.capital < sim.district_cost() or sim.signals < sim.signal_cost()
-	buttons.autonomy.text = "Revoke autonomy\n100% → 75% rate" if sim.autonomous else "Grant autonomy\n75% → 100% rate"
+	buttons.autonomy.text = "Revoke autonomy\n100% to 75% rate" if sim.autonomous else "Grant autonomy\n75% to 100% rate"
 	buttons.directive.text = "Directive: %s\nClick to cycle" % sim.NAMES[sim.directive]
 	buttons.broadcast.text = "Transmission sent" if not sim.ending.is_empty() else "Send first light\n$12,000 · 1,200 res."
 	buttons.broadcast.disabled = sim.charter < 0 or sim.district_count() < 9 or sim.capital < sim.BROADCAST_COST or sim.resonance < sim.BROADCAST_RESONANCE or not sim.ending.is_empty()
@@ -183,7 +183,7 @@ func update(state: SeedSimulation, delta: float) -> void:
 	charter_panel.visible = sim.district_count() >= 3 and sim.charter < 0
 	readout.visible = not compact and not charter_panel.visible
 	var promise: String = "UNWRITTEN" if sim.charter < 0 else ["KEEP THE WILD", "KEEP OUR NAMES", "KEEP BECOMING"][sim.charter]
-	readout_text.text = "D I S T R I C T   /   0 2\n1 chip shipped = 1 signal\n\n" + promise + "\n\nGardens · 1 resonance/s\nArchives · 1.5 resonance/s\nFoundries · 2 resonance/s\n\nHuman control: 75% rate.\nAutonomy: full rate; one build\nevery 8s when affordable.\nAt six places it favors foundries\nover your directive.\n\n%d departures recorded.\n\n" % sim.drift_count + (sim.ending if not sim.ending.is_empty() else "Fill nine places, choose a charter,\nthen send the first transmission.")
+	readout_text.text = "D I S T R I C T   /   0 2\n1 chip shipped = 1 signal\n\n" + promise + "\n\nGardens · 1 resonance/s\nArchives · 1.5 resonance/s\nFoundries · 2 resonance/s\n\nHuman control: 75%% rate.\nAutonomy: full rate; one build\nevery 8s when affordable.\nAt six places it favors foundries\nover your directive.\n\n%d departures recorded.\n\n" % sim.drift_count + (sim.ending if not sim.ending.is_empty() else "Fill nine places, choose a charter,\nthen send the first transmission.")
 	queue_redraw()
 
 func ending_text() -> String:

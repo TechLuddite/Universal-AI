@@ -55,7 +55,7 @@ func _ready() -> void:
 	if OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("persist=1"):
 		saving=true
 	if saving:_load_game()
-	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=chorus"):
+	if test_mode and ("--chorus" in OS.get_cmdline_user_args() or (OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=chorus"))):
 		# Browser regression starts from a known old-format save; normal play has no setter.
 		sim.restore({"version":1, "capital":60000, "wafers":300, "chips":1200, "fabs":6, "overclock":true, "controller":true, "linked":true, "sound_enabled":false})
 	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=firstlight"):

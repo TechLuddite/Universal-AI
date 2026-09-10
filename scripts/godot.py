@@ -100,6 +100,7 @@ def main():
         engine('--editor', '--import', '--quit')
         engine('--script', 'res://tests/test_simulation.gd')
         engine('--quit-after', '10', '--', '--test')
+        engine('--quit-after', '10', '--', '--test', '--chorus')
     elif args.command == 'editor':
         subprocess.run([executable(), '--editor', '--path', str(PROJECT)], check=True)
     elif args.command == 'stage':

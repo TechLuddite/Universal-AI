@@ -10,7 +10,11 @@ const state = (page: Page): Promise<SeedSnapshot> => page.evaluate(() => (window
 
 async function ready(page: Page, query = '?test=1') {
   await page.goto('/' + query);
-  await expect.poll(async () => Boolean(await state(page)), { timeout: 90_000 }).toBe(true);
+  await page.waitForFunction(() =>
+    Boolean((window as unknown as { __seed?: unknown }).__seed) ||
+    Boolean(document.getElementById('error')?.textContent),
+    undefined, { timeout: 90_000 });
+  await expect(page.locator('#error')).toHaveText('');
   await expect(page.locator('#loading')).toHaveCount(0);
 }
 

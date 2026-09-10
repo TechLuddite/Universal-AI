@@ -76,13 +76,19 @@ jobs:
           echo "Built entry: $entry"
 
       - name: Install test browsers
-        run: npx playwright install --with-deps chromium firefox
+        run: |
+          npx playwright install --with-deps chromium firefox
+          sudo apt-get install -y xvfb libgl1-mesa-dri libegl-mesa0 mesa-utils
 
       - name: Test chooser and classic browser flows
         run: npx playwright test
 
       - name: Test Godot in Chromium and Firefox
-        run: npx playwright test --config playwright.godot.config.ts
+        env:
+          GODOT_BROWSER_HEADED: '1'
+          GODOT_BROWSER_ANGLE: gl
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1440x1000x24" npx playwright test --config playwright.godot.config.ts --max-failures=1 --reporter=list
 
       - name: Save browser checks and chooser screenshots
         if: always()

@@ -87,6 +87,9 @@ Install test browsers with `npx playwright install chromium firefox` if needed.
 For a system browser, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. On this Linux
 machine, `GODOT_BROWSER_ANGLE=gl` enables the hardware renderer in headless QA.
 Software WebGL rendering can be much slower than normal browser GPU rendering.
+GitHub CI uses a virtual display with Mesa and `GODOT_BROWSER_HEADED=1`, plus
+the GL backend, because headless Firefox lacks WebGL 2 on that runner and its
+default Chromium software backend misses the interactive timing budgets.
 
 The browser tests exercise actual fabrication, purchasing, automatic production,
 camera controls, reload persistence, and portrait touch controls. They also check

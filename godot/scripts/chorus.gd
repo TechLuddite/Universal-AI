@@ -27,6 +27,8 @@ var map_radius: float = 150.0
 var compact: bool = false
 var readout: PanelContainer
 var readout_text: Label
+var reveal: float = 0.0
+var last_count: int = -1
 
 func label(text: String, pixels: int, color: Color = CREAM) -> Label:
 	var node := Label.new()
@@ -150,19 +152,27 @@ func update(state: SeedSimulation, delta: float) -> void:
 	if not visible:return
 	if size != last_size:_layout()
 	clock += delta
+	reveal = maxf(0.0, reveal - delta)
+	if sim.district_count() != last_count:
+		last_count = sim.district_count()
+		reveal = 2.0
 	refresh += delta
 	if refresh < 0.1:return
 	refresh = fmod(refresh, 0.1)
 	heading.text = "The Chorus" if sim.ending.is_empty() else "First light."
 	metrics.text = "$%s   /   %d SIGNAL   /   %d RESONANCE" % [sim.capital, sim.signals, sim.resonance]
 	metrics.add_theme_font_size_override("font_size", 10 if compact else 13)
-	note.text = "You built a machine that could work without you.\nNow build a place that deserves to."
+	note.text = "One chip, one signal. Give that signal somewhere to go."
+	if sim.district_count() > 0:
+		note.text = "Gardens: 1 resonance/s. Archives: 1.5. Foundries: 2. At three places, make a permanent promise."
+	if sim.charter >= 0:
+		note.text = "You built a machine that could work without you. Now build a place that deserves to."
 	if not sim.ending.is_empty():note.text = ending_text()
 	for i in 3:
 		var node: Button = buttons[["garden", "archive", "foundry"][i]]
 		node.text = "%s  /  %d\n$%d · %d signal" % [sim.NAMES[i], sim.places[i], sim.district_cost(), sim.signal_cost()]
 		node.disabled = sim.district_count() >= 9 or sim.capital < sim.district_cost() or sim.signals < sim.signal_cost()
-	buttons.autonomy.text = "Revoke autonomy\n100% resonance" if sim.autonomous else "Grant autonomy\n75% resonance"
+	buttons.autonomy.text = "Revoke autonomy\n100% → 75% rate" if sim.autonomous else "Grant autonomy\n75% → 100% rate"
 	buttons.directive.text = "Directive: %s\nClick to cycle" % sim.NAMES[sim.directive]
 	buttons.broadcast.text = "Transmission sent" if not sim.ending.is_empty() else "Send first light\n$12,000 · 240 res."
 	buttons.broadcast.disabled = sim.charter < 0 or sim.district_count() < 9 or sim.capital < sim.BROADCAST_COST or sim.resonance < sim.BROADCAST_RESONANCE or not sim.ending.is_empty()
@@ -173,7 +183,7 @@ func update(state: SeedSimulation, delta: float) -> void:
 	charter_panel.visible = sim.district_count() >= 3 and sim.charter < 0
 	readout.visible = not compact and not charter_panel.visible
 	var promise: String = "UNWRITTEN" if sim.charter < 0 else ["KEEP THE WILD", "KEEP OUR NAMES", "KEEP BECOMING"][sim.charter]
-	readout_text.text = "D I S T R I C T   /   0 2\n\n" + promise + "\n\nGardens · 1 resonance/s\nArchives · 1.5 resonance/s\nFoundries · 2 resonance/s\n\nHuman control: 75% rate.\nAutonomy: full rate; one build\nevery 8s when affordable.\nAt six places it favors foundries\nover your directive.\n\n%d departures recorded.\n\n" % sim.drift_count + (sim.ending if not sim.ending.is_empty() else "Fill nine places, choose a charter,\nthen send the first transmission.")
+	readout_text.text = "D I S T R I C T   /   0 2\n1 chip shipped = 1 signal\n\n" + promise + "\n\nGardens · 1 resonance/s\nArchives · 1.5 resonance/s\nFoundries · 2 resonance/s\n\nHuman control: 75% rate.\nAutonomy: full rate; one build\nevery 8s when affordable.\nAt six places it favors foundries\nover your directive.\n\n%d departures recorded.\n\n" % sim.drift_count + (sim.ending if not sim.ending.is_empty() else "Fill nine places, choose a charter,\nthen send the first transmission.")
 	queue_redraw()
 
 func ending_text() -> String:
@@ -192,6 +202,13 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	for orbit in [0.45, 0.75, 1.08]:
 		draw_arc(map_center, map_radius * orbit, 0, TAU, 80, Color(0.5, 0.75, 0.7, 0.13), 1, true)
+	if reveal > 0 and last_count > 0:
+		draw_arc(map_center, map_radius * (1.0 - reveal / 2.0) * 1.2, 0, TAU, 64, Color(0.8, 0.85, 0.6, reveal * 0.18), 2, true)
+	if not sim.ending.is_empty():
+		# A transmission becomes concentric wavefronts, still a fixed three rings.
+		for wave in 3:
+			var phase: float = fmod(clock * 0.13 + wave / 3.0, 1.0)
+			draw_arc(map_center, map_radius * (0.15 + phase * 1.3), 0, TAU, 80, Color(0.93,0.77,0.5,(1.0-phase)*0.22), 2, true)
 	var sweep: float = clock * 0.12
 	draw_arc(map_center, map_radius * 1.08, sweep, sweep + 0.6, 16, GOLD * Color(1,1,1,0.6), 2, true)
 	var positions: Array[Vector2] = []

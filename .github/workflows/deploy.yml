@@ -88,7 +88,9 @@ jobs:
           GODOT_BROWSER_HEADED: '1'
           GODOT_BROWSER_ANGLE: gl
           LIBGL_ALWAYS_SOFTWARE: '1'
-        run: xvfb-run --auto-servernum --server-args="-screen 0 1440x1000x24" npx playwright test --config playwright.godot.config.ts --max-failures=1 --reporter=list
+        run: |
+          xvfb-run --auto-servernum glxinfo -B
+          xvfb-run --auto-servernum --server-args="-screen 0 1440x1000x24" npx playwright test --config playwright.godot.config.ts --max-failures=1 --reporter=list
 
       - name: Save browser checks and chooser screenshots
         if: always()

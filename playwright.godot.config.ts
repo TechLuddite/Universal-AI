@@ -20,11 +20,11 @@ export default defineConfig({
         browserName: 'chromium',
         launchOptions: {
           executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-          args: ['--enable-unsafe-swiftshader', ...(process.env.GODOT_BROWSER_ANGLE ? [`--use-angle=${process.env.GODOT_BROWSER_ANGLE}`] : [])],
+          args: ['--enable-unsafe-swiftshader', ...(process.env.GODOT_BROWSER_ANGLE ? ['--use-gl=angle', `--use-angle=${process.env.GODOT_BROWSER_ANGLE}`, '--ignore-gpu-blocklist'] : [])],
         },
       },
     },
-    { name: 'firefox', use: { browserName: 'firefox' } },
+    { name: 'firefox', use: { browserName: 'firefox', launchOptions: { firefoxUserPrefs: { 'webgl.force-enabled': true } } } },
   ],
   webServer: {
     command: 'npm run godot:serve',

@@ -31,6 +31,8 @@ func _initialize() -> void:
 	var restored:=Simulation.new()
 	check(restored.restore(sim.to_save()),"Save round trip is accepted")
 	check(restored.to_save()==sim.to_save(),"Save preserves in-flight wafers and machine cycles")
+	var json_copy := Simulation.new()
+	check(json_copy.restore(JSON.parse_string(JSON.stringify(sim.to_save()))) and json_copy.chips == sim.chips, "Actual JSON saves restore after numeric type conversion")
 	var bad: Dictionary=sim.to_save()
 	bad.cycles=["broken"]
 	check(not restored.restore(bad),"Corrupted cycle data is rejected")
@@ -95,7 +97,8 @@ func _initialize() -> void:
 		check(not city.ending.is_empty(), "Each committed district can finish within twenty minutes of the uplink")
 		check(city.places[kind] == 9 and city.capital >= 0 and city.signals >= 0, "Endings require real funded construction")
 		var copy := Simulation.new()
-		check(copy.restore(city.to_save()), "A completed district can be restored")
+		check(copy.restore(JSON.parse_string(JSON.stringify(city.to_save()))) and copy.ending == city.ending and copy.places == city.places, "A completed district can be restored from serialized JSON")
+		copy.restore(city.to_save())
 		advance(city, 12)
 		advance(copy, 12)
 		check(copy.to_save() == city.to_save(), "District resources, promises and ending survive save/reload")

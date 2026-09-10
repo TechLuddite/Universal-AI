@@ -226,7 +226,8 @@ func to_save() -> Dictionary:
 		"ending": ending, "transmission": transmission, "history": history.duplicate()}
 
 func restore(data: Dictionary) -> bool:
-	if data.get("version") not in [1, SAVE_VERSION]:
+	# JSON decodes numbers as floats; array membership is type-sensitive.
+	if data.get("version") != 1 and data.get("version") != SAVE_VERSION:
 		return false
 	# Reject invalid files as a whole. No partial restore of a corrupted economy.
 	for field in ["capital", "wafers", "chips", "fabs"]:

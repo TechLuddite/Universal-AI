@@ -155,10 +155,21 @@ for (const width of [1440, 390]) {
 }
 
 
-test('first light requires a completed district and survives a real browser save', async ({ page }, testInfo) => {
+test('first light requires a completed district and survives a real browser save', async ({ page, browserName }, testInfo) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  let navigating = false;
+  const navigationNotices: string[] = [];
+  page.on('console', message => {
+    if (message.type() !== 'error') return;
+    // Firefox emits this source-less diagnostic while discarding the old page.
+    // Only classify that exact message during deliberate navigation; preserve
+    // all live-game errors and retain the notices in the test artifact.
+    if (navigating && browserName === 'firefox' && message.location().url === '' &&
+        message.text() === '[JavaScript Error: "InvalidStateError: Navigated away from page"]') {
+      navigationNotices.push(message.text());
+    } else errors.push(message.text());
+  });
   await ready(page, '?test=1&persist=1&scenario=firstlight');
   const ending = () => page.evaluate(() => (window as unknown as { __seed: { ending: string; atlas: boolean; places: number[] } }).__seed);
   await page.keyboard.press('Enter');
@@ -171,7 +182,11 @@ test('first light requires a completed district and survives a real browser save
   await page.screenshot({ path: testInfo.outputPath('first-light.png') });
   await page.waitForTimeout(3500);
   // Remove the fixture parameter: this load must come from the browser filesystem.
+  expect(errors).toEqual([]);
+  navigating = true;
   await ready(page, '?test=1&persist=1');
+  navigating = false;
+  await testInfo.attach('navigation-diagnostics', { body: JSON.stringify(navigationNotices), contentType: 'application/json' });
   expect((await ending()).ending).toBe('THE OPEN HAND');
   expect((await ending()).atlas).toBe(true);
   expect(errors).toEqual([]);

@@ -166,11 +166,12 @@ func update(state: SeedSimulation, delta: float) -> void:
 	if sim.district_count() > 0:
 		note.text = "Gardens: 1 resonance/s. Archives: 1.5. Foundries: 2. At three places, make a permanent promise."
 	if sim.charter >= 0:
-		note.text = "You built a machine that could work without you. Now build a place that deserves to."
+		note.text = "%d / 7 %ss support your charter. At six places, an autonomous controller favors foundries." % [sim.places[sim.charter], sim.NAMES[sim.charter].to_lower()]
 	if not sim.ending.is_empty():note.text = ending_text()
 	for i in 3:
 		var node: Button = buttons[["garden", "archive", "foundry"][i]]
 		node.text = "%s  /  %d\n$%d · %d signal" % [sim.NAMES[i], sim.places[i], sim.district_cost(), sim.signal_cost()]
+		if sim.district_count() >= 9:node.text = "%s / %d\nDistrict complete" % [sim.NAMES[i], sim.places[i]]
 		node.disabled = sim.district_count() >= 9 or sim.capital < sim.district_cost() or sim.signals < sim.signal_cost()
 	buttons.autonomy.text = "Revoke autonomy\n100% to 75% rate" if sim.autonomous else "Grant autonomy\n75% to 100% rate"
 	buttons.directive.text = "Directive: %s\nClick to cycle" % sim.NAMES[sim.directive]

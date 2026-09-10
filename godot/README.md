@@ -154,7 +154,7 @@ are explicitly recorded. Revoke autonomy to stop automatic construction. It
 never chooses your charter or broadcasts on your behalf.
 
 At three places choose a permanent charter. At nine places, spend $12,000 and
-240 resonance to send first light. Four or more places matching the charter
+1,200 resonance to send first light. Seven or more places matching the charter
 produce The Open Hand, The Many, or The Unfinished Sun. A district whose
 infrastructure diverges from its promise produces The Common Ground.
 

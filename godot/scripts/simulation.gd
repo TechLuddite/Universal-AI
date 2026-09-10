@@ -28,7 +28,7 @@ var events: Array[Dictionary] = []
 # The Chorus uses a fixed nine-place district. Scale changes meaning, not object count.
 const DISTRICT_LIMIT: int = 9
 const BROADCAST_COST: int = 12000
-const BROADCAST_RESONANCE: float = 240.0
+const BROADCAST_RESONANCE: float = 1200.0
 const NAMES: Array[String] = ["Garden", "Archive", "Foundry"]
 var places: Array[int] = [0, 0, 0]
 var signals: int = 0
@@ -88,7 +88,7 @@ func broadcast() -> bool:
 	capital -= BROADCAST_COST
 	resonance -= BROADCAST_RESONANCE
 	# A promise needs supporting infrastructure, not just a selected label.
-	ending = "THE OPEN HAND" if charter == 0 and places[0] >= 4 else "THE MANY" if charter == 1 and places[1] >= 4 else "THE UNFINISHED SUN" if charter == 2 and places[2] >= 4 else "THE COMMON GROUND"
+	ending = "THE OPEN HAND" if charter == 0 and places[0] >= 7 else "THE MANY" if charter == 1 and places[1] >= 7 else "THE UNFINISHED SUN" if charter == 2 and places[2] >= 7 else "THE COMMON GROUND"
 	report("FIRST TRANSMISSION / " + ending)
 	return true
 

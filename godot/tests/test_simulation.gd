@@ -123,6 +123,8 @@ func _initialize() -> void:
 	auto.toggle_autonomy()
 	var rate: float = auto.resonance_rate()
 	check(is_equal_approx(rate, 9.0), "Revoked autonomy applies its advertised 25 percent resonance cost")
+	advance(auto, 180)
+	check(auto.broadcast() and auto.ending == "THE COMMON GROUND", "Unchecked departures can change the ending promised by a garden charter")
 	var invalid: Dictionary = auto.to_save()
 	invalid.places = [10, 0, 0]
 	var unchanged: Dictionary = auto.to_save()

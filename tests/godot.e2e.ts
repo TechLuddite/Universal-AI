@@ -165,7 +165,7 @@ test('first light requires a completed district and survives a real browser save
   await page.waitForTimeout(500);
   expect((await ending()).ending).toBe('');
   await page.keyboard.press('3');
-  await expect.poll(async () => (await ending()).places[2]).toBe(3);
+  await expect.poll(async () => (await ending()).places[2]).toBe(1);
   await page.keyboard.press('Enter');
   await expect.poll(async () => (await ending()).ending).toBe('THE OPEN HAND');
   await page.screenshot({ path: testInfo.outputPath('first-light.png') });

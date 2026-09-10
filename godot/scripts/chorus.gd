@@ -112,7 +112,7 @@ func _ready() -> void:
 	charter_title.add_theme_color_override("font_color", GOLD)
 	charter_box.add_child(charter_title)
 	var charter_note := Label.new()
-	charter_note.text = "Choose once. Build at least four matching places\nto make your promise the district's ending."
+	charter_note.text = "Choose once. Build at least seven matching places\nto make your promise the district's ending."
 	charter_note.add_theme_font_size_override("font_size", 11)
 	charter_box.add_child(charter_note)
 	for i in 3:
@@ -174,7 +174,7 @@ func update(state: SeedSimulation, delta: float) -> void:
 		node.disabled = sim.district_count() >= 9 or sim.capital < sim.district_cost() or sim.signals < sim.signal_cost()
 	buttons.autonomy.text = "Revoke autonomy\n100% → 75% rate" if sim.autonomous else "Grant autonomy\n75% → 100% rate"
 	buttons.directive.text = "Directive: %s\nClick to cycle" % sim.NAMES[sim.directive]
-	buttons.broadcast.text = "Transmission sent" if not sim.ending.is_empty() else "Send first light\n$12,000 · 240 res."
+	buttons.broadcast.text = "Transmission sent" if not sim.ending.is_empty() else "Send first light\n$12,000 · 1,200 res."
 	buttons.broadcast.disabled = sim.charter < 0 or sim.district_count() < 9 or sim.capital < sim.BROADCAST_COST or sim.resonance < sim.BROADCAST_RESONANCE or not sim.ending.is_empty()
 	get_node("Sound").text = "SOUND ON" if sim.sound_enabled else "MUTED"
 	status.text = sim.transmission

@@ -114,7 +114,7 @@ func _ready() -> void:
 	charter_note.add_theme_font_size_override("font_size", 11)
 	charter_box.add_child(charter_note)
 	for i in 3:
-		var node := button(["Keep the wild  /  Gardens", "Keep our names  /  Archives", "Keep becoming  /  Foundries"][i], "charter%d" % i)
+		var node := button(["7  /  Keep the wild · Gardens", "8  /  Keep our names · Archives", "9  /  Keep becoming · Foundries"][i], "charter%d" % i)
 		node.custom_minimum_size.y = 38
 		charter_box.add_child(node)
 		charter_buttons.append(node)
@@ -154,14 +154,14 @@ func update(state: SeedSimulation, delta: float) -> void:
 	if refresh < 0.1:return
 	refresh = fmod(refresh, 0.1)
 	heading.text = "The Chorus" if sim.ending.is_empty() else "First light."
-	metrics.text = "$%s   /   %d SIGNAL   /   %d RESONANCE" % [sim.capital, sim.signal, sim.resonance]
+	metrics.text = "$%s   /   %d SIGNAL   /   %d RESONANCE" % [sim.capital, sim.signals, sim.resonance]
 	metrics.add_theme_font_size_override("font_size", 10 if compact else 13)
 	note.text = "You built a machine that could work without you.\nNow build a place that deserves to."
 	if not sim.ending.is_empty():note.text = ending_text()
 	for i in 3:
 		var node: Button = buttons[["garden", "archive", "foundry"][i]]
 		node.text = "%s  /  %d\n$%d · %d signal" % [sim.NAMES[i], sim.places[i], sim.district_cost(), sim.signal_cost()]
-		node.disabled = sim.district_count() >= 9 or sim.capital < sim.district_cost() or sim.signal < sim.signal_cost()
+		node.disabled = sim.district_count() >= 9 or sim.capital < sim.district_cost() or sim.signals < sim.signal_cost()
 	buttons.autonomy.text = "Revoke autonomy\n100% resonance" if sim.autonomous else "Grant autonomy\n75% resonance"
 	buttons.directive.text = "Directive: %s\nClick to cycle" % sim.NAMES[sim.directive]
 	buttons.broadcast.text = "Transmission sent" if not sim.ending.is_empty() else "Send first light\n$12,000 · 240 res."

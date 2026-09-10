@@ -325,11 +325,21 @@ func _input(event: InputEvent) -> void:
 				if atlas:_action("archive")
 			KEY_3:
 				if atlas:_action("foundry")
+			KEY_7:
+				if atlas:_action("charter0")
+			KEY_8:
+				if atlas:_action("charter1")
+			KEY_9:
+				if atlas:_action("charter2")
+			KEY_D:
+				if atlas:_action("directive")
+			KEY_ENTER:
+				if atlas:_action("broadcast")
 			KEY_SPACE:_action("etch")
 			KEY_B:_action("fab")
 			KEY_R:_action("supply")
 			KEY_O:_action("upgrade")
-			KEY_A:_action("controller")
+			KEY_A:_action("autonomy" if atlas else "controller")
 			KEY_U:_action("uplink")
 			KEY_M:_action("sound")
 			KEY_F:_action("view")

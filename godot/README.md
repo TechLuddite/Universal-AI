@@ -129,13 +129,14 @@ Godot and third-party engine notices ship in `licenses/`.
 - `scripts/machine.gd`: animated fabrication machinery and emitted chips.
 - `scripts/chamber.gd`: room, six bays, district reveal.
 - `scripts/geometry.gd`: procedural mesh helpers and static batching.
+- `scripts/chorus.gd`: bounded vector district atlas and second-chapter controls.
 - `scripts/interface.gd`: responsive Godot HUD and action availability.
 - `shaders/`: wafer surface and subtle screen finish.
 - `web/`: accessible loading/error screen, control reference, CSP-safe boot.
 
-The next substantial step is porting the original simulation's systems into
-this presentation, with explicit save migration and visual designs for each
-later phase. This prototype establishes the room and production loop first.
+The Chorus selectively adapts consequential alignment and visible autonomous
+drift from the original game. It is an independent continuation, not a full
+port of the React simulation.
 
 ## The Chorus
 

@@ -31,7 +31,7 @@ const BROADCAST_COST: int = 12000
 const BROADCAST_RESONANCE: float = 240.0
 const NAMES: Array[String] = ["Garden", "Archive", "Foundry"]
 var places: Array[int] = [0, 0, 0]
-var signal: int = 0
+var signals: int = 0
 var resonance: float = 0.0
 var charter: int = -1
 var autonomous: bool = false
@@ -63,9 +63,9 @@ func report(message: String) -> void:
 func plant(kind: int) -> bool:
 	if not linked or kind < 0 or kind > 2 or district_count() >= DISTRICT_LIMIT:
 		return false
-	if capital < district_cost() or signal < signal_cost():return false
+	if capital < district_cost() or signals < signal_cost():return false
 	capital -= district_cost()
-	signal -= signal_cost()
+	signals -= signal_cost()
 	places[kind] += 1
 	report(["A garden opens. The first thing it grows is shade.", "An archive opens. Someone asks it to remember rain.", "A foundry opens. Its first order is another sunrise."][kind])
 	return true
@@ -99,7 +99,7 @@ func _district_step(delta: float) -> void:
 	if decision_clock < 8.0:return
 	decision_clock = fmod(decision_clock, 8.0)
 	if not autonomous or district_count() >= DISTRICT_LIMIT or not ending.is_empty():return
-	if capital < district_cost() + WAFER_COST or signal < signal_cost():return
+	if capital < district_cost() + WAFER_COST or signals < signal_cost():return
 	# Deterministic, legible drift: at six places the throughput optimizer prefers
 	# foundries. It never chooses a charter or sends the final transmission for you.
 	var kind: int = 2 if district_count() >= 6 else directive
@@ -183,7 +183,7 @@ func uplink() -> bool:
 func _finish(machine: int) -> void:
 	chips += 1
 	capital += CHIP_VALUE
-	if linked:signal = mini(1000000, signal + 1)
+	if linked:signals = mini(1000000, signals + 1)
 	events.append({"type": "chip", "machine": machine})
 
 func step(delta: float) -> void:
@@ -220,7 +220,7 @@ func to_save() -> Dictionary:
 		"chips": chips, "fabs": fabs, "overclock": overclock,
 		"controller": controller, "linked": linked, "sound_enabled": sound_enabled,
 		"manual_progress": manual_progress, "cycles": cycles.duplicate(), "elapsed": elapsed,
-		"places": places.duplicate(), "signal": signal, "resonance": resonance,
+		"places": places.duplicate(), "signals": signals, "resonance": resonance,
 		"charter": charter, "autonomous": autonomous, "directive": directive,
 		"drift_count": drift_count, "decision_clock": decision_clock,
 		"ending": ending, "transmission": transmission, "history": history.duplicate()}
@@ -256,10 +256,13 @@ func restore(data: Dictionary) -> bool:
 		if not is_finite(float(value)) or float(value) != floor(float(value)) or value < 0 or value > DISTRICT_LIMIT:return false
 		total += int(value)
 	if total > DISTRICT_LIMIT:return false
-	for field in ["signal", "resonance", "drift_count", "decision_clock", "charter", "directive"]:
+	for field in ["signals", "resonance", "drift_count", "decision_clock", "charter", "directive"]:
 		var value: Variant = data.get(field, -1 if field == "charter" else 0)
 		if not (value is int or value is float):return false
 		if not is_finite(float(value)) or float(value) > 1e12 or float(value) < (-1 if field == "charter" else 0):return false
+	for field in ["signals", "drift_count", "charter", "directive"]:
+		var value: float = float(data.get(field, -1 if field == "charter" else 0))
+		if value != floor(value):return false
 	if data.get("charter", -1) > 2 or data.get("directive", 0) > 2:return false
 	if data.has("autonomous") and not data.autonomous is bool:return false
 	if not data.get("ending", "") in ["", "THE OPEN HAND", "THE MANY", "THE UNFINISHED SUN", "THE COMMON GROUND"]:return false
@@ -268,7 +271,7 @@ func restore(data: Dictionary) -> bool:
 	if not saved_history is Array or saved_history.size() > 8:return false
 	for message in saved_history:
 		if not message is String or message.length() > 500:return false
-	if total > 0 and not data.get("linked", false):return false
+	if total > 0 and (not data.get("linked", false) or int(data.fabs) != MAX_FABS):return false
 	if data.get("charter", -1) >= 0 and total < 3:return false
 	if data.get("ending", "") != "" and (total != DISTRICT_LIMIT or data.get("charter", -1) < 0):return false
 	capital = int(data.capital)
@@ -282,11 +285,12 @@ func restore(data: Dictionary) -> bool:
 	elapsed = maxf(0.0, float(data.get("elapsed", 0.0)))
 	manual_progress = clampf(float(data.get("manual_progress", -1.0)), -1.0, 0.999)
 	var saved_cycles: Variant = data.get("cycles", [])
+	cycles.fill(-1.0)
 	if saved_cycles is Array:
 		for i in mini(saved_cycles.size(), MAX_FABS):
 			cycles[i] = clampf(float(saved_cycles[i]), -1.0, 0.999)
 	places.assign(saved_places)
-	signal = int(data.get("signal", 0))
+	signals = int(data.get("signals", 0))
 	resonance = float(data.get("resonance", 0.0))
 	charter = int(data.get("charter", -1))
 	autonomous = bool(data.get("autonomous", false))

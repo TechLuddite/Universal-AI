@@ -131,12 +131,12 @@ for (const width of [1440, 390]) {
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     await ready(page, '?test=1&scenario=chorus');
-    const city = () => page.evaluate(() => (window as unknown as { __seed: { atlas: boolean; places: number[]; signal: number; charter: number; autonomous: boolean; nodes: number } }).__seed);
+    const city = () => page.evaluate(() => (window as unknown as { __seed: { atlas: boolean; places: number[]; signals: number; charter: number; autonomous: boolean; nodes: number } }).__seed);
     await expect.poll(async () => (await city()).atlas).toBe(true);
     const nodes = (await city()).nodes;
     // Signal is earned by the six real fabs from the restored factory.
     for (let i = 0; i < 3; i++) {
-      await expect.poll(async () => (await city()).signal, { timeout: 30_000 }).toBeGreaterThanOrEqual(20 + i * 10);
+      await expect.poll(async () => (await city()).signals, { timeout: 30_000 }).toBeGreaterThanOrEqual(20 + i * 10);
       // First action card: use the actual pointer/touch target on both layouts.
       await page.mouse.click(width === 390 ? 100 : 130, width === 390 ? 630 : 825);
       await expect.poll(async () => (await city()).places[0]).toBe(i + 1);

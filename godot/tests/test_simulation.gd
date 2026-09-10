@@ -78,27 +78,34 @@ func _initialize() -> void:
 	var legacy: Dictionary = {"version": 1, "capital": 2400, "wafers": 30, "chips": 90, "fabs": 6, "linked": true}
 	var migrated := Simulation.new()
 	check(migrated.restore(legacy) and migrated.linked and migrated.district_count() == 0, "Original uplink saves enter the new chapter without losing their factory")
-	check(not migrated.plant(0), "District construction cannot spend signal it has not earned")
+	check(not migrated.plant(0), "District construction cannot spend signals it has not earned")
 	var endings: Array[String] = []
-	for kind in 3:
+	for path in 4:
+		var kind: int = mini(path, 2)
 		var city := Simulation.new()
 		city.restore(saved)
 		# Continue a legitimately earned factory through every ending; no resource grants.
 		for frame in 60 * 1200:
 			city.step(1.0 / 60)
 			city.plant(kind)
-			city.choose_charter(kind)
+			city.choose_charter(0 if path == 3 else kind)
 			city.take_events()
 			if city.broadcast():break
 		endings.append(city.ending)
 		check(not city.ending.is_empty(), "Each committed district can finish within twenty minutes of the uplink")
-		check(city.places[kind] == 9 and city.capital >= 0 and city.signal >= 0, "Endings require real funded construction")
+		check(city.places[kind] == 9 and city.capital >= 0 and city.signals >= 0, "Endings require real funded construction")
 		var copy := Simulation.new()
 		check(copy.restore(city.to_save()), "A completed district can be restored")
 		advance(city, 12)
 		advance(copy, 12)
 		check(copy.to_save() == city.to_save(), "District resources, promises and ending survive save/reload")
-	check(endings == ["THE OPEN HAND", "THE MANY", "THE UNFINISHED SUN"], "Different committed places and charters produce distinct endings")
+	check(endings == ["THE OPEN HAND", "THE MANY", "THE UNFINISHED SUN", "THE COMMON GROUND"], "Infrastructure and charter produce three committed endings and one divergent ending")
+	var revoked := Simulation.new()
+	revoked.restore(saved)
+	revoked.toggle_autonomy()
+	revoked.toggle_autonomy()
+	advance(revoked, 120)
+	check(revoked.district_count() == 0 and revoked.drift_count == 0, "Revoked autonomy never spends resources or departs from a directive")
 	var auto := Simulation.new()
 	auto.restore(saved)
 	auto.toggle_autonomy()
@@ -107,6 +114,7 @@ func _initialize() -> void:
 		auto.choose_charter(0)
 		auto.take_events()
 		if auto.district_count() == 9:break
+	check(not auto.choose_charter(1), "A charter cannot be rewritten after seeing the outcome")
 	check(auto.places == [6, 0, 3] and auto.drift_count == 3, "Autonomy follows six garden requests then explicitly records three higher-output departures")
 	check(auto.transmission.begins_with("DRIFT") and auto.history.size() <= 8, "Drift remains visible and the persisted journal is bounded")
 	auto.toggle_autonomy()

@@ -166,7 +166,7 @@ func update(state: SeedSimulation, delta: float) -> void:
 	if sim.district_count() > 0:
 		note.text = "Gardens: 1 resonance/s. Archives: 1.5. Foundries: 2. At three places, make a permanent promise."
 	if sim.charter >= 0:
-		note.text = "%d / 7 %ss support your charter. At six places, an autonomous controller favors foundries." % [sim.places[sim.charter], sim.NAMES[sim.charter].to_lower()]
+		note.text = "%d / 7 %s support your charter. At six places, an autonomous controller favors foundries." % [sim.places[sim.charter], ["gardens", "archives", "foundries"][sim.charter]]
 	if not sim.ending.is_empty():note.text = ending_text()
 	for i in 3:
 		var node: Button = buttons[["garden", "archive", "foundry"][i]]

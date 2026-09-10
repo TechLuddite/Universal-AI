@@ -4,8 +4,21 @@ Orientation for anyone (human or agent) picking this up cold.
 
 ## Shape of the thing
 
-A single-page React app with no backend, no router, and no server state. The
-whole deployment is `npm run build` → static files → GitHub Pages.
+One static GitHub Pages deployment, with three document entry points:
+
+- `/`: a lightweight HTML/CSS chooser, original SVG artwork, and contributor credits.
+- `/classic/`: the complete React game. Vite builds both this and the chooser.
+- `/seed/`: the independent Godot export, copied into `dist/seed/` after Vite builds.
+
+Neither game is mounted by the chooser. Its small script only handles service
+worker updates and the local development link. No router, backend, or shared
+game state is required. Relative links/assets support custom domains and GitHub
+project paths. The root service worker precaches the chooser and classic app
+shell, but never the Godot engine. Classic localStorage keys are unchanged by
+the path move. Godot saves remain separate.
+
+See [PERFORMANCE-HANDOFF.md](PERFORMANCE-HANDOFF.md) before performance testing;
+the local shutdown instruction remains in force.
 
 ```
 src/
@@ -28,11 +41,13 @@ src/
       worker.ts      WebLLM inference worker
 
   components/        presentation. Props in, callbacks out.
+    WorldStage.tsx   observatory canvas, chapter narrative, objectives, telemetry
+    SystemSignal.tsx measured production trace and bounded session event log
   data/
     upgrades.ts      32 upgrades; each has an effect(state) => Partial<GameState>
     decisionBranches.ts  narrative forks, same effect shape
   utils/
-    pixelArt.ts      canvas renderer
+    worldRenderer.ts procedural wafer / planet / swarm renderer
     sound.ts         Web Audio synthesizer
 ```
 
@@ -142,9 +157,31 @@ outgoing phase's panels mounted for `PHASE_DEMOLITION_MS`, and gives them
 `renderedPhase` directly so loading into Phase 3 doesn't demolish panels the
 player never had open.
 
+## Observatory
+
+`WorldStage.tsx` owns one animation loop and supplies current state through a
+ref to `utils/worldRenderer.ts`. ResizeObserver tracks the canvas size; device
+pixel ratio is capped at 2. The scene draws at 30 fps, suspends painting while
+hidden/offscreen, and paints static state twice a second when paused or when
+reduced motion is requested. Visual populations are bounded independently of
+game populations. The renderer does not mutate the simulation.
+
+The expanded view traps keyboard focus, makes the background inert, and restores
+focus on exit. Its controls call the same actions used by the operation panels.
+`SystemSignal.tsx` samples actual production deltas against elapsed time, retaining
+60 samples and 16 observed session transmissions. Neither is persisted.
+
+`tests/observatory.browser.ts` tests these user-facing claims in Chromium,
+including the production CSP and offline app shell. Run `npm run test:browser`.
+
 ## Saves
 
 `save.ts` writes a versioned envelope to `localStorage` (`universal_ai_save_v1`).
+App restores the save in its state initializer, before autosave effects mount.
+Restoring in an effect allowed React StrictMode's cleanup to save the fresh
+initial state over the loaded run. A browser regression covers development
+startup and reload into a later phase.
+
 Loading spreads over `createInitialState()`, so a save written before a field
 existed loads with that field's default instead of crashing.
 
@@ -182,6 +219,12 @@ HMR's WebSocket works. Production ships the policy exactly as written — so
 
 Generated at build time by a plugin in `vite.config.ts`. Precaches the **app
 shell only** — entry chunks by `isEntry`, plus the manifest and icon.
+
+Each shell cache includes a hash of its HTML and asset list, so two local builds
+at the same commit cannot share incompatible HTML and bundles. Activation removes
+only previous `universal-ai-` caches. Shell lookups ignore `Vary`, because these
+are public static resources and preview's `Vary: Origin` would otherwise prevent
+module/style requests from matching the precached entries while offline.
 
 It explicitly does not cache WebLLM's dynamic chunk, its worker, or anything
 cross-origin. WebLLM manages its own multi-hundred-megabyte weight cache and a
@@ -272,3 +315,11 @@ the healthy path is worse than an outage.
   `space_exploration_initiative` is the only door to Phase 3. The tick never
   changes `phase`, and the cosmic decision branch decides what the launched
   swarm is *for*, not whether it launches.
+
+## Godot opening prototype
+
+`godot/` is an independent Godot 4.7.2 application exported to `dist/seed/`.
+Its pure `SeedSimulation` owns the small six-fab economy; the scene drives it
+at fixed 60 Hz and translates returned events into mesh animation and sound.
+It has a separate versioned browser save and no WebLLM dependency. See
+[`godot/README.md`](../godot/README.md) for its source map and verification.

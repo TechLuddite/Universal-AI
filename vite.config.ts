@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
@@ -26,7 +27,7 @@ function devCspRelax(): Plugin {
     transformIndexHtml(html) {
       return html.replace(
         /<meta http-equiv="Content-Security-Policy"[\s\S]*?\/>/,
-        '<!-- CSP relaxed in dev for HMR; the production policy is in index.html -->'
+        '<!-- CSP relaxed in dev for HMR; the production policy is in index.html -->',
       );
     },
   };
@@ -46,21 +47,37 @@ function serviceWorker(): Plugin {
     closeBundle() {
       const outDir = path.resolve(__dirname, 'dist');
       const manifest = JSON.parse(
-        readFileSync(path.join(outDir, '.vite/manifest.json'), 'utf8')
+        readFileSync(path.join(outDir, '.vite/manifest.json'), 'utf8'),
       ) as Record<string, { file: string; css?: string[]; isEntry?: boolean }>;
 
       // Static entry chunks only. The WebLLM runtime is a dynamic import and
       // its worker is 6MB each — precaching either would force every visitor to
       // download the model runtime they explicitly opted out of.
-      const shell = new Set<string>(['./', './index.html', './manifest.webmanifest', './icon.svg']);
+      const shell = new Set<string>([
+        './',
+        './index.html',
+        './classic/',
+        './classic/index.html',
+        './manifest.webmanifest',
+        './icon.svg',
+      ]);
       for (const entry of Object.values(manifest)) {
         if (!entry.isEntry) continue;
         if (entry.file) shell.add('./' + entry.file);
         for (const css of entry.css ?? []) shell.add('./' + css);
       }
 
+      // Local builds can share a commit while carrying different asset hashes.
+      // Give each shell its own cache so an update cannot mix old HTML and JS.
+      const shellHash = createHash('sha256')
+        .update(readFileSync(path.join(outDir, 'index.html')))
+        .update(readFileSync(path.join(outDir, 'classic/index.html')))
+        .update(JSON.stringify([...shell]))
+        .digest('hex')
+        .slice(0, 12);
+
       const sw = `// Generated at build time. Precaches the app shell for offline play.
-const CACHE = 'universal-ai-${commitSha()}';
+const CACHE = 'universal-ai-${commitSha()}-${shellHash}';
 const SHELL = ${JSON.stringify([...shell], null, 2)};
 
 self.addEventListener('install', (event) => {
@@ -70,7 +87,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('universal-ai-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -83,7 +100,12 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((hit) => hit || fetch(event.request))
+    // This cache contains only public, immutable app-shell resources. Preview
+    // sends Vary: Origin, but addAll and module requests have different Origin
+    // headers. Ignoring Vary for this shell makes offline reload work there too.
+    caches.open(CACHE)
+      .then((cache) => cache.match(event.request, { ignoreVary: true }))
+      .then((hit) => hit || fetch(event.request))
   );
 });
 `;
@@ -105,6 +127,12 @@ export default defineConfig({
   },
   build: {
     manifest: true,
+    rollupOptions: {
+      input: {
+        index: path.resolve(__dirname, 'index.html'),
+        classic: path.resolve(__dirname, 'classic/index.html'),
+      },
+    },
     // Required under `script-src 'self'` — the polyfill injects inline script.
     modulePreload: { polyfill: false },
     chunkSizeWarningLimit: 7000,

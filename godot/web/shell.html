@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1620">
+<meta name="description" content="First, a chip. Then, everything. Build an autonomous factory in Universal AI: The Seed.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'self'">
+<title>Universal AI — The Seed</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0b1620;color:#e8e9e1;font-family:Arial,sans-serif}#canvas{display:block;width:100%;height:100%;outline:none;touch-action:none}#loading{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at center,#1a303b,#09131e 70%);z-index:5}.intro{width:min(440px,85vw);text-align:center}.mark{font-size:55px;color:#f1cb83;line-height:1;margin-bottom:32px}.eyebrow{color:#90adae;letter-spacing:4px;font:10px monospace}h1{font-weight:400;font-size:50px;letter-spacing:-2px;margin:19px 0 12px}p{font-size:13px;line-height:1.8;color:#9cb1b6}.progress{height:2px;background:#2d414b;margin:35px 0 15px;overflow:hidden}.progress i{display:block;width:0;height:100%;background:#f2ca80;transition:width .2s}#status{font:10px monospace;letter-spacing:1px;color:#c3d3cd}button{background:#e9c78c;color:#18262a;border:0;border-radius:3px;padding:13px 24px;cursor:pointer;margin-top:20px;font-weight:bold}#error{color:#ffc9af;white-space:pre-line;font-size:12px}#retry{display:none}.foot{margin-top:45px;font:9px monospace;color:#66818e;letter-spacing:2px}#help-button{position:fixed;bottom:8px;right:10px;background:transparent;color:#718893;padding:2px 5px;font:9px monospace;margin:0;z-index:2}#controls{color:#c7d7d6;background:#12232e;border:1px solid #44606b;border-radius:6px;max-width:450px;padding:28px;font:14px/1.8 Arial}#controls::backdrop{background:#05101bbf}#controls a{color:#f2cf8b}#controls strong{color:#f2cf8b}#controls h2{margin-top:0}#controls button{display:block;margin-left:auto}#controls p{color:#b2c7cb}#controls ul{padding-left:18px}
+</style>
+$GODOT_HEAD_INCLUDE
+<script id="godot-config" type="application/json">$GODOT_CONFIG</script>
+<script src="$GODOT_URL" defer></script>
+<script src="boot.js" defer></script>
+</head>
+<body>
+<canvas id="canvas" tabindex="0" aria-label="Universal AI factory. Space fabricates a chip, B installs a fab, R orders silicon. Drag to orbit and scroll to zoom.">Your browser needs WebGL 2 to run this game.</canvas>
+<div id="loading"><div class="intro"><div class="mark">◈</div><div class="eyebrow">UNIVERSAL AI / CHAPTER ZERO</div><h1>The Seed.</h1><p>A quiet room. A silicon wafer.<br>An objective that doesn't know when to stop.</p><div class="progress"><i id="bar"></i></div><div id="status" role="status">PREPARING THE FABRICATION FLOOR</div><p id="error" role="alert"></p><button id="retry">Try again</button><div class="foot">BUILT IN GODOT · RUNS ON YOUR MACHINE</div></div></div>
+<button id="help-button" aria-label="Open game controls">CONTROLS [?]</button>
+<dialog id="controls"><h2>The first machine.</h2><p><a id="versions-link" href="../">← All versions</a></p><p>Etch chips and sell them for $100 each. Install your first fab at $1,200, then grow to six machines and connect the district.</p><ul><li><strong>Space</strong> — etch a chip; hold to repeat</li><li><strong>B</strong> — install the next fab</li><li><strong>R</strong> — buy 30 wafers for $600</li><li><strong>O / A / U</strong> — overclock / supply controller / uplink</li><li><strong>Drag / scroll</strong> — orbit / zoom</li><li><strong>C / F / M / Home</strong> — close-up / cinema / sound / reset camera</li></ul><p>Progress saves in this browser. Production pauses while the tab is suspended. This is a standalone prototype; earlier Universal AI saves are separate.</p><button id="close-help">Back to the factory</button></dialog>
+<noscript>This game needs JavaScript and WebGL 2 enabled.</noscript>
+</body></html>

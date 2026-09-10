@@ -8,7 +8,15 @@
     "build": "vite build",
     "preview": "vite preview --port=4173 --host=0.0.0.0",
     "lint": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:browser": "npm run build && playwright test",
+    "godot:setup": "python scripts/godot.py setup",
+    "godot:build": "python scripts/godot.py build",
+    "godot:test": "python scripts/godot.py test",
+    "godot:serve": "python scripts/godot.py serve",
+    "godot:stage": "python scripts/godot.py stage",
+    "godot:editor": "python scripts/godot.py editor",
+    "godot:test:browser": "npm run godot:build && playwright test --config playwright.godot.config.ts"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.84",
@@ -19,6 +27,7 @@
     "react-dom": "^19.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

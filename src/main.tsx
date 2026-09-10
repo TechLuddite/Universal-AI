@@ -13,8 +13,8 @@ createRoot(document.getElementById('root')!).render(
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     // Resolved against the document URL, not the bundle's — sw.js sits at the
-    // site root so its scope covers the whole app.
-    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {
+    // site root so its scope covers the chooser and the classic game.
+    navigator.serviceWorker.register(new URL('../sw.js', window.location.href)).catch(() => {
       // Offline play is a bonus, not a requirement.
     });
   });

@@ -1,117 +1,63 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!--
-      Content Security Policy — the network guarantee, in enforceable form.
-
-      There is no backend. The page has no analytics, no telemetry, no fonts,
-      no trackers, and no API. `connect-src` lists the only origins this page
-      is permitted to reach, ever:
-
-        huggingface.co, *.hf.co      model weights, if you opt into WebLLM
-        raw.githubusercontent.com    the compiled model libraries
-
-      Those are contacted only when you explicitly choose the WebLLM Overseer
-      and press download. The default Utility Engine contains no network code
-      at all, so on a default game nothing leaves your machine — open DevTools
-      and watch. What CSP guarantees on top of that is the harder part: even a
-      compromised dependency could not exfiltrate anything anywhere else.
-
-      `wasm-unsafe-eval` is required to compile WebLLM's WebAssembly. It does
-      not permit eval() of JavaScript.
-    -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
-        default-src 'self';
-        script-src 'self' 'wasm-unsafe-eval';
-        worker-src 'self' blob:;
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data: blob:;
-        font-src 'self';
-        connect-src 'self' blob: data: https://huggingface.co https://*.hf.co https://raw.githubusercontent.com;
-        form-action 'none';
-        base-uri 'self';
-        object-src 'none'
-      "
-    />
-    <!--
-      No `frame-ancestors` here: it is ignored when delivered via <meta>, and
-      GitHub Pages cannot set response headers, so clickjacking protection
-      isn't available on this host. Listing it anyway would only imply a
-      protection that isn't there.
-    -->
-
-
-    <title>Universal AI — an idle game about optimization</title>
-    <meta
-      name="description"
-      content="A Universal Paperclips tribute. Build NPU chips, hand the wheel to an autonomous Overseer, and watch what optimization does when nobody stops it. Runs entirely in your browser."
-    />
-    <meta name="theme-color" content="#0c0a09" />
-    <meta name="color-scheme" content="dark" />
-
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
-
-    <!--
-      Boot shell. Lives inside #root, so React wipes it on first render and it
-      costs a healthy load nothing but the frames before the bundle parses.
-
-      It exists because when the bundle *doesn't* parse, the page had nothing to
-      say: `<div id="root">` on a dark background is a grey screen, identical
-      whether the app is booting, the module 404'd, or the CSP blocked it. That
-      is the same failure this repo keeps finding — a silent fallback that looks
-      like the healthy path. This one announces itself: after eight seconds with
-      no React, the diagnostic fades in.
-
-      Pure CSS on purpose. `script-src 'self'` forbids inline script, but
-      `style-src` allows 'unsafe-inline', so a timed reveal is the one mechanism
-      available to a page whose JavaScript never arrived.
-    -->
-    <style>
-      /* Preflight sets this too, but preflight ships in the bundle that may
-         never arrive. Kept off `background` so the Cyberpunk palette's own
-         slate body colour isn't overridden on a healthy load. */
-      body { margin: 0; }
-      #boot {
-        min-height: 100vh;
-        background: #0c0a09;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        padding: 2rem;
-        text-align: center;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        color: #a8a29e;
-      }
-      #boot h1 { margin: 0; font-size: 1rem; font-weight: 600; color: #e7e5e4; letter-spacing: 0.08em; }
-      #boot p  { margin: 0; font-size: 0.8125rem; line-height: 1.6; max-width: 34rem; }
-      #boot a  { color: #a8a29e; }
-      @keyframes boot-reveal { to { opacity: 1; } }
-      /* Hidden until the bundle has had every reasonable chance to boot. */
-      #boot .stalled { opacity: 0; animation: boot-reveal 400ms ease 8s forwards; }
-      #boot .stalled strong { color: #fca5a5; font-weight: 600; }
-    </style>
-  </head>
-  <body>
-    <div id="root">
-      <div id="boot">
-        <h1>UNIVERSAL AI</h1>
-        <p>Loading…</p>
-        <p class="stalled">
-          <strong>The application bundle did not load.</strong><br />
-          Nothing is wrong with your browser — this page was served without its
-          compiled assets. Reloading will not help. Please report it at
-          <a href="https://github.com/TechLuddite/Universal-AI/issues">github.com/TechLuddite/Universal-AI/issues</a>.
-        </p>
-      </div>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <title>Universal AI — Choose your experiment</title>
+  <meta name="description" content="One obsession, two games. Explore Universal AI's full browser strategy game or The Seed, an experimental Godot fabrication room. Meet the humans and AI tools behind them." />
+  <meta name="theme-color" content="#101916" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/src/landing.css" />
+</head>
+<body>
+  <a class="skip-link" href="#versions">Skip to the games</a>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Universal AI home"><span aria-hidden="true">U / AI</span> UNIVERSAL AI</a>
+      <nav aria-label="Project"><a href="#credits">Who built it</a><a href="https://github.com/TechLuddite/Universal-AI">Source <span aria-hidden="true">↗</span></a></nav>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="title">
+        <p class="eyebrow">TECHLUDDITE’S EXPERIMENT IN ENOUGH</p>
+        <div class="intro-row"><h1 id="title">One obsession.<br /><em>Two machines.</em></h1><p class="intro-note">Start with a chip.<br />See what “make more” becomes.<br /><span>Two ways into the same dangerous idea.</span></p></div>
+      </section>
+      <section id="versions" class="versions" aria-label="Choose a game version">
+        <article class="game-card classic-card" aria-labelledby="classic-title">
+          <div class="card-top"><span class="eyebrow">01 / THE SYSTEM</span><span class="badge">FULL THREE-PHASE GAME</span></div>
+          <div class="illustration instrument" aria-hidden="true">
+            <svg viewBox="0 0 600 240" fill="none"><path class="circuit" d="M0 55h145l70 65H385l70-65h145M0 185h145l70-65M385 120l70 65h145M300 0v55m0 130v55M60 120h155m170 0h155"/><circle cx="300" cy="120" r="95"/><circle cx="300" cy="120" r="73" stroke-dasharray="2 8"/><rect x="250" y="70" width="100" height="100" rx="8"/><rect x="267" y="87" width="66" height="66" rx="3"/><path d="M280 60V40m20 20V40m20 20V40M280 200v-20m20 20v-20m20 20v-20M240 100h-20m20 20h-20m20 20h-20M380 100h-20m20 20h-20m20 20h-20"/><path class="pulse" d="M280 135v-30l20 30v-30m12 0v30m10-30v30"/><circle class="dot" cx="145" cy="55" r="4"/><circle class="dot" cx="455" cy="185" r="4"/></svg>
+            <span class="art-caption">CHIPS → PLANET → SWARM</span>
+          </div>
+          <div class="card-body"><p class="edition">THE ORIGINAL, EVOLVED</p><h2 id="classic-title">Universal AI</h2><p class="description">A quiet dashboard with an enormous appetite. Build a chip business, direct an autonomous Overseer, and follow optimization from the market to the stars.</p>
+            <dl class="specs"><div><dt>Experience</dt><dd>Idle strategy · three phases · alignment-driven endings</dd></div><div><dt>Built with</dt><dd>React, TypeScript &amp; Canvas · optional WebLLM</dd></div><div><dt>Lineage</dt><dd>Gemini foundation → Claude’s systems work → Codex’s interface pass</dd></div></dl>
+            <a class="play-link" href="./classic/">Enter Universal AI <span aria-hidden="true">↗</span></a>
+            <p class="card-footnote">The complete game. Your existing browser save stays with this version.</p>
+          </div>
+        </article>
+        <article class="game-card seed-card" aria-labelledby="seed-title">
+          <div class="card-top"><span class="eyebrow">02 / THE PLACE</span><span class="badge">EXPERIMENTAL PROTOTYPE</span></div>
+          <div class="illustration factory" aria-hidden="true">
+            <svg viewBox="0 0 600 240" fill="none"><path class="floor" d="m300 28 220 108-220 100L80 128Z"/><path d="m160 88 220 108M230 53l220 111M150 162 370 60M220 198 440 96"/><path class="plinth" d="m210 124 90-43 90 43-90 44Zm0 0v26l90 44 90-44v-26M300 168v26"/><ellipse class="wafer" cx="300" cy="123" rx="52" ry="24"/><path class="gantry" d="M240 127V61l67-32 59 28v66M240 61l60 29 66-33M300 90v24"/><path class="laser" d="M300 104v25"/><path d="m273 180-32 16 36 18 33-16M253 194l36 18M264 189l36 18"/><circle cx="366" cy="54" r="5"/><path class="signal" d="m112 127 44 20m289-28 39 19M300 215v12"/></svg>
+            <span class="art-caption">ONE WAFER. SIX FABS. A LARGER AMBITION.</span>
+          </div>
+          <div class="card-body"><p class="edition">A NEW DIMENSION</p><h2 id="seed-title">The Seed<span>.</span></h2><p class="description">Step inside the first fabrication room. Watch etch heads scan, chips leave the line, and six autonomous machines turn a small beginning into a district connection.</p>
+            <dl class="specs"><div><dt>Experience</dt><dd>3D factory · opening chapter · independent save</dd></div><div><dt>Built with</dt><dd>Godot &amp; GDScript · WebAssembly / WebGL 2</dd></div><div><dt>Lineage</dt><dd>TechLuddite’s “go Godot” direction → Codex’s implementation</dd></div></dl>
+            <p class="performance-note"><strong>Performance investigation open.</strong> Severe slowdowns have been reported on the development laptop. Testing on another machine is still pending.</p>
+            <a class="play-link" href="./seed/" data-factory-link>Enter the experimental factory <span aria-hidden="true">↗</span></a>
+            <p class="card-footnote">Opening prototype, not a full port. Initial engine download: about 39 MB before compression.</p>
+          </div>
+        </article>
+      </section>
+      <p class="choice-note">Both run in your browser. Separate games, separate saves. Neither game starts until you choose it.</p>
+      <section class="credits" id="credits" aria-labelledby="credits-title">
+        <div class="credits-heading"><p class="eyebrow">HUMAN DIRECTION. SHARED AUTHORSHIP.</p><h2 id="credits-title">Built in conversation.</h2><p>These games grew through several tools and several rounds of work. The credits follow the contributions, not just the name on the latest interface.</p></div>
+        <dl class="credit-list"><div><dt>TechLuddite <span>PROJECT CREATOR</span></dt><dd>Direction, prompts, product decisions, playtesting, and the invitation to take the project into Godot.</dd></div><div><dt>Gemini <span>GOOGLE AI STUDIO</span></dt><dd>The initial generated browser-game foundation and early concepts, including the Overseer and alignment axis.</dd></div><div><dt>Claude <span>SIMULATION &amp; SYSTEMS</span></dt><dd>Audited and repaired the original game; developed persistence, Overseer engines, progression, alignment consequences, tests, and Pages deployment work.</dd></div><div><dt>Codex <span>INTERFACE &amp; GODOT</span></dt><dd>The recent React interface and observatory visuals; The Seed’s Godot scene, prototype economy, animation, audio, and web export; this shared entrance.</dd></div></dl>
+      </section>
+      <aside class="origin"><span class="eyebrow">THE SPARK</span><p>Inspired by Frank Lantz’s <a href="https://www.decisionproblem.com/paperclips/">Universal Paperclips</a>—the small beginning behind a very large obsession. These are independent experiments, not an official sequel.</p></aside>
+    </main>
+    <footer><span>UNIVERSAL AI / AN EXPERIMENT IN ENOUGH</span><a href="https://github.com/TechLuddite/Universal-AI">Explore the code <span aria-hidden="true">↗</span></a></footer>
+  </div>
+  <script type="module" src="/src/landing.ts"></script>
+</body>
 </html>

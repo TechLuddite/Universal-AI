@@ -1,5 +1,12 @@
 # Roadmap
 
+## The Chorus — district chapter
+
+The Godot continuation curates consequential alignment, visible autonomy, and
+different endings from the classic game into a nine-place signal atlas. It
+keeps the factory save and uses bounded vector animation instead of expanding
+the 3D population. See `godot/README.md` for its economy and controls.
+
 ## Current priority: unresolved Godot performance
 
 Severe resource-use issues remain open after the initial rendering and audio

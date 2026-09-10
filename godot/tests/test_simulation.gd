@@ -31,6 +31,8 @@ func _initialize() -> void:
 	var restored:=Simulation.new()
 	check(restored.restore(sim.to_save()),"Save round trip is accepted")
 	check(restored.to_save()==sim.to_save(),"Save preserves in-flight wafers and machine cycles")
+	var json_copy := Simulation.new()
+	check(json_copy.restore(JSON.parse_string(JSON.stringify(sim.to_save()))) and json_copy.chips == sim.chips, "Actual JSON saves restore after numeric type conversion")
 	var bad: Dictionary=sim.to_save()
 	bad.cycles=["broken"]
 	check(not restored.restore(bad),"Corrupted cycle data is rejected")
@@ -74,5 +76,58 @@ func _initialize() -> void:
 	advance(run,10)
 	advance(resumed,10)
 	check(run.to_save()==resumed.to_save(),"Resumed automation behaves identically to uninterrupted play")
+	# Pre-Chorus saves migrate in place; no reset or new save location.
+	var legacy: Dictionary = {"version": 1, "capital": 2400, "wafers": 30, "chips": 90, "fabs": 6, "linked": true}
+	var migrated := Simulation.new()
+	check(migrated.restore(legacy) and migrated.linked and migrated.district_count() == 0, "Original uplink saves enter the new chapter without losing their factory")
+	check(not migrated.plant(0), "District construction cannot spend signals it has not earned")
+	var endings: Array[String] = []
+	for path in 4:
+		var kind: int = mini(path, 2)
+		var city := Simulation.new()
+		city.restore(saved)
+		# Continue a legitimately earned factory through every ending; no resource grants.
+		for frame in 60 * 1200:
+			city.step(1.0 / 60)
+			city.plant(kind)
+			city.choose_charter(0 if path == 3 else kind)
+			city.take_events()
+			if city.broadcast():break
+		endings.append(city.ending)
+		check(not city.ending.is_empty(), "Each committed district can finish within twenty minutes of the uplink")
+		check(city.places[kind] == 9 and city.capital >= 0 and city.signals >= 0, "Endings require real funded construction")
+		var copy := Simulation.new()
+		check(copy.restore(JSON.parse_string(JSON.stringify(city.to_save()))) and copy.ending == city.ending and copy.places == city.places, "A completed district can be restored from serialized JSON")
+		copy.restore(city.to_save())
+		advance(city, 12)
+		advance(copy, 12)
+		check(copy.to_save() == city.to_save(), "District resources, promises and ending survive save/reload")
+	check(endings == ["THE OPEN HAND", "THE MANY", "THE UNFINISHED SUN", "THE COMMON GROUND"], "Infrastructure and charter produce three committed endings and one divergent ending")
+	var revoked := Simulation.new()
+	revoked.restore(saved)
+	revoked.toggle_autonomy()
+	revoked.toggle_autonomy()
+	advance(revoked, 120)
+	check(revoked.district_count() == 0 and revoked.drift_count == 0, "Revoked autonomy never spends resources or departs from a directive")
+	var auto := Simulation.new()
+	auto.restore(saved)
+	auto.toggle_autonomy()
+	for frame in 60 * 1200:
+		auto.step(1.0 / 60)
+		auto.choose_charter(0)
+		auto.take_events()
+		if auto.district_count() == 9:break
+	check(not auto.choose_charter(1), "A charter cannot be rewritten after seeing the outcome")
+	check(auto.places == [6, 0, 3] and auto.drift_count == 3, "Autonomy follows six garden requests then explicitly records three higher-output departures")
+	check(auto.transmission.begins_with("DRIFT") and auto.history.size() <= 8, "Drift remains visible and the persisted journal is bounded")
+	auto.toggle_autonomy()
+	var rate: float = auto.resonance_rate()
+	check(is_equal_approx(rate, 9.0), "Revoked autonomy applies its advertised 25 percent resonance cost")
+	advance(auto, 180)
+	check(auto.broadcast() and auto.ending == "THE COMMON GROUND", "Unchecked departures can change the ending promised by a garden charter")
+	var invalid: Dictionary = auto.to_save()
+	invalid.places = [10, 0, 0]
+	var unchanged: Dictionary = auto.to_save()
+	check(not auto.restore(invalid) and auto.to_save() == unchanged, "Invalid district saves are rejected atomically")
 	print("The Seed: %d checks, %d failures. Full run: %.1fs, %d chips."%[checks,failures.size(),finished_at,run.chips])
 	quit(0 if failures.is_empty() else 1)

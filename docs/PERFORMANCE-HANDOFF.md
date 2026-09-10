@@ -29,6 +29,15 @@ Remote GitHub Actions builds/tests and deployment are authorized.
   1440 × 900 internally. MSAA and full-screen bloom are disabled. These changes
   reduce work; they are not proof that the remaining problem is fixed.
 
+## Hosted-session observation — 2026-09-10
+
+The user reports that the GitHub Pages version is playing much more smoothly.
+It is not yet established whether this was on another machine, with the same
+browser/settings, or past the previously troublesome expansion milestones.
+This is encouraging evidence, not a controlled comparison: local workloads,
+browser state, and the deployed fixes remain possible contributors. The
+cross-machine check and the local shutdown instruction remain in force.
+
 ## Next investigation
 
 1. **Test the deployed site from another machine.** Record OS, browser/version,

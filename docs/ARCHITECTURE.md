@@ -323,3 +323,30 @@ Its pure `SeedSimulation` owns the small six-fab economy; the scene drives it
 at fixed 60 Hz and translates returned events into mesh animation and sound.
 It has a separate versioned browser save and no WebLLM dependency. See
 [`godot/README.md`](../godot/README.md) for its source map and verification.
+
+## Godot continuation: The Chorus
+
+`godot/scripts/simulation.gd` remains the authority for both chapters. After the
+uplink, chip completions earn signal, district places produce resonance, and
+`plant`, `choose_charter`, `toggle_autonomy`, and `broadcast` enforce every gate.
+The deterministic district controller calls `plant`; it retains a silicon
+reserve and explicitly reports departures from the chosen directive. It cannot
+choose the permanent charter or the final transmission.
+
+`godot/scripts/chorus.gd` is a native Control drawing a nine-place signal atlas
+at 10 Hz while visible. `factory.gd` switches views without replacing the scene
+or simulation. In atlas view it hides room/machine geometry and suspends their
+animation; all purchases and camera/view changes reuse existing scene nodes.
+Existing 30 fps and internal-resolution limits remain in force.
+
+Save version 2 uses the existing Godot save path, accepts version 1 factory
+saves, and validates district data before applying any fields. The bounded
+transmission journal, charter, autonomy state, controller timing, and ending
+are saved. Pure simulation tests play all four endings from an earned factory;
+browser tests cover chapter migration, real desktop/mobile controls, stable
+node counts, and ending persistence through the web filesystem. Test-only
+scenario query parameters initialize saved-run fixtures, and require test mode.
+
+This is selective adaptation of the classic game's strongest systems, not a
+shared simulation or a transfer of classic saves. The performance handoff
+remains open despite the user's encouraging hosted-session report.

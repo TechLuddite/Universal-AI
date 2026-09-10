@@ -32,12 +32,14 @@ story. Play the original first.
 
 A new playable 3D fabrication room lives in [`godot/`](godot/README.md): moving
 etch heads, physical chip output, six autonomous fabs, synthesized sound, and a
-district reveal. Run `npm run godot:build && npm run godot:serve`, then open
+district reveal followed by **The Chorus**: a living signal atlas with gardens,
+archives, foundries, autonomous decisions, a permanent charter, and four possible
+endings. Run `npm run godot:build && npm run godot:serve`, then open
 http://localhost:4180. Use `npm run godot:editor` to open the native project.
 
 The Pages workflow includes it at `/seed/`, alongside `/classic/` and the
-lightweight chooser at `/`. This is a standalone opening-loop
-prototype with its own save; the full React game below remains available. See
+lightweight chooser at `/`. This is a standalone two-chapter
+game with its own save; the full React game below remains available. See
 the [Godot guide](godot/README.md) for controls, setup, tests, and current scope.
 
 ## Running it

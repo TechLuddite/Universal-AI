@@ -123,3 +123,71 @@ test('ambient audio remains bounded through two fabs and repeated mute toggles',
   await page.waitForTimeout(3000);
   expect(await sources() - resumed).toBeLessThan(10);
 });
+
+for (const width of [1440, 390]) {
+  test(`the Chorus migrates an uplink save and builds a living district at ${width}px`, async ({ page }, testInfo) => {
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    await ready(page, '?test=1&scenario=chorus');
+    const city = () => page.evaluate(() => (window as unknown as { __seed: { atlas: boolean; places: number[]; signals: number; charter: number; autonomous: boolean; nodes: number } }).__seed);
+    await expect.poll(async () => (await city()).atlas).toBe(true);
+    const nodes = (await city()).nodes;
+    // Signal is earned by the six real fabs from the restored factory.
+    for (let i = 0; i < 3; i++) {
+      await expect.poll(async () => (await city()).signals, { timeout: 30_000 }).toBeGreaterThanOrEqual(20 + i * 10);
+      // First action card: use the actual pointer/touch target on both layouts.
+      await page.mouse.click(width === 390 ? 100 : 130, width === 390 ? 630 : 825);
+      await expect.poll(async () => (await city()).places[0]).toBe(i + 1);
+    }
+    // The permanent charter choice appears after the third place.
+    await page.mouse.click(width === 390 ? 175 : 1210, width === 390 ? 305 : 282);
+    await expect.poll(async () => (await city()).charter).toBe(0);
+    expect((await city()).nodes).toBe(nodes);
+    await page.screenshot({ path: testInfo.outputPath('chorus.png') });
+    await page.keyboard.press('Tab');
+    await expect.poll(async () => (await city()).atlas).toBe(false);
+    await page.keyboard.press('Tab');
+    await expect.poll(async () => (await city()).atlas).toBe(true);
+    expect(errors).toEqual([]);
+  });
+}
+
+
+test('first light requires a completed district and survives a real browser save', async ({ page, browserName }, testInfo) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  let navigating = false;
+  const navigationNotices: string[] = [];
+  page.on('console', message => {
+    if (message.type() !== 'error') return;
+    // Firefox emits this source-less diagnostic while discarding the old page.
+    // Only classify that exact message during deliberate navigation; preserve
+    // all live-game errors and retain the notices in the test artifact.
+    if (navigating && browserName === 'firefox' && message.location().url === '' &&
+        message.text() === '[JavaScript Error: "InvalidStateError: Navigated away from page"]') {
+      navigationNotices.push(message.text());
+    } else errors.push(message.text());
+  });
+  await ready(page, '?test=1&persist=1&scenario=firstlight');
+  const ending = () => page.evaluate(() => (window as unknown as { __seed: { ending: string; atlas: boolean; places: number[] } }).__seed);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  expect((await ending()).ending).toBe('');
+  await page.keyboard.press('3');
+  await expect.poll(async () => (await ending()).places[2]).toBe(1);
+  await page.keyboard.press('Enter');
+  await expect.poll(async () => (await ending()).ending).toBe('THE OPEN HAND');
+  await page.screenshot({ path: testInfo.outputPath('first-light.png') });
+  await page.waitForTimeout(3500);
+  // Remove the fixture parameter: this load must come from the browser filesystem.
+  expect(errors).toEqual([]);
+  navigating = true;
+  await ready(page, '?test=1&persist=1');
+  navigating = false;
+  await testInfo.attach('navigation-diagnostics', { body: JSON.stringify(navigationNotices), contentType: 'application/json' });
+  expect((await ending()).ending).toBe('THE OPEN HAND');
+  expect((await ending()).atlas).toBe(true);
+  expect(errors).toEqual([]);
+});

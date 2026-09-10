@@ -14,7 +14,7 @@ async function ready(page: Page, query = '?test=1') {
     Boolean((window as unknown as { __seed?: unknown }).__seed) ||
     Boolean(document.getElementById('error')?.textContent),
     undefined, { timeout: 90_000 });
-  await expect(page.locator('#error')).toHaveText('');
+  expect(await page.evaluate(() => document.getElementById('error')?.textContent ?? '')).toBe('');
   await expect(page.locator('#loading')).toHaveCount(0);
 }
 

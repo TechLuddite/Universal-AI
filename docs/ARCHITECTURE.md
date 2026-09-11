@@ -41,13 +41,13 @@ src/
       worker.ts      WebLLM inference worker
 
   components/        presentation. Props in, callbacks out.
-    WorldStage.tsx   observatory canvas, chapter narrative, objectives, telemetry
-    SystemSignal.tsx measured production trace and bounded session event log
+    NpuCanvasComponent.tsx original factory and combat canvas
+    PixelHeader.tsx original controls, metrics, and chooser navigation
   data/
     upgrades.ts      32 upgrades; each has an effect(state) => Partial<GameState>
     decisionBranches.ts  narrative forks, same effect shape
   utils/
-    worldRenderer.ts procedural wafer / planet / swarm renderer
+    pixelArt.ts     original procedural factory / combat renderer
     sound.ts         Web Audio synthesizer
 ```
 
@@ -157,22 +157,15 @@ outgoing phase's panels mounted for `PHASE_DEMOLITION_MS`, and gives them
 `renderedPhase` directly so loading into Phase 3 doesn't demolish panels the
 player never had open.
 
-## Observatory
+## Original presentation
 
-`WorldStage.tsx` owns one animation loop and supplies current state through a
-ref to `utils/worldRenderer.ts`. ResizeObserver tracks the canvas size; device
-pixel ratio is capped at 2. The scene draws at 30 fps, suspends painting while
-hidden/offscreen, and paints static state twice a second when paused or when
-reduced motion is requested. Visual populations are bounded independently of
-game populations. The renderer does not mutate the simulation.
-
-The expanded view traps keyboard focus, makes the background inert, and restores
-focus on exit. Its controls call the same actions used by the operation panels.
-`SystemSignal.tsx` samples actual production deltas against elapsed time, retaining
-60 samples and 16 observed session transmissions. Neither is persisted.
-
-`tests/observatory.browser.ts` tests these user-facing claims in Chromium,
-including the production CSP and offline app shell. Run `npm run test:browser`.
+The `/classic/` interface comes from pre-redesign commit `7520185`, including
+`NpuCanvasComponent.tsx`, `pixelArt.ts`, `PixelHeader.tsx`, the original layout,
+and phase-transition styles. The abandoned observatory presentation was wrongly
+published as the original during the split; it is now retained only in Git
+history. Save restoration before effects and shared-site navigation remain.
+`tests/classic.browser.ts` verifies original controls, all three phases, startup
+and reload persistence, production CSP, offline loading, and cache isolation.
 
 ## Saves
 

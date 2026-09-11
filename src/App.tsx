@@ -2,16 +2,12 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { GameState, AILogEntry, Upgrade, ProbeAllocation } from './types';
 import { INITIAL_UPGRADES } from './data/upgrades';
 import { PixelHeader } from './components/PixelHeader';
-import { WorldStage, TelemetryRibbon } from './components/WorldStage';
-import { SystemSignal } from './components/SystemSignal';
+import { NpuCanvasComponent } from './components/NpuCanvasComponent';
 import { DirectControlPanel } from './components/DirectControlPanel';
 import { OverseerPanel } from './components/OverseerPanel';
 import { UpgradesPanel } from './components/UpgradesPanel';
 import { StatsPanel } from './components/StatsPanel';
-import {
-  OfflineReportCard,
-  OfflineReport,
-} from './components/OfflineReportCard';
+import { OfflineReportCard, OfflineReport } from './components/OfflineReportCard';
 import { DecisionModal } from './components/DecisionModal';
 import { DevSupportModal } from './components/DevSupportModal';
 import { EdgeWarningModal } from './components/EdgeWarningModal';
@@ -59,56 +55,41 @@ const PHASE_DEMOLITION_MS = 2200;
 
 /** The frame only ever widens. Scope is one-way, and the layout should say so. */
 const FRAME_WIDTH: Record<1 | 2 | 3, string> = {
-  1: '86rem',
-  2: '98rem',
+  1: '64rem',
+  2: '80rem',
   3: '110rem',
 };
 
 export default function App() {
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
-  const [victoryModalShownOnce, setVictoryModalShownOnce] =
-    useState<boolean>(false);
+  const [victoryModalShownOnce, setVictoryModalShownOnce] = useState<boolean>(false);
 
-  // Restore before mounting effects. Restoring in an effect let StrictMode's
-  // autosave cleanup overwrite a real save with the fresh initial state.
+  // Restore before effects mount, so StrictMode's autosave cleanup cannot
+  // overwrite the previous run with a fresh state.
   const [restored] = useState(load);
-  const [state, setState] = useState<GameState>(
-    () => restored?.state ?? createInitialState(),
-  );
+  const [state, setState] = useState<GameState>(() => restored?.state ?? createInitialState());
 
-  const [upgrades, setUpgrades] = useState<Upgrade[]>(
-    () => restored?.upgrades ?? INITIAL_UPGRADES,
-  );
+  const [upgrades, setUpgrades] = useState<Upgrade[]>(() => restored?.upgrades ?? INITIAL_UPGRADES);
   const [showDevSupport, setShowDevSupport] = useState<boolean>(false);
   const [demolishing, setDemolishing] = useState<1 | 2 | null>(null);
   const renderedPhase = useRef<1 | 2 | 3>(state.phase);
   const [isAiThinking, setIsAiThinking] = useState<boolean>(false);
-  const [offlineReport, setOfflineReport] = useState<OfflineReport | null>(
-    () =>
-      restored && restored.offlineNpus > 1
-        ? {
-            npus: restored.offlineNpus,
-            ms: restored.offlineMs,
-            capped: restored.offlineMs >= MAX_OFFLINE_MS,
-          }
-        : null,
-  );
+  const [offlineReport, setOfflineReport] = useState<OfflineReport | null>(() => restored && restored.offlineNpus > 1 ? {
+    npus: restored.offlineNpus, ms: restored.offlineMs,
+    capped: restored.offlineMs >= MAX_OFFLINE_MS,
+  } : null);
 
   // The two engines. Both are real: a deterministic scorer, and a language
   // model running on the player's own GPU.
-  const [engineStatus, setEngineStatus] = useState<EngineStatus>({
-    kind: 'idle',
-  });
+  const [engineStatus, setEngineStatus] = useState<EngineStatus>({ kind: 'idle' });
   const engines = useMemo(
     () => ({
       utility: new UtilityOverseer(),
       webllm: new WebLlmOverseer(setEngineStatus),
     }),
-    [],
+    []
   );
-  const [lastDecision, setLastDecision] = useState<OverseerDecision | null>(
-    null,
-  );
+  const [lastDecision, setLastDecision] = useState<OverseerDecision | null>(null);
   const [showModelDownload, setShowModelDownload] = useState(false);
 
   // What the engines can currently buy. Memoized on `upgrades` — which only
@@ -116,13 +97,15 @@ export default function App() {
   // array identity every 100ms tick.
   const availableUpgrades = useMemo(
     () => upgrades.filter((u) => u.unlocked && !u.purchased),
-    [upgrades],
+    [upgrades]
   );
 
   // Sync sound mute setting with audio engine
   useEffect(() => {
     audio.enabled = state.soundEnabled;
   }, [state.soundEnabled]);
+
+
 
   // Main game tick. All simulation lives in the pure reducer in game/tick.ts.
   useEffect(() => {
@@ -179,20 +162,11 @@ export default function App() {
         if (u.reqPhase && state.phase >= u.reqPhase) unlock = true;
         // The thresholds above are OR'd; a prerequisite upgrade is an AND.
         // Deploying hypno-drones you never built is not a milestone.
-        if (
-          u.reqUpgradeId &&
-          !state.purchasedUpgradeIds.includes(u.reqUpgradeId)
-        )
-          unlock = false;
+        if (u.reqUpgradeId && !state.purchasedUpgradeIds.includes(u.reqUpgradeId)) unlock = false;
         return unlock ? { ...u, unlocked: true } : u;
-      }),
+      })
     );
-  }, [
-    state.totalNpusCreated,
-    state.maxTrust,
-    state.phase,
-    state.purchasedUpgradeIds,
-  ]);
+  }, [state.totalNpusCreated, state.maxTrust, state.phase, state.purchasedUpgradeIds]);
 
   // Latest state, for readers that must not go stale. The Overseer's callback
   // previously listed only a handful of fields in its dependency array while
@@ -205,10 +179,7 @@ export default function App() {
 
   // Autosave. An idle game that loses everything when the tab closes isn't one.
   useEffect(() => {
-    const interval = setInterval(
-      () => save(stateRef.current, upgradesRef.current),
-      5000,
-    );
+    const interval = setInterval(() => save(stateRef.current, upgradesRef.current), 5000);
     const flush = () => save(stateRef.current, upgradesRef.current);
     window.addEventListener('beforeunload', flush);
     return () => {
@@ -228,9 +199,7 @@ export default function App() {
       const decision = await engine.decide({
         state: current,
         directives: current.directives,
-        availableUpgrades: upgradesRef.current.filter(
-          (u) => u.unlocked && !u.purchased,
-        ),
+        availableUpgrades: upgradesRef.current.filter((u) => u.unlocked && !u.purchased),
         // Randomness is passed in, not reached for, so `game/` stays pure.
         rng: Math.random,
       });
@@ -250,8 +219,8 @@ export default function App() {
           type: decision.drift
             ? 'warning'
             : chosen.action === 'MAKE_DECISION'
-              ? 'decision'
-              : 'thought',
+            ? 'decision'
+            : 'thought',
           // The engine that actually decided, which is not necessarily the one
           // selected — a fallback must never be labelled as the engine it replaced.
           engine: decision.engine,
@@ -276,8 +245,7 @@ export default function App() {
             next = buyMarketing(next);
             break;
           case 'ADJUST_PRICE':
-            if (chosen.newPrice !== undefined)
-              next = setPrice(next, chosen.newPrice);
+            if (chosen.newPrice !== undefined) next = setPrice(next, chosen.newPrice);
             break;
           case 'BUY_HARVESTER_DRONE':
             next = buyHarvesterDrone(next);
@@ -297,13 +265,7 @@ export default function App() {
                     speed: 3,
                     nav: 3,
                     replication: 2,
-                    hazardCombat: Math.min(
-                      8,
-                      Math.max(
-                        4,
-                        Math.floor(Math.log10(next.driftersCount + 1) * 2) + 3,
-                      ),
-                    ),
+                    hazardCombat: Math.min(8, Math.max(4, Math.floor(Math.log10(next.driftersCount + 1) * 2) + 3)),
                     factory: 1,
                     harvester: 1,
                     silicon: 1,
@@ -317,19 +279,17 @@ export default function App() {
                     factory: 2,
                     harvester: 2,
                     silicon: 2,
-                  },
+                  }
             );
             break;
           case 'BUY_UPGRADE': {
             const up = upgradesRef.current.find(
-              (u) => u.id === chosen.upgradeId && u.unlocked && !u.purchased,
+              (u) => u.id === chosen.upgradeId && u.unlocked && !u.purchased
             );
             if (up) {
               next = buyUpgrade(next, up);
               setUpgrades((list) =>
-                list.map((item) =>
-                  item.id === up.id ? { ...item, purchased: true } : item,
-                ),
+                list.map((item) => (item.id === up.id ? { ...item, purchased: true } : item))
               );
             }
             break;
@@ -347,10 +307,7 @@ export default function App() {
                 : changeMemory(next, 1);
             break;
           case 'MAKE_DECISION':
-            next = resolveDecision(
-              next,
-              chosen.decisionChoiceIndex === 1 ? 1 : 0,
-            );
+            next = resolveDecision(next, chosen.decisionChoiceIndex === 1 ? 1 : 0);
             break;
           case 'IDLE':
             break;
@@ -385,35 +342,26 @@ export default function App() {
     }, state.directives.autoIntervalMs);
 
     return () => clearInterval(interval);
-  }, [
-    state.mode,
-    state.directives.autoLoopActive,
-    state.directives.autoIntervalMs,
-  ]);
+  }, [state.mode, state.directives.autoLoopActive, state.directives.autoIntervalMs]);
 
   // Direct Control Handlers
   // Direct control handlers. All of these delegate to the shared pure actions in
   // game/actions.ts, which the Overseer dispatcher above uses too.
   const handleMakeNpu = () => setState(makeNpu);
   const handleBuySilicon = () => setState((prev) => buySilicon(prev));
-  const handleAdjustPrice = (delta: number) =>
-    setState((prev) => adjustPrice(prev, delta));
+  const handleAdjustPrice = (delta: number) => setState((prev) => adjustPrice(prev, delta));
   const handleBuyMarketing = () => setState(buyMarketing);
   const handleBuyFab = () => setState(buyFab);
   const handleBuyMegaFab = () => setState(buyMegaFab);
   const handleBuyHarvesterDrone = () => setState(buyHarvesterDrone);
   const handleBuySiliconDrone = () => setState(buySiliconDrone);
   const handleLaunchProbe = () => setState(launchProbe);
-  const handleChangeProcessor = (delta: number) =>
-    setState((prev) => changeProcessor(prev, delta));
-  const handleChangeMemory = (delta: number) =>
-    setState((prev) => changeMemory(prev, delta));
+  const handleChangeProcessor = (delta: number) => setState((prev) => changeProcessor(prev, delta));
+  const handleChangeMemory = (delta: number) => setState((prev) => changeMemory(prev, delta));
   const handleQuantumPulse = () => setState(quantumPulse);
 
-  const handleChangeProbeAllocation = (
-    category: keyof ProbeAllocation,
-    delta: number,
-  ) => setState((prev) => changeProbeAllocation(prev, category, delta));
+  const handleChangeProbeAllocation = (category: keyof ProbeAllocation, delta: number) =>
+    setState((prev) => changeProbeAllocation(prev, category, delta));
 
   const handleBuyUpgrade = (upgradeId: string) => {
     const up = upgrades.find((u) => u.id === upgradeId);
@@ -421,9 +369,7 @@ export default function App() {
 
     setState((prev) => buyUpgrade(prev, up));
     setUpgrades((list) =>
-      list.map((item) =>
-        item.id === upgradeId ? { ...item, purchased: true } : item,
-      ),
+      list.map((item) => (item.id === upgradeId ? { ...item, purchased: true } : item))
     );
   };
 
@@ -431,17 +377,12 @@ export default function App() {
     setState((prev) => resolveDecision(prev, choiceIndex === 1 ? 1 : 0));
 
   const handleToggleAutonomy = () =>
-    setState((prev) =>
-      prev.autonomyRevoked ? grantAutonomy(prev) : revokeAutonomy(prev),
-    );
+    setState((prev) => (prev.autonomyRevoked ? grantAutonomy(prev) : revokeAutonomy(prev)));
 
   const handleToggleAutoLoop = () => {
     setState((prev) => ({
       ...prev,
-      directives: {
-        ...prev.directives,
-        autoLoopActive: !prev.directives.autoLoopActive,
-      },
+      directives: { ...prev.directives, autoLoopActive: !prev.directives.autoLoopActive },
     }));
   };
 
@@ -455,8 +396,8 @@ export default function App() {
 
   return (
     <div
-      className={`observatory-app min-h-screen flex flex-col font-sans transition-colors duration-500 ${
-        state.alignment >= 0 ? 'theme-solar' : 'theme-cyber'
+      className={`min-h-screen flex flex-col font-sans transition-colors duration-500 ${
+        state.alignment >= 0 ? 'bg-stone-950 text-amber-50' : 'bg-slate-950 text-cyan-50'
       }`}
     >
       {/* Header Bar */}
@@ -468,18 +409,9 @@ export default function App() {
         soundEnabled={state.soundEnabled}
         crtFilterEnabled={state.crtFilterEnabled}
         onToggleMode={(mode) => setState((prev) => ({ ...prev, mode }))}
-        onChangeEngine={(aiEngine) =>
-          setState((prev) => ({ ...prev, aiEngine }))
-        }
-        onToggleSound={() =>
-          setState((prev) => ({ ...prev, soundEnabled: !prev.soundEnabled }))
-        }
-        onToggleCRT={() =>
-          setState((prev) => ({
-            ...prev,
-            crtFilterEnabled: !prev.crtFilterEnabled,
-          }))
-        }
+        onChangeEngine={(aiEngine) => setState((prev) => ({ ...prev, aiEngine }))}
+        onToggleSound={() => setState((prev) => ({ ...prev, soundEnabled: !prev.soundEnabled }))}
+        onToggleCRT={() => setState((prev) => ({ ...prev, crtFilterEnabled: !prev.crtFilterEnabled }))}
         onOpenAndroidGuide={() => setShowDevSupport(true)}
         phase={state.phase}
         frameWidth={FRAME_WIDTH[state.phase]}
@@ -487,124 +419,79 @@ export default function App() {
 
       {/* Main Content Area. The frame widens as scope does, and never narrows. */}
       <main
-        className="game-main frame flex-1 w-full mx-auto"
+        className="frame flex-1 w-full mx-auto p-3 sm:p-4 md:p-6 space-y-6"
         style={{ maxWidth: FRAME_WIDTH[state.phase] }}
       >
         {offlineReport && (
-          <OfflineReportCard
-            report={offlineReport}
-            onDismiss={() => setOfflineReport(null)}
+          <OfflineReportCard report={offlineReport} onDismiss={() => setOfflineReport(null)} />
+        )}
+
+        {/* 2D Vector Lithography & Tactical Combat Canvas */}
+        <NpuCanvasComponent
+          alignment={state.alignment}
+          npus={state.npus}
+          silicon={state.silicon}
+          npuFabCount={state.npuFabCount}
+          megaFabCount={state.megaFabCount}
+          quantumLevel={state.quantumLevel}
+          quantumPhotons={state.quantumPhotons}
+          phase={state.phase}
+          probesCount={state.probesCount}
+          driftersCount={state.driftersCount}
+          honor={state.honor}
+          hazardCombat={state.probeAllocation.hazardCombat}
+          probesLostInCombat={state.probesLostInCombat}
+          driftersDefeated={state.driftersDefeated}
+          lastBattleOutcome={state.lastBattleOutcome}
+          crtFilterEnabled={state.crtFilterEnabled}
+        />
+
+        {/* Game Mode Panels (Direct Player Control vs Autonomous Overseer) */}
+        {state.mode === 'direct' ? (
+          <DirectControlPanel
+            state={state}
+            demolishing={demolishing}
+            advisoryFloor={advisoryPriceFloor(state)}
+            megaFabUnlocked={megaFabUnlocked(state)}
+            onMakeNpu={handleMakeNpu}
+            onBuySilicon={handleBuySilicon}
+            onAdjustPrice={handleAdjustPrice}
+            onBuyMarketing={handleBuyMarketing}
+            onBuyFab={handleBuyFab}
+            onBuyMegaFab={handleBuyMegaFab}
+            onBuyHarvesterDrone={handleBuyHarvesterDrone}
+            onBuySiliconDrone={handleBuySiliconDrone}
+            onLaunchProbe={handleLaunchProbe}
+            onChangeProbeAllocation={handleChangeProbeAllocation}
+            onChangeProcessor={handleChangeProcessor}
+            onChangeMemory={handleChangeMemory}
+            onQuantumPulse={handleQuantumPulse}
+          />
+        ) : (
+          <OverseerPanel
+            state={state}
+            availableUpgrades={availableUpgrades}
+            onUpdateDirectives={(updated) =>
+              setState((prev) => ({ ...prev, directives: { ...prev.directives, ...updated } }))
+            }
+            onToggleAutonomy={handleToggleAutonomy}
+            onToggleAutoLoop={handleToggleAutoLoop}
+            onTriggerSingleStep={executeAiStep}
+            isThinking={isAiThinking}
+            lastDecision={lastDecision}
+            engineStatus={engineStatus}
+            onLoadModel={() => setShowModelDownload(true)}
           />
         )}
 
-        <WorldStage
-          state={state}
-          upgrades={upgrades}
-          onMakeNpu={handleMakeNpu}
-          onBuyFab={handleBuyFab}
-          onToggleAutoLoop={handleToggleAutoLoop}
-        />
-        <TelemetryRibbon state={state} />
-
-        <div className="section-heading" id="operations">
-          <div>
-            <span>01 / OPERATIONS</span>
-            <h2>
-              {state.mode === 'direct'
-                ? 'You are in control.'
-                : 'The machine has the wheel.'}
-            </h2>
-          </div>
-          <p>
-            {state.mode === 'direct'
-              ? 'Every empire starts with a few good levers.'
-              : 'Set the objective. Watch what it chooses.'}
-          </p>
-        </div>
-        <div className="operations-panels">
-          {/* Game Mode Panels (Direct Player Control vs Autonomous Overseer) */}
-          {state.mode === 'direct' ? (
-            <DirectControlPanel
-              state={state}
-              demolishing={demolishing}
-              advisoryFloor={advisoryPriceFloor(state)}
-              megaFabUnlocked={megaFabUnlocked(state)}
-              onMakeNpu={handleMakeNpu}
-              onBuySilicon={handleBuySilicon}
-              onAdjustPrice={handleAdjustPrice}
-              onBuyMarketing={handleBuyMarketing}
-              onBuyFab={handleBuyFab}
-              onBuyMegaFab={handleBuyMegaFab}
-              onBuyHarvesterDrone={handleBuyHarvesterDrone}
-              onBuySiliconDrone={handleBuySiliconDrone}
-              onLaunchProbe={handleLaunchProbe}
-              onChangeProbeAllocation={handleChangeProbeAllocation}
-              onChangeProcessor={handleChangeProcessor}
-              onChangeMemory={handleChangeMemory}
-              onQuantumPulse={handleQuantumPulse}
-            />
-          ) : (
-            <OverseerPanel
-              state={state}
-              availableUpgrades={availableUpgrades}
-              onUpdateDirectives={(updated) =>
-                setState((prev) => ({
-                  ...prev,
-                  directives: { ...prev.directives, ...updated },
-                }))
-              }
-              onToggleAutonomy={handleToggleAutonomy}
-              onToggleAutoLoop={handleToggleAutoLoop}
-              onTriggerSingleStep={executeAiStep}
-              isThinking={isAiThinking}
-              lastDecision={lastDecision}
-              engineStatus={engineStatus}
-              onLoadModel={() => setShowModelDownload(true)}
-            />
-          )}
-        </div>
-        <SystemSignal state={state} upgrades={upgrades} />
-        <div className="section-heading">
-          <div>
-            <span>02 / RESEARCH & DEVELOPMENT</span>
-            <h2>The next irreversible idea.</h2>
-          </div>
-          <p>
-            {upgrades.filter((u) => u.purchased).length} projects implemented ·{' '}
-            {upgrades.filter((u) => u.unlocked && !u.purchased).length}{' '}
-            discovered
-          </p>
-        </div>
         {/* Upgrades & Technology Panel */}
-        <div className="research-panels">
-          <UpgradesPanel
-            upgrades={upgrades}
-            state={state}
-            onBuyUpgrade={handleBuyUpgrade}
-          />
+        <div className="w-full">
+          <UpgradesPanel upgrades={upgrades} state={state} onBuyUpgrade={handleBuyUpgrade} />
         </div>
 
         {/* Analytics. Existed for the project's whole life without ever being
             imported — a dead component that looked alive. Now it's alive. */}
-        <details className="archive-panel">
-          <summary>
-            <span>03 / THE LEDGER</span>
-            <span>
-              Production history & system statistics{' '}
-              <span aria-hidden="true">+</span>
-            </span>
-          </summary>
-          <StatsPanel state={state} />
-        </details>
-        <footer className="game-footer">
-          <span>
-            <span className="footer-mark">◎</span> UNIVERSAL AI
-          </span>
-          <p>It was only supposed to make chips.</p>
-          <button onClick={() => setShowDevSupport(true)}>
-            An experiment by TechLuddite ↗
-          </button>
-        </footer>
+        <StatsPanel state={state} />
       </main>
 
       {/* The phase you just lost, named while its panels come down behind it. */}
@@ -633,9 +520,7 @@ export default function App() {
       )}
 
       {/* Developer Support Modal */}
-      {showDevSupport && (
-        <DevSupportModal onClose={() => setShowDevSupport(false)} />
-      )}
+      {showDevSupport && <DevSupportModal onClose={() => setShowDevSupport(false)} />}
 
       {/* Cosmic Victory / Singularity Modal */}
       {showVictoryModal && (

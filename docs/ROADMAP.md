@@ -203,7 +203,7 @@ decision time, never at ranking time).
   "verified" badge — a page cannot prove its own integrity, and the comment in
   `DevSupportModal.tsx` says so. What it offers instead is the pointer to check
   from outside: the public Actions run, or build-and-diff.
-- **Mobile layout** — **done in the observatory pass.** Dedicated stacked scene,
+- **Mobile layout** — **historical, abandoned observatory pass.** Dedicated stacked scene,
   two-column telemetry, responsive controls, and production browser coverage.
 - **Canvas polish** — **done.** The rAF loop reads live values through a ref and
   is created once, instead of being torn down and rebuilt ~10×/second by its own
@@ -260,7 +260,11 @@ honesty pass; the details live in the invariants sections of `CLAUDE.md` and
   build artifact; the root one was created by GitHub's UI. Harmless while they
   agree — worth collapsing to one.
 
-## Observatory pass — complete
+## Observatory pass — abandoned, not the original
+
+The following records the intermediate Codex attempt. It is no longer served
+at `/classic/`; that route restores pre-redesign commit `7520185`. The save
+startup fix is retained. These visual features are historical, not live.
 
 - Procedural wafer, conversion globe, and cosmic swarm driven by game state.
 - New command header, chapter narrative, alignment telemetry, and actionable

@@ -33,7 +33,7 @@ for (const phase of [1, 2, 3] as const) {
     page.on('pageerror', error => errors.push(error.message));
     await seed(page, { phase, totalNpusCreated: 5000, npuFabCount: 7 });
     await page.goto('/classic/');
-    await expect(page.getByText(`PHASE ${phase}:`, { exact: false })).toBeVisible();
+    await expect(page.getByText(`PHASE ${phase}: ${["EARTH", "GRID", "COSMIC"][phase - 1]}`, { exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Choose a Universal AI version' })).toBeVisible();
     await expect(page.locator('canvas')).toBeVisible();
     await expect(page.locator('.world-stage, .world-viewport, .chapter-track')).toHaveCount(0);

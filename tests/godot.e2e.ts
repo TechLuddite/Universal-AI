@@ -235,6 +235,8 @@ test('graphics controls record factory scaling with actual AA and shadow setting
     const downloadEvent = page.waitForEvent('download');
     await page.locator('#download-performance').click();
     const download = await downloadEvent;
+    // The list reporter does not persist in-memory attachments on successful runs.
+    await download.saveAs(testInfo.outputPath(`fabs-${fabs}-aa-${aa}-shadows-${shadows}.json`));
     const report = JSON.parse(await readFile((await download.path())!, 'utf8'));
     expect(report.samples.length).toBeGreaterThanOrEqual(4);
     expect(report.samples.length).toBeLessThanOrEqual(60);

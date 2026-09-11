@@ -7,7 +7,7 @@ one doing it.
 
 The shared entrance describes both games and their contributors:
 
-- `/classic/`: the full React/TypeScript game, with the recent observatory UI.
+- `/classic/`: the full React/TypeScript game, with its original pre-redesign interface.
 - `/seed/`: The Seed, the independent Godot opening prototype.
 
 **Godot performance is still under investigation.** Severe slowdowns persisted
@@ -62,27 +62,14 @@ that's the entire deployment.
 
 ---
 
-## The observatory
+## The original browser game
 
-The interface is a live instrument: a floating processor above an etched silicon
-wafer, a planet being converted, and finally a luminous interstellar swarm.
-These are procedural Canvas scenes, driven by your actual game state. Alignment
-changes their light; new fabs join the wafer network; harvesting consumes the
-globe. They are schematics, not literal maps or one dot per probe.
-
-Fabricate directly from the observatory, build your first fab from its capital
-objective, or release the Overseer. Expand the view for a closer look; Escape
-returns to the controls. Animation can be paused independently of the game and
-respects reduced-motion preferences.
-
-A live production trace measures actual chips per elapsed second. Session
-transmissions record first fabrication, factory purchases, trust increases,
-projects, phase transitions, and directive overrides. Neither invents activity
-while the system is idle. These instruments reset on reload; your game save does
-not.
-
-The layout is designed for phones as well as desktops. All visuals and fonts
-are local, and the default engine needs no downloads beyond the app itself.
+`/classic/` restores the interface from commit `7520185`, the last main revision
+before Codex's abandoned React redesign. It includes Claude's repaired economy,
+three phases, alignment consequences, Overseer, and original Canvas presentation.
+The existing save-loading fix and navigation to the shared chooser are retained.
+The intermediate observatory attempt remains in Git history, not behind the
+original game's play button. The Godot game continues separately at `/seed/`.
 
 ## The Overseer
 
@@ -227,14 +214,13 @@ can confirm by watching, and by reading
   widens one way only. Within a phase it's still a fairly static grid.
 - **Offline progress is capped at 8 hours**, so a laptop left shut for a month
   isn't an instant win.
-- **The observatory is a schematic.** It compresses huge populations into bounded
-  visual samples; use the numerical telemetry for exact quantities.
+- **Canvas scenes are illustrations.** Use resource counters for exact quantities.
 
 ---
 
 ## How it's built
 
-React 19 + TypeScript + Vite + Tailwind 4. Procedural Canvas observatory, SVG production trace and radar,
+React 19 + TypeScript + Vite + Tailwind 4. Original Canvas factory/combat scenes and SVG radar,
 Web Audio synthesizer. Deployed to GitHub Pages from `main` by
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), which typechecks
 and tests before it builds — and then fetches the live URL and fails unless it's

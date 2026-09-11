@@ -202,6 +202,8 @@ test('first light requires a completed district and survives a real browser save
 
 
 test('graphics controls record factory scaling with actual AA and shadow settings', async ({ page }, testInfo) => {
+  // Six live-rendering comparisons include costly MSAA on CI's software GPU.
+  test.setTimeout(240_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -245,6 +247,7 @@ test('graphics controls record factory scaling with actual AA and shadow setting
       expect(sample.frame_interval_p95_ms).toBeGreaterThan(0);
     }
     reports.push(report);
+    await testInfo.attach(`fabs-${fabs}-aa-${aa}-shadows-${shadows}`, { body: JSON.stringify(report, null, 2), contentType: 'application/json' });
     await page.locator('#controls details').locator('summary').click();
     await page.getByRole('button', { name: 'Back to the factory' }).click();
   }

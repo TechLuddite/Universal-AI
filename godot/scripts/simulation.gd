@@ -12,7 +12,7 @@ const OVERCLOCK_COST: int = 2400
 const UPLINK_COST: int = 6000
 const SAVE_VERSION: int = 2
 
-var capital: int = 0
+var capital: int = 500
 var wafers: int = 60
 var chips: int = 0
 var fabs: int = 0

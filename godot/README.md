@@ -52,7 +52,7 @@ are retained. On other platforms, install the matching editor and set
 | New Run | Confirm and reset this prototype's save |
 
 Touch users can use the action dock and drag the scene. Each etch consumes one
-wafer and pays $100 when finished. Twelve chips finance the first fab. Reserve
+wafer and pays $100 when finished. New runs start with $500; seven chips finance the first fab. Existing saves retain their balance. Reserve
 $600 for a shipment of 30 wafers. If you run out of both silicon and money,
 procurement offers three reclaimed wafers so the run cannot become stranded.
 
@@ -73,7 +73,7 @@ purchasing and production reuse those objects. Machine monitors show cycle state
 instead of rebuilding percentage text throughout every cycle.
 
 Rendering is capped at 30 fps and at a 1440 × 900 internal viewport (preserving
-aspect ratio on smaller or portrait screens). MSAA and the full-screen mipmap
+aspect ratio on smaller or portrait screens). By default MSAA and the full-screen mipmap
 bloom pass are disabled to reduce GPU load. This trades some edge sharpness and
 glow for a lower rendering budget on laptops. The simulation still advances by
 elapsed time; the cap does not halve production speed.
@@ -167,3 +167,23 @@ The performance investigation remains open.
 Version 2 saves keep the original `the-seed-v1.json` location and accept version
 1 factory saves. The browser regression fixture is enabled only by
 `?test=1&scenario=chorus`; normal play exposes no state setter.
+
+
+## Graphics and performance recording
+
+Open **Graphics / controls** below the game to select off, 2× or 4× MSAA,
+change the internal resolution cap, or toggle shadows. These preferences persist
+separately from your run. Defaults retain the previous budget: AA off, 1440 × 900
+maximum, shadows on, 30 fps. Try 2× MSAA for smoother geometry; higher resolution
+and 4× MSAA cost more GPU work. Bloom remains disabled.
+
+The same panel can record up to 60 one-second samples while you play, then
+download a local JSON report. It includes fab count, settings, frame intervals,
+draw calls, rendered primitives, node count, and approximate JavaScript heap
+where the browser exposes it. Frame intervals include the frame limiter;
+JavaScript heap is **not** total browser, GPU, or system memory. Recording stops
+when the tab is hidden. Nothing is uploaded. The scaling problem remains open.
+
+Remote browser checks use `?test=1&scenario=scaling` (one funded, muted fab),
+then real build controls to compare two and six fabs and record AA/shadow settings.
+This fixture is available only in test mode; it does not replace normal saves.

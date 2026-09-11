@@ -41,6 +41,11 @@ var selected_ring: MeshInstance3D
 var debug_timer: float = 0.0
 var fps_samples: int = 0
 var reset_pending: bool = false
+var render_cap: int = 1440
+var graphics_timer: float = 0.0
+var sample_time: float = 0.0
+var sample_intervals: Array[float] = []
+var was_recording: bool = false
 
 func _ready() -> void:
 	Engine.max_fps=30
@@ -60,6 +65,8 @@ func _ready() -> void:
 		sim.restore({"version":1, "capital":60000, "wafers":300, "chips":1200, "fabs":6, "overclock":true, "controller":true, "linked":true, "sound_enabled":false})
 	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=firstlight"):
 		sim.restore({"version":2, "capital":30000, "wafers":300, "chips":2000, "fabs":6, "overclock":true, "controller":true, "linked":true, "sound_enabled":false, "places":[7,1,0], "signals":1000, "resonance":1500.0, "charter":0})
+	if test_mode and OS.has_feature("web") and str(JavaScriptBridge.get_interface("window").location.search).contains("scenario=scaling"):
+		sim.restore({"version":1, "capital":60000, "wafers":300, "chips":0, "fabs":1, "sound_enabled":false})
 	_create_environment()
 	room=Chamber.new()
 	add_child(room)
@@ -80,6 +87,7 @@ func _ready() -> void:
 	camera_focus=sim.fabs==0
 	_create_camera()
 	_create_audio()
+	_update_graphics(1.0)
 	ui=Interface.new()
 	add_child(ui)
 	ui.action_requested.connect(_action)
@@ -141,10 +149,52 @@ func _limit_render_size() -> void:
 	if window.size==last_window_size:return
 	last_window_size=window.size
 	var physical:=Vector2(window.size)
-	var factor:=minf(1.0,minf(1440.0/maxf(1,physical.x),900.0/maxf(1,physical.y)))
+	var factor:=minf(1.0,minf(float(render_cap)/maxf(1,physical.x),float(render_cap)*0.625/maxf(1,physical.y)))
 	var target:=Vector2i((physical*factor).round())
 	window.content_scale_mode=Window.CONTENT_SCALE_MODE_VIEWPORT
 	if window.content_scale_size!=target:window.content_scale_size=target
+
+func _update_graphics(delta: float) -> void:
+	if not OS.has_feature("web"):return
+	var browser_window = JavaScriptBridge.get_interface("window")
+	var settings = browser_window.seedGraphics
+	if settings == null:return
+	graphics_timer += delta
+	if graphics_timer >= 0.5:
+		graphics_timer = 0.0
+		var aa: int = clampi(int(settings.aa), 0, 2)
+		if int(get_viewport().msaa_3d) != aa:get_viewport().msaa_3d = aa as Viewport.MSAA
+		var cap: int = int(settings.cap)
+		if cap in [1280, 1440, 1920] and render_cap != cap:
+			render_cap = cap
+			last_window_size = Vector2i.ZERO
+		if key_light.shadow_enabled != bool(settings.shadows):key_light.shadow_enabled = bool(settings.shadows)
+	var recording: bool = bool(settings.recording)
+	if recording and not was_recording:
+		sample_time = 0.0
+		sample_intervals.clear()
+	was_recording = recording
+	if not recording:return
+	sample_time += delta
+	# Bound recording storage even if the frame cap is changed later.
+	if sample_intervals.size() < 240:sample_intervals.append(delta * 1000.0)
+	if sample_time < 1.0:return
+	sample_intervals.sort()
+	var sample: Dictionary = {
+		"fps": Engine.get_frames_per_second(), "window_seconds": sample_time,
+		"frame_interval_p95_ms": sample_intervals[mini(sample_intervals.size()-1, floori(sample_intervals.size()*0.95))],
+		"frame_interval_max_ms": sample_intervals.back(),
+		"render_width": get_viewport().get_visible_rect().size.x,
+		"render_height": get_viewport().get_visible_rect().size.y,
+		"msaa": int(get_viewport().msaa_3d), "shadows": key_light.shadow_enabled,
+		"fabs": sim.fabs, "chips": sim.chips, "sound_enabled": sim.sound_enabled,
+		"atlas": atlas, "nodes": get_tree().get_node_count(),
+		"draw_calls": Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+		"rendered_primitives": Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+	}
+	browser_window.seedReceivePerformance(JavaScriptBridge.get_interface("JSON").parse(JSON.stringify(sample)))
+	sample_time = 0.0
+	sample_intervals.clear()
 
 func _create_audio() -> void:
 	for id in ["etch","chip","build","supply","uplink"]:
@@ -170,6 +220,7 @@ func _sound(id: String, volume: float=-15.0) -> void:
 	voice.play()
 
 func _process(delta: float) -> void:
+	_update_graphics(delta)
 	_limit_render_size()
 	# A short fixed step keeps production deterministic across render frame rates.
 	# Browser tab suspension does not mint unobserved chips in this prototype.
@@ -210,6 +261,8 @@ func _process(delta: float) -> void:
 			snapshot["nodes"]=get_tree().get_node_count()
 			snapshot["render_width"]=get_viewport().get_visible_rect().size.x
 			snapshot["render_height"]=get_viewport().get_visible_rect().size.y
+			snapshot["msaa"]=get_viewport().msaa_3d
+			snapshot["shadows"]=key_light.shadow_enabled
 			snapshot["atlas"]=atlas
 			snapshot["cinema"]=ui.focus_mode
 			snapshot["camera_focus"]=camera_focus
@@ -292,7 +345,7 @@ func _handle_events() -> void:
 					_sound("chip",-23 if index>=0 else -16)
 					production_chime=0.18
 				if sim.chips==1:ui.notify("First chip shipped. $100. A very small beginning.",true)
-				elif sim.chips==12 and sim.fabs==0:ui.notify("Your first fab is ready to fund. Press B or choose Install a fab.",true)
+				elif sim.chips==7 and sim.fabs==0:ui.notify("Your first fab is ready to fund. Press B or choose Install a fab.",true)
 			"build":
 				_add_machine(int(event.machine))
 				camera_focus=false

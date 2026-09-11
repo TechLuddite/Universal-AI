@@ -1,6 +1,6 @@
 # Performance investigation — OPEN
 
-Updated 2026-09-10. **Do not treat the Godot performance problem as resolved.**
+Updated 2026-09-11. **Do not treat the Godot performance problem as resolved.**
 
 The development laptop experienced severe system-wide slowdowns, initially
 near the first fab and later near the second. The user still reported excessive
@@ -68,3 +68,23 @@ workflow are tracked; generated engine binaries and web exports are not.
 The games have separate browser-local saves. Changing browser, machine, or
 origin does not transfer progress automatically. Git transfers the project,
 not a running game's browser storage.
+
+
+## Cross-device report and graphics controls — 2026-09-11
+
+The user confirms remaining slowdown as the factory scales on both the development
+laptop and a phone, without a consistent two-fab threshold. The earlier smoother
+hosted run did not establish a fix. Browser versions and phone model are unknown.
+
+The lost edge smoothing corresponds to disabling MSAA during the earlier
+performance investigation. New graphics controls expose off/2×/4× MSAA,
+1280×800 / 1440×900 / 1920×1200 resolution caps, and shadows. Defaults retain the
+previous rendering budget. Preferences are independent of simulation saves.
+
+An opt-in, bounded 60-sample local JSON recording reports actual settings, fab
+count, frame intervals, rendering counters and node count. Optional JS heap is
+approximate and excludes total browser/GPU/system memory. Use identical camera,
+resolution and sound when comparing fab counts; then vary AA and shadows
+separately. CI software rendering can validate controls and bounded allocations,
+but cannot establish performance on the affected laptop or phone. No local game,
+browser or server should be launched to test these changes.

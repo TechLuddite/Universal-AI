@@ -1,7 +1,8 @@
+import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
 
 interface SeedSnapshot {
-  nodes: number; fps: number; render_width: number; render_height: number;
+  msaa: number; shadows: boolean; nodes: number; fps: number; render_width: number; render_height: number;
   chips: number; capital: number; wafers: number; fabs: number;
   machines_visible: number; cinema: boolean; camera_focus: boolean;
   sound_enabled: boolean; manual_progress: number;
@@ -26,6 +27,7 @@ test('real WebGL fabrication finances and installs an autonomous machine', async
   page.on('request', request => { if (/^https?:/.test(request.url()) && !request.url().startsWith('http://127.0.0.1:4180/')) external.push(request.url()); });
   await ready(page);
   expect((await state(page)).fabs).toBe(0);
+  expect((await state(page)).capital).toBe(500);
   await page.keyboard.down('Space');
   await expect.poll(async () => (await state(page)).capital, { timeout: 60_000 }).toBeGreaterThanOrEqual(1200);
   await page.keyboard.up('Space');
@@ -58,12 +60,18 @@ test('Godot local storage preserves a run through a browser reload', async ({ pa
   await expect.poll(async () => (await state(page)).chips, { timeout: 15_000 }).toBe(1);
   await page.keyboard.press('m');
   await expect.poll(async () => (await state(page)).sound_enabled).toBe(false);
+  await page.getByRole('button', { name: 'Open game controls' }).click();
+  await page.locator('#graphics-aa').selectOption('1');
+  await expect.poll(async () => (await state(page)).msaa).toBe(1);
+  await page.getByRole('button', { name: 'Back to the factory' }).click();
   // The scene saves every two seconds; allow the web filesystem to synchronize.
   await page.waitForTimeout(3500);
   await page.reload();
   await expect.poll(async () => (await state(page))?.chips, { timeout: 60_000 }).toBe(1);
   expect((await state(page)).sound_enabled).toBe(false);
   expect((await state(page)).wafers).toBe(59);
+  expect((await state(page)).capital).toBe(600);
+  await expect.poll(async () => (await state(page)).msaa).toBe(1);
 });
 
 test('the portrait control dock can fabricate with a tap', async ({ page }) => {
@@ -189,5 +197,62 @@ test('first light requires a completed district and survives a real browser save
   await testInfo.attach('navigation-diagnostics', { body: JSON.stringify(navigationNotices), contentType: 'application/json' });
   expect((await ending()).ending).toBe('THE OPEN HAND');
   expect((await ending()).atlas).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+
+test('graphics controls record factory scaling with actual AA and shadow settings', async ({ page }, testInfo) => {
+  // Six live-rendering comparisons include costly MSAA on CI's software GPU.
+  test.setTimeout(240_000);
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page, '?test=1&scenario=scaling');
+  const nodes = (await state(page)).nodes;
+  const reports: unknown[] = [];
+  for (const [fabs, aa, shadows] of [[1, 0, true], [2, 0, true], [6, 0, true], [6, 1, true], [6, 2, true], [6, 0, false]] as const) {
+    while ((await state(page)).fabs < fabs) {
+      const before = (await state(page)).fabs;
+      await page.keyboard.press('b');
+      await expect.poll(async () => (await state(page)).fabs).toBe(before + 1);
+    }
+    await page.getByRole('button', { name: 'Open game controls' }).click();
+    await page.locator('#graphics-aa').selectOption(String(aa));
+    await page.locator('#graphics-cap').selectOption('1280');
+    await page.locator('#graphics-shadows').setChecked(shadows);
+    await expect.poll(async () => (await state(page)).msaa).toBe(aa);
+    await expect.poll(async () => (await state(page)).shadows).toBe(shadows);
+    await expect.poll(async () => (await state(page)).render_width).toBe(1280);
+    await page.locator('#controls details').locator('summary').click();
+    await page.locator('#record-performance').click();
+    await page.getByRole('button', { name: 'Back to the factory' }).click();
+    // Measure the unobscured factory, with actual simulation and rendering active.
+    await expect(page.locator('#performance-status')).toHaveText(/^4\/60 samples/, { timeout: 15_000 });
+    await page.screenshot({ path: testInfo.outputPath(`fabs-${fabs}-aa-${aa}-shadows-${shadows}.png`) });
+    await page.getByRole('button', { name: 'Open game controls' }).click();
+    await page.locator('#record-performance').click();
+    const downloadEvent = page.waitForEvent('download');
+    await page.locator('#download-performance').click();
+    const download = await downloadEvent;
+    // The list reporter does not persist in-memory attachments on successful runs.
+    await download.saveAs(testInfo.outputPath(`fabs-${fabs}-aa-${aa}-shadows-${shadows}.json`));
+    const report = JSON.parse(await readFile((await download.path())!, 'utf8'));
+    expect(report.samples.length).toBeGreaterThanOrEqual(4);
+    expect(report.samples.length).toBeLessThanOrEqual(60);
+    for (const sample of report.samples) {
+      expect(sample.fabs).toBe(fabs);
+      expect(sample.msaa).toBe(aa);
+      expect(sample.shadows).toBe(shadows);
+      expect(sample.nodes).toBe(nodes);
+      expect(sample.draw_calls).toBeGreaterThan(0);
+      expect(sample.frame_interval_p95_ms).toBeGreaterThan(0);
+    }
+    reports.push(report);
+    await testInfo.attach(`fabs-${fabs}-aa-${aa}-shadows-${shadows}`, { body: JSON.stringify(report, null, 2), contentType: 'application/json' });
+    await page.locator('#controls details').locator('summary').click();
+    await page.getByRole('button', { name: 'Back to the factory' }).click();
+  }
+  await testInfo.attach('scaling-comparison', { body: JSON.stringify(reports, null, 2), contentType: 'application/json' });
   expect(errors).toEqual([]);
 });

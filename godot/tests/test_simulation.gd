@@ -19,11 +19,11 @@ func _initialize() -> void:
 	check(sim.wafers==59 and sim.chips==0,"Starting a cycle consumes one wafer but grants no output early")
 	check(not sim.etch(),"Manual cycle cannot be double queued")
 	advance(sim,1.0)
-	check(sim.chips==1 and sim.capital==100,"Completed fabrication sells one chip for $100")
-	for i in 11:
+	check(sim.chips==1 and sim.capital==600,"New runs start with $500 and a completed chip adds $100")
+	for i in 6:
 		sim.etch()
 		advance(sim,1)
-	check(sim.capital==1200,"Twelve manual chips finance the first machine")
+	check(sim.capital==1200,"Seven manual chips plus starting capital finance the first machine")
 	check(sim.build_fab() and sim.fabs==1 and sim.capital==0,"The first fab debits the displayed price")
 	var before: int=sim.chips
 	advance(sim,3.5)

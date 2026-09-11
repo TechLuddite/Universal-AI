@@ -101,7 +101,7 @@ func _ready() -> void:
 	chapter_box.add_child(_label("O B J E C T I V E   /   0 1",10,GOLD))
 	chapter_title=_label("Build the machine\nthat builds the machine.",22,WHITE)
 	chapter_box.add_child(chapter_title)
-	chapter_note=_label("Etch 12 chips. Sales are automatic.\nThen install your first autonomous fab.",12,MUTED)
+	chapter_note=_label("Etch 7 chips. Sales are automatic.\nThen install your first autonomous fab.",12,MUTED)
 	chapter_note.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	chapter_box.add_child(chapter_note)
 	var sep:=HSeparator.new()
@@ -121,7 +121,7 @@ func _ready() -> void:
 	fill.content_margin_bottom=0
 	objective_progress.add_theme_stylebox_override("fill",fill)
 	chapter_box.add_child(objective_progress)
-	objective_numbers=_label("$0 / $1,200",11,MUTED)
+	objective_numbers=_label("$500 / $1,200",11,MUTED)
 	chapter_box.add_child(objective_numbers)
 	chapter_box.add_child(_label("S Y S T E M  T R A N S M I S S I O N",9,MUTED))
 	journal=_label("The room is quiet.\nThat part is temporary.",13,WHITE)
